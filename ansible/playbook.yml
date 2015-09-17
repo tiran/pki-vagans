@@ -1,0 +1,11 @@
+---
+- name: install Dogtag PKI CA
+  hosts: pki_server
+  sudo: True
+  sudo_user: root
+
+  roles:
+    - common
+    - 389ds
+    - pkica
+

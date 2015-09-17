@@ -1,0 +1,56 @@
+Setup
+=====
+
+$ sudo dnf install ansible libvirt vagrant vagrant-lxc lxc-templates lxc-extras
+$ sudo usermod -G vagrant -a USER
+$ newgrp vagrant # or restart your session
+
+virtual network
+---------------
+
+edit /etc/lxc/default.conf
+change lxc.network.link = virbr0
+
+$ sudo systemctl enable libvirtd
+$ sudo systemctl start libvirtd
+
+
+Download / tune Vagrant box
+---------------------------
+
+$ vagrant box add obnox/fedora22-64-lxc
+
+Apache httpd needs setfcap
+
+edit ~/.vagrant.d/boxes/obnox-VAGRANTSLASH-fedora22-64-lxc/1.0.0/lxc/lxc-config
+comment out 'lxc.cap.drop = setfcap'
+
+
+Use Vagrant
+===========
+
+$ cd pki
+$ vagrant up
+$ vagrant provision
+$ vagrant ssh
+$ vagrant destroy
+
+
+Optional
+========
+
+cachier
+-------
+
+Development headers for plugin:
+
+$ sudo dnf install ruby-devel ruby-libvirt libvirt-devel
+
+vagrant plugin install vagrant-cachier
+
+
+forceful cleanup
+----------------
+
+rm -rf /var/lib/pki/ /var/log/pki/ /etc/sysconfig/pki-tomcat-tests /etc/sysconfig/pki/tomcat/pki-tomcat-tests/ /root/.dogtag/pki-tomcat-tests /etc/pki/pki-tomcat-tests/
+

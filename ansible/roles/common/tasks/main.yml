@@ -1,0 +1,61 @@
+---
+- name: Enable yum for Fedora
+  command: dnf install yum-utils -y
+  when: ansible_distribution == "Fedora" and ansible_distribution_major_version >= "22"
+  args:
+    creates: /usr/bin/yumdownloader
+
+- name: upgrade all packages
+  tags:
+    - common
+  yum: name=* state=latest
+
+- name: install selinux tools
+  tags:
+    - common
+  yum: name=libselinux-python,selinux-policy
+
+- name: disable selinux for 389-DS installation
+  # for LXC, 389-DS installation hangs with:
+  # SELinux policy is not managed or store cannot be accessed
+  tags:
+    - common
+    - lxc
+  selinux: state=disabled
+
+- name: check for firewalld
+  tags:
+    - common
+  stat: path=/usr/sbin/firewalld
+  register: has_firewalld
+
+- name: disable firewalld
+  tags:
+    - common
+  service: name=firewalld enabled=yes state=started
+  when: has_firewalld.stat.exists
+
+- name: Install rng tools
+  tags:
+    - common
+  yum: name=rng-tools
+
+- name: Start the rngd service
+  tags:
+    - common
+  service: name=rngd enabled=yes state=started
+
+- name: tty-less sudo
+  tags:
+    - common
+  sudo: yes
+  lineinfile: dest=/etc/sudoers
+              state=absent
+              regexp='^Defaults(\s+)requiretty(\s*)$'
+              validate='visudo -cf %s'
+
+- name: Set server hostname
+  tags:
+    - common
+  sudo: yes
+  hostname: name={{ hostname }}

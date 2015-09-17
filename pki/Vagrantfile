@@ -1,0 +1,50 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.require_version ">= 1.6.0"
+
+ENV['VAGRANT_DEFAULT_PROVIDER'] = 'lxc'
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "obnox/fedora22-64-lxc"
+ 
+  # doesn't work for me, why?
+  #if Vagrant.has_plugin?("vagrant-cachier")
+  #  config.cache.scope = :box
+  #  config.cache.enable :yum
+  #end
+
+  config.vm.provider :lxc do |lxc|
+    # lxc.customize 'cgroup.memory.limit_in_bytes', '1024M'
+  end
+
+  config.vm.define "pki_server" do |server|
+  end
+
+  #config.vm.provision "shell", inline: <<-SHELL
+  #  # sudo dnf update -y
+  #  sudo dnf install httpd -y
+  #SHELL
+  #end
+
+  config.vm.provision "ansible" do |ansible|
+      ansible.playbook = "../ansible/playbook.yml"
+      ansible.groups = {
+          "pki_server" => ["pki_server"],
+      }
+      #ansible.verbose = 'v'
+      ansible.extra_vars = {
+          hostname: 'dogtag.example.org',
+          domain: 'example.org',
+          suffix: 'dc=example,dc=com',
+          forwarder: '192.168.122.1',
+          ldap_port: 389,
+          http_port: 8080,
+          https_port: 80443,
+          pki_instance_name: 'pki-tomcat-tests',
+          security_domain: 'pki-tests',
+          password: 'Secret123',
+      }
+  end
+end
+

@@ -1,0 +1,17 @@
+---
+- name: install pki-ca package
+  tags:
+    - pkica
+  yum: name=pki-ca
+
+- name: Write config template
+  tags:
+    - pkica
+  template: src=../templates/pki.cfg dest=/tmp/{{pki_instance_name}}-pkica.cfg
+
+- name: create CA
+  tags:
+    - pkica
+  command: pkispawn -f /tmp/{{pki_instance_name}}-pkica.cfg -s CA
+  args:
+    creates: /etc/pki/{{pki_instance_name}}/ca/CS.cfg
