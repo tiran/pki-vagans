@@ -6,7 +6,11 @@ Vagrant.require_version ">= 1.6.0"
 ENV['VAGRANT_DEFAULT_PROVIDER'] = 'lxc'
 
 Vagrant.configure(2) do |config|
-  config.vm.box = "obnox/fedora22-64-lxc"
+  # config.vm.box = "obnox/fedora22-64-lxc"
+  # Special build of Fedora 22 for LXC with most Dogtag dependencies
+  # preinstalled.
+  # https://github.com/tiran/vagrant-lxc-base-boxes/tree/dogtag
+  config.vm.box = "cheimes/dogtag-fedora22-64-lxc"
  
   # doesn't work for me, why?
   #if Vagrant.has_plugin?("vagrant-cachier")
