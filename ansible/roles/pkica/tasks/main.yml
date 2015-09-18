@@ -2,7 +2,7 @@
 - name: install pki-ca package
   tags:
     - pkica
-  yum: name=pki-ca
+  yum: name=pki-ca,dogtag-pki-server-theme
 
 - name: Write config template
   tags:

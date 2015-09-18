@@ -15,8 +15,10 @@ $ sudo systemctl enable libvirtd
 $ sudo systemctl start libvirtd
 
 
-Download / tune Vagrant box
----------------------------
+Download / tune obnox's Vagrant box
+-----------------------------------
+
+NOTE: No longer needed
 
 $ vagrant box add obnox/fedora22-64-lxc
 
@@ -35,6 +37,7 @@ $ vagrant provision
 $ vagrant ssh
 $ vagrant destroy
 
+See selinux/README if lxc-start fails with a SELinux violation.
 
 Optional
 ========

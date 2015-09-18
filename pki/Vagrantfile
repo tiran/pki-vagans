@@ -12,10 +12,9 @@ Vagrant.configure(2) do |config|
   # https://github.com/tiran/vagrant-lxc-base-boxes/tree/dogtag
   config.vm.box = "cheimes/dogtag-fedora22-64-lxc"
  
-  # doesn't work for me, why?
+  # DNF is not yet supported, https://github.com/fgrehm/vagrant-cachier/pull/158
   #if Vagrant.has_plugin?("vagrant-cachier")
   #  config.cache.scope = :box
-  #  config.cache.enable :yum
   #end
 
   config.vm.provider :lxc do |lxc|
@@ -36,7 +35,7 @@ Vagrant.configure(2) do |config|
       ansible.groups = {
           "pki_server" => ["pki_server"],
       }
-      #ansible.verbose = 'v'
+      #ansible.verbose = 'vv'
       ansible.extra_vars = {
           hostname: 'dogtag.example.org',
           domain: 'example.org',
