@@ -15,3 +15,23 @@
   command: pkispawn -f /tmp/{{pki_instance_name}}-pkica.cfg -s CA
   args:
     creates: /etc/pki/{{pki_instance_name}}/ca/CS.cfg
+
+- name: check for tomcat memory limit
+  tags:
+    - pkica
+  shell: grep -P '^JAVA_OPTS=.*-Xmx.*' /etc/sysconfig/{{pki_instance_name}} || true
+  register: tomcat_memorylimit
+
+- name: limit tomcat memory
+  tags:
+    - pkica
+  lineinfile: dest=/etc/sysconfig/{{pki_instance_name}}
+              regexp='^JAVA_OPTS="(.*?)(-Xm.*)?"$'
+              line='JAVA_OPTS="\1 -Xmx256M -Xms256M"'
+              backrefs=yes
+              backup=yes
+  when: "'Xmx' not in tomcat_memorylimit.stdout"
+
+- name: restart tomcat
+  service: name=pki-tomcatd@{{pki_instance_name}} state=restarted
+  when: "'Xmx' not in tomcat_memorylimit.stdout"
