@@ -1,0 +1,14 @@
+SELinux workaround policy for lxc
+=================================
+
+Install the policy with:
+
+  semodule -i lxc-rootfs.pp
+
+NOTE:
+The policy is a quick workaround. It's not a proper solution. Please don't
+use it on a production system. I consider it marginally better than
+setenforce 0.
+
+type=AVC msg=audit(1442523531.083:5156): avc:  denied  { mounton } for  pid=13953 comm="lxc-start" path="/usr/lib64/lxc/rootfs/proc/1/net" dev="proc" ino=193884 scontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tcontext=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 tclass=dir permissive=0
+
