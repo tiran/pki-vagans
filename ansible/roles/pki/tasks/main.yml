@@ -1,0 +1,6 @@
+---
+- name: install pki-server packages and dependencies
+  tags:
+    - pki
+  yum: name=pki-server,dogtag-pki-server-theme,openssl
+

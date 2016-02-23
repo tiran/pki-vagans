@@ -1,11 +1,14 @@
 ---
+
 - name: install Dogtag PKI CA
   hosts: pki_server
   sudo: True
   sudo_user: root
+  # Fedora 23 doesn't come with Python 2. The bootstrap role installs
+  # Python 2 and gathers facts once Python 2 is available.
+  gather_facts: false
 
   roles:
-    - common
-    - 389ds
     - pkica
+    - pkikra
 

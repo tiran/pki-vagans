@@ -1,0 +1,1 @@
+rm -rf /etc/sysconfig/pki/tomcat/pki-tomcat-tests /etc/pki/pki-tomcat-tests /var/lib/pki/pki-tomcat-tests/ /var/log/pki/pki-tomcat-tests/

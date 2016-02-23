@@ -1,0 +1,21 @@
+---
+- name: install pki-kra package
+  tags:
+    - pkikra
+  yum: name=pki-kra
+
+- name: Write KRA config template
+  tags:
+    - pkikra
+  template: src=../../pki/templates/pki.cfg dest=/tmp/{{pki_instance_name}}-pkikra.cfg
+
+- name: create KRA
+  tags:
+    - pkikra
+  command: pkispawn -f /tmp/{{pki_instance_name}}-pkikra.cfg -s KRA
+  args:
+    creates: /etc/pki/{{pki_instance_name}}/kra/CS.cfg
+
+- include: ../../pki/tasks/limitmemory.yml
+- include: ../../pki/tasks/fetchadmincert.yml
+

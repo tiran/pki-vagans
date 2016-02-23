@@ -1,0 +1,28 @@
+---
+- name: check for tomcat memory limit
+  tags:
+    - pki
+  shell: grep -P '^JAVA_OPTS=.*-Xmx.*' /etc/sysconfig/{{pki_instance_name}} || true
+  register: tomcat_memorylimit
+
+- name: limit tomcat memory
+  tags:
+    - pki
+  lineinfile: dest=/etc/sysconfig/{{pki_instance_name}}
+              regexp='^JAVA_OPTS="(.*?)(-Xm.*)?"$'
+              line='JAVA_OPTS="\1 -Xmx256M -Xms256M"'
+              backrefs=yes
+              backup=yes
+  when: "'Xmx' not in tomcat_memorylimit.stdout"
+
+- name: restart tomcat
+  tags:
+    - pki
+  service: name=pki-tomcatd@{{pki_instance_name}} state=restarted
+  #when: "'Xmx' not in tomcat_memorylimit.stdout"
+
+- name: wait for tomcat
+  tags:
+    - pki
+  wait_for: port={{https_port}} delay=5 timeout=60
+

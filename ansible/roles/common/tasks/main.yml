@@ -35,6 +35,32 @@
     - common
   yum: name=libselinux-python,selinux-policy
 
+- name: Create directory for custom RPMS
+  tags:
+    - common
+    - rpm
+  file: path=/vagrant/rpms state=directory mode=0755
+
+- name: Synchronize RPMs
+  tags:
+    - common
+    - rpm
+  synchronize: src={{vagrant_root}}/rpms/ dest=/vagrant/rpms/ delete=true recursive=true copy_links=true
+
+- name: find custom RPMs
+  tags:
+    - common
+    - rpms
+  command: find -L /vagrant/rpms \( -type f -and -name '*.rpm' \) -printf '%p '
+  register: custom_rpms
+
+- name: install custom RPMs
+  tags:
+    - common
+    - rpms
+  command: dnf install --allowerasing --best -y {{ custom_rpms.stdout }}
+  when: custom_rpms.stdout
+
 - name: disable selinux for 389-DS installation
   # for LXC, 389-DS installation hangs with:
   # SELinux policy is not managed or store cannot be accessed
@@ -42,6 +68,7 @@
     - common
     - lxc
   selinux: state=disabled
+  when: disable_selinux
 
 - name: check for firewalld
   tags:
@@ -79,3 +106,4 @@
     - common
   sudo: yes
   hostname: name={{ hostname }}
+

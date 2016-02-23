@@ -1,0 +1,19 @@
+---
+- name: dump admin PKCS12 file to PEM file
+  tags:
+    - pki
+  command: openssl pkcs12 \
+           -in /root/.dogtag/{{pki_instance_name}}/ca_admin_cert.p12 \
+           -out /root/.dogtag/{{pki_instance_name}}/ca_admin_cert.pem \
+           -nodes -passin pass:{{password}}
+  args:
+    creates:
+      /root/.dogtag/{{pki_instance_name}}/ca_admin_cert.pem
+
+- name: fetch admin cert as /tmp/{{pki_instance_name}}_admin.pem
+  tags:
+    - pki
+  fetch: src=/root/.dogtag/{{pki_instance_name}}/ca_admin_cert.pem
+         dest=/tmp/{{pki_instance_name}}_admin.pem
+         flat=yes
+

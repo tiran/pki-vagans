@@ -1,0 +1,8 @@
+- name: Install python2 and deps for ansible modules
+  raw: dnf install -y python2 python2-dnf libselinux-python
+  args:
+    creates: /usr/bin/python2
+
+- name: Gather facts
+  setup:
+
