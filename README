@@ -1,8 +1,33 @@
+=====
+About
+=====
+
+Vagrant + Ansible for Dogtag PKI
+
+Authors:
+    Christian Heimes <cheimes@redhat.com>
+
+Parts of the playbook are based on Adam Young's rippowam
+https://github.com/admiyo/rippowam.
+
+=====
 Setup
 =====
 
+libvirt
+=======
+
+$ sudo dnf install ansible libvirt vagrant vagrant-libvirt
+$ sudo systemctl enable libvirtd
+$ sudo systemctl start libvirtd
+$ sudo usermod -G libvirt -a YOUR_USER
+$ newgrp libvirt
+
+LXC (outdated)
+==============
+
 $ sudo dnf install ansible libvirt vagrant vagrant-lxc lxc-templates lxc-extras
-$ sudo usermod -G vagrant -a USER
+$ sudo usermod -G vagrant -a YOUR_USER
 $ newgrp vagrant # or restart your session
 
 virtual network
@@ -15,45 +40,47 @@ $ sudo systemctl enable libvirtd
 $ sudo systemctl start libvirtd
 
 
-Download / tune obnox's Vagrant box
------------------------------------
-
-NOTE: No longer needed
-
-$ vagrant box add obnox/fedora22-64-lxc
-
-Apache httpd needs setfcap
-
-edit ~/.vagrant.d/boxes/obnox-VAGRANTSLASH-fedora22-64-lxc/1.0.0/lxc/lxc-config
-comment out 'lxc.cap.drop = setfcap'
-
-
+===========
 Use Vagrant
 ===========
 
+create VM
+---------
+
 $ cd pki
 $ vagrant up
+
+Provision the VM again
+----------------------
+
+For example to update RPMs
+
 $ vagrant provision
+
+Log into VM
+-----------
+
 $ vagrant ssh
+
+Destroy VM
+----------
+
 $ vagrant destroy
 
-See selinux/README if lxc-start fails with a SELinux violation.
+Install custom RPMs
+-------------------
 
-Optional
-========
+Copy or symlink files or directories with RPMs into pki/rpms. The Ansible
+playbook will pick up all RPMs (even in symlinked and nested directory
+structures) and install them.
 
-cachier
--------
+Python 3 dependencies
+---------------------
 
-Development headers for plugin:
-
-$ sudo dnf install ruby-devel ruby-libvirt libvirt-devel
-
-vagrant plugin install vagrant-cachier
-
+There is a shell script in pki/rpms that will download some dependencies.
 
 forceful cleanup
 ----------------
 
-rm -rf /var/lib/pki/ /var/log/pki/ /etc/sysconfig/pki-tomcat-tests /etc/sysconfig/pki/tomcat/pki-tomcat-tests/ /root/.dogtag/pki-tomcat-tests /etc/pki/pki-tomcat-tests/
+rm -rf /var/lib/pki/ /var/log/pki/ /etc/sysconfig/pki-tomcat/ /etc/sysconfig/pki/tomcat/pki-tomcat/ /root/.dogtag/pki-tomcat /etc/pki/pki-tomcat/
 
