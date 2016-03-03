@@ -6,12 +6,41 @@
 set -e
 
 VAGRANT_PKG="curl,rsync,yum-utils,which"
-ANSIBLE_PKG="python2,python2-dnf,libselinux-python"
-EXTRA_PKG="freeipa-client,freeipa-server,rng-tools"
+ANSIBLE_PKG="python2,python2-dnf,libselinux-python,python-firewall"
+COMMON_EXTRA_PGK="rng-tools,openssl"
 FEDORA=23
 
-echo "Building Vagrant box..."
+case $1 in
+  freeipa)
+    EXTRA_PKG="freeipa-client,freeipa-server,freeipa-server-dns,$COMMON_EXTRA_PGK"
+    NAME=freeipa
+    ;;
+  dogtag)
+    EXTRA_PKG="pki-ca,pki-kra,pki-server,dogtag-pki-server-theme,389-ds-base,$COMMON_EXTRA_PGK"
+    NAME=dogtag
+    ;;
+  *)
+    echo "$0 [dogtag|freeipa]"
+    exit 1
+    ;;
+esac
+
+BOXNAME=${NAME}-f${FEDORA}
+
+function trimbox {
+    echo "Cleaning up"
+    virt-sysprep \
+        --operations defaults,-ssh-userdir \
+        -a $1
+    echo "Trimming"
+    virt-sparsify --in-place $1
+}
+
+echo "Building Fedora ${FEDORA} X86_64 Vagrant box for ${NAME}"
+echo "Extra packages: $EXTRA_PKG"
 echo "This takes about 5 to 12 minutes"
+
+echo "Building Vagrant box with updates, Vagrant and Ansible dependencies"
 virt-builder \
     --format qcow2 \
     --run vagrantsetup \
@@ -20,23 +49,26 @@ virt-builder \
     --update \
     --install $VAGRANT_PKG \
     --install $ANSIBLE_PKG \
+    --selinux-relabel \
+    --no-logfile \
+    fedora-${FEDORA} -o box.img
+
+echo "Customize with extra packages"
+virt-customize \
+    --format qcow2 \
     --install $EXTRA_PKG \
     --selinux-relabel \
     --no-logfile \
-    fedora-${FEDORA} -o box.img $@
-
-echo "Cleaning up"
-virt-sysprep \
-    --operations defaults,-ssh-userdir \
     -a box.img
-echo "Trimming"
-virt-sparsify --in-place box.img
+
+trimbox box.img
 
 echo "Creating box archive"
-tar cvJf f${FEDORA}freeipa.box ./metadata.json ./Vagrantfile ./box.img
+rm -f ${BOXNAME}.box
+tar cvJf ${BOXNAME}.box ./metadata.json ./Vagrantfile ./box.img
 
 echo "Done. To use the new box, run:"
-echo "    vagrant box add f${FEDORA}freeipa f${FEDORA}freeipa.box"
+echo "    vagrant box add ${BOXNAME} ${BOXNAME}.box"
 echo
-echo "You may remove box.img and f${FEDORA}freeipa.box afterwards."
+echo "You may remove box.img and ${BOXNAME}.box afterwards."
 
