@@ -1,0 +1,41 @@
+#!/bin/sh
+# Create, update and customize Vagrant box
+#
+# Christian Heimes <cheimes@redhat.com>
+#
+set -e
+
+VAGRANT_PKG="curl,rsync,yum-utils,which"
+ANSIBLE_PKG="python2,python2-dnf,libselinux-python"
+EXTRA_PKG="freeipa-client,freeipa-server"
+FEDORA=23
+
+echo "Building Vagrant box..."
+echo "This takes about 5 to 12 minutes"
+virt-builder \
+    --format qcow2 \
+    --run vagrantsetup \
+    --root-password password:vagrant \
+    --password vagrant:password:vagrant \
+    --update \
+    --install $VAGRANT_PKG \
+    --install $ANSIBLE_PKG \
+    --install $EXTRA_PKG \
+    --selinux-relabel \
+    --no-logfile \
+    fedora-${FEDORA} -o box.img $@
+
+echo "Cleaning up"
+virt-sysprep \
+    --operations defaults,-ssh-userdir \
+    -a box.img
+virt-sparsify --in-place box.img
+
+echo "Creating box archive"
+tar cvJf f${FEDORA}freeipa.box ./metadata.json ./Vagrantfile ./box.img
+
+echo "Done. To use the new box, run:"
+echo "    vagrant box add f${FEDORA}freeipa f${FEDORA}freeipa.box"
+echo
+echo "You may remove box.img and f${FEDORA}freeipa.box afterwards."
+

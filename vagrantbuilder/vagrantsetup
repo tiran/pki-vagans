@@ -1,0 +1,55 @@
+#!/bin/sh
+# Modify a Fedora image for Vagrant
+#
+# Christian Heimes <cheimes@redhat.com>
+#
+set -e
+
+# Don't keep rescue kernel images
+cat > /etc/dracut.conf.d/norescue.conf << EOF
+dracut_rescue_image="no"
+EOF
+
+# harden sshd
+sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' \
+    /etc/ssh/sshd_config
+
+# network interface
+cat > /etc/sysconfig/network-scripts/ifcfg-eth0 << EOF
+DEVICE="eth0"
+BOOTPROTO="dhcp"
+ONBOOT="yes"
+TYPE="Ethernet"
+PERSISTENT_DHCLIENT="yes"
+EOF
+
+# Vagrant user and group
+getent group vagrant >/dev/null || groupadd --gid 1001 vagrant
+getent passwd vagrant >/dev/null || useradd \
+    --create-home \
+    --home-dir /home/vagrant \
+    --password '\$6\$Irp4RRc2RM9hETN0\$v.zFsy9PGLW1m3MKnUSHn3lQYJWcLls/TCo4XnFaE5U1IHO.eb.TrXx3NLBuHHZUwrzonh0.ZhqzU3tHPS5el1' \
+    --gid vagrant \
+    --uid 1001 \
+    --shell /bin/bash \
+    vagrant
+
+# ssh login for Vagrant user
+mkdir -p -m 0700 ~vagrant/.ssh
+cat > ~vagrant/.ssh/authorized_keys << EOF
+ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key
+EOF
+chmod 0600 ~vagrant/.ssh/authorized_keys
+chown -R vagrant:vagrant ~vagrant/
+restorecon -Rv ~vagrant/.ssh || true
+
+# sudoers for Vagrant user
+cat > /etc/sudoers.d/vagrant-nopasswd << EOF
+vagrant ALL=NOPASSWD: ALL
+Defaults:vagrant !requiretty
+EOF
+chmod 600 /etc/sudoers.d/vagrant-nopasswd
+restorecon -Rv /etc/sudoers.d || true
+
+exit 0
+
