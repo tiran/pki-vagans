@@ -4,6 +4,7 @@
     - ipaserver
     - packages
     - network
+    - firewall
   yum: name={{ item }} state=present
   with_items:
     - firewalld
@@ -66,6 +67,7 @@
 - name: enable firewalld
   tags:
     - ipaserver
+    - firewall
   service: enabled=yes
            state=started
            name=firewalld
@@ -73,6 +75,7 @@
 - name: Open Firewall for services
   tags:
     - ipaserver
+    - firewall
   firewalld: service={{ item }}
              permanent=true
              state=enabled
@@ -90,6 +93,7 @@
 - name: Open Firewall for ports
   tags:
     - ipaserver
+    - firewall
   firewalld: port={{ item }}
              permanent=true
              state=enabled
