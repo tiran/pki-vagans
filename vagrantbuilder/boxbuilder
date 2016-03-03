@@ -7,7 +7,7 @@ set -e
 
 VAGRANT_PKG="curl,rsync,yum-utils,which"
 ANSIBLE_PKG="python2,python2-dnf,libselinux-python"
-EXTRA_PKG="freeipa-client,freeipa-server"
+EXTRA_PKG="freeipa-client,freeipa-server,rng-tools"
 FEDORA=23
 
 echo "Building Vagrant box..."
@@ -29,6 +29,7 @@ echo "Cleaning up"
 virt-sysprep \
     --operations defaults,-ssh-userdir \
     -a box.img
+echo "Trimming"
 virt-sparsify --in-place box.img
 
 echo "Creating box archive"
