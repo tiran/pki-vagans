@@ -2,7 +2,10 @@
 - name: install pki-kra package
   tags:
     - pkikra
+    - packages
+    - network
   yum: name=pki-kra
+  when: network_access
 
 - name: Write KRA config template
   tags:

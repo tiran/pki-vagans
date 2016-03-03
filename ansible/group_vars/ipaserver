@@ -1,0 +1,6 @@
+---
+ipa_realm: IPA.EXAMPLE
+hostname: iserver.{{ipa_realm | lower }}
+ipa_dm_password: "{{ default_password }}"
+ipa_admin_password: "{{ default_password }}"
+

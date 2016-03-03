@@ -2,7 +2,10 @@
 - name: install 389-DS LDAP server
   tags:
     - 389ds
+    - packages
+    - network
   yum: name=389-ds-base
+  when: network_access
 
 - name: create 389-DS instance
   tags:
@@ -16,6 +19,6 @@
     slapd.ServerIdentifier='{{pki_instance_name}}' \
     slapd.Suffix='{{suffix}}' \
     slapd.RootDN='cn=Directory Manager' \
-    slapd.RootDNPwd='{{password}}'
+    slapd.RootDNPwd='{{ dm_password }}'
   args:
     creates: /etc/dirsrv/slapd-{{pki_instance_name}}

@@ -19,10 +19,10 @@
   tags:
     - pki
   service: name=pki-tomcatd@{{pki_instance_name}} state=restarted
-  #when: "'Xmx' not in tomcat_memorylimit.stdout"
+  when: "'Xmx' not in tomcat_memorylimit.stdout"
 
 - name: wait for tomcat
   tags:
     - pki
-  wait_for: port={{https_port}} delay=5 timeout=60
+  wait_for: port={{https_port}} delay=1 timeout=60
 

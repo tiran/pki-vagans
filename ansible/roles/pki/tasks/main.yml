@@ -2,5 +2,8 @@
 - name: install pki-server packages and dependencies
   tags:
     - pki
+    - packages
+    - network
   yum: name=pki-server,dogtag-pki-server-theme,openssl
+  when: network_access
 

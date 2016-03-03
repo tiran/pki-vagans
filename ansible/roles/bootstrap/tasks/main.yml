@@ -1,8 +1,19 @@
+---
+- name: Refresh dnf cache
+  tags:
+    - packages
+    - network
+  raw: which dnf 2>/dev/null && dnf makecache
+  when: network_access
+
 - name: Install python2 and deps for ansible modules
-  raw: dnf install -y python2 python2-dnf libselinux-python
+  tags:
+    - packages
+    - network
+  raw: which dnf 2>/dev/null && dnf install -y python2 python2-dnf libselinux-python
   args:
     creates: /usr/bin/python2
+  when: network_access
 
 - name: Gather facts
   setup:
-

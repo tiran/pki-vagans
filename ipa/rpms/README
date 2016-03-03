@@ -1,0 +1,5 @@
+Place your RPMs here
+
+Ansible will install all RPMS in this folder and any sub folder. You can
+even symlink files or directories into this folder.
+

@@ -5,7 +5,7 @@
   command: openssl pkcs12 \
            -in /root/.dogtag/{{pki_instance_name}}/ca_admin_cert.p12 \
            -out /root/.dogtag/{{pki_instance_name}}/ca_admin_cert.pem \
-           -nodes -passin pass:{{password}}
+           -nodes -passin pass:{{pkcs12_password}}
   args:
     creates:
       /root/.dogtag/{{pki_instance_name}}/ca_admin_cert.pem

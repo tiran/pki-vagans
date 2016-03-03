@@ -1,0 +1,18 @@
+---
+domain: example.org
+hostname: dogtag.{{domain}}
+suffix: dc=example,dc=org
+ldap_port: 389
+http_port: 8080
+https_port: 8443
+pki_instance_name: pki-tomcat
+security_domain: pki-tests
+dm_password: "{{ default_password }}"
+pkcs12_password: "{{ default_password }}"
+client_db_password: "{{ default_password }}"
+backup_password: "{{ default_password }}"
+security_domain_password: "{{ default_password }}"
+token_password: "{{ default_password }}"
+ca_password: "{{ default_password }}"
+kra_password: "{{ default_password }}"
+ocsp_password: "{{ default_password }}"

@@ -1,5 +1,27 @@
 ---
+- name: Disable repos to prevent network access
+  tags:
+    - common
+    - network
+  command: dnf config-manager --set-disabled {{ item }}
+  with_items:
+    - fedora
+    - updates
+  when: not network_access and ansible_distribution == "Fedora" and ansible_distribution_major_version >= "22"
+
+- name: Enable repos
+  tags:
+    - common
+    - network
+  command: dnf config-manager --set-enabled {{ item }}
+  with_items:
+    - fedora
+    - updates
+  when: network_access and ansible_distribution == "Fedora" and ansible_distribution_major_version >= "22"
+
 - name: Auto select fastest yum mirror
+  tags:
+    - common
   ini_file: dest=/etc/dnf/dnf.conf
             section=main
             option=fastestmirror
@@ -8,10 +30,16 @@
   when: ansible_distribution == "Fedora" and ansible_distribution_major_version >= "22"
 
 - name: Auto-select fastest yum mirror
+  tags:
+    - common
+    - packages
+    - network
   yum: name=yum-plugin-fastestmirror
-  when: ansible_distribution == "RedHat" or ansible_distribution == "CentOS"
+  when: network_access and (ansible_distribution == "RedHat" or ansible_distribution == "CentOS")
 
 - name: Keep DNF cache
+  tags:
+    - common
   ini_file: dest=/etc/dnf/dnf.conf
             section=main
             option=keepcache
@@ -20,20 +48,30 @@
   when: ansible_distribution == "Fedora" and ansible_distribution_major_version >= "22"
 
 - name: Enable yum for Fedora
+  tags:
+    - common
+    - packages
+    - network
   command: dnf install yum-utils -y
-  when: ansible_distribution == "Fedora" and ansible_distribution_major_version >= "22"
+  when: network_access and ansible_distribution == "Fedora" and ansible_distribution_major_version >= "22"
   args:
     creates: /usr/bin/yumdownloader
 
 - name: upgrade all packages
   tags:
     - common
+    - packages
+    - network
   yum: name=* state=latest
+  when: network_access and upgrade_packages
 
 - name: install selinux tools
   tags:
     - common
+    - packages
+    - network
   yum: name=libselinux-python,selinux-policy
+  when: network_access
 
 - name: Create directory for custom RPMS
   tags:
@@ -85,7 +123,10 @@
 - name: Install rng tools
   tags:
     - common
+    - packages
+    - network
   yum: name=rng-tools
+  when: network_access
 
 - name: Start the rngd service
   tags:

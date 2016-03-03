@@ -2,7 +2,10 @@
 - name: install pki-ca package
   tags:
     - pkica
+    - packages
+    - network
   yum: name=pki-ca
+  when: network_access
 
 - name: Write CA config template
   tags:

@@ -1,0 +1,115 @@
+---
+- name: install firewalld
+  tags:
+    - ipaserver
+    - packages
+    - network
+  yum: name={{ item }} state=present
+  with_items:
+    - firewalld
+    - python-firewall
+  when: network_access
+
+- name: install FreeIPA package
+  tags:
+    - ipaserver
+    - packages
+    - network
+  yum: name={{ item }} state=present
+  with_items:
+    - freeipa-server
+    - freeipa-server-dns
+  when: network_access
+
+- name: FreeIPA extra packages
+  tags:
+    - ipaserver
+    - packages
+    - network
+  yum: name={{ item }} state=present
+  with_items:
+    - bind-pkcs11
+    - bind-pkcs11-util
+    - freeipa-server-dns
+    - bind-dyndb-ldap
+  when: network_access and ansible_distribution == "RedHat"
+
+- name: Get default DNS
+  resolver:
+  register: dns_forwarder
+  changed_when: false
+
+- name: install ipa
+  tags:
+    - ipaserver
+  command: >
+    ipa-server-install -U
+    --realm {{ ipa_realm }}
+    --domain {{ ipa_realm | lower }}
+    --ds-password {{ ipa_dm_password }}
+    --admin-password {{ ipa_admin_password }}
+    --setup-dns
+    --ip-address {{ ansible_default_ipv4.address }}
+    --forwarder {{ dns_forwarder.nameservers[0] }}
+  args:
+    creates: /etc/ipa/ca.crt
+
+- name: install ipa kra
+  tags:
+    - ipaserver
+  command: >
+    ipa-kra-install -U
+    -p {{ ipa_dm_password }}
+  args:
+    creates: /etc/httpd/alias/kra-agent.pem
+
+- name: enable firewalld
+  tags:
+    - ipaserver
+  service: enabled=yes
+           state=started
+           name=firewalld
+
+- name: Open Firewall for services
+  tags:
+    - ipaserver
+  firewalld: service={{ item }}
+             permanent=true
+             state=enabled
+             immediate=yes
+  with_items:
+    - http
+    - https
+    - ldap
+    - ldaps
+    - dns
+    - kerberos
+    - kpasswd
+    - ntp
+
+- name: Open Firewall for ports
+  tags:
+    - ipaserver
+  firewalld: port={{ item }}
+             permanent=true
+             state=enabled
+             immediate=yes
+  with_items:
+    - 9180/tcp
+    - 9443-9446/tcp
+    - 9701/tcp
+    - 7389/tcp
+    - 8443/tcp
+
+- name: Fetch krb5config
+  fetch: src=/etc/krb5.conf
+         dest={{ vagrant_root }}/krb5.conf
+         flat=yes
+
+- name: Fetch cacert
+  fetch: src=/etc/ipa/ca.crt
+         dest={{ vagrant_root }}/ca.crt
+         flat=yes
+
+- name: Fetch kra agent pem file
+  fetch: src=/etc/httpd/alias/kra-agent.pem dest={{ vagrant_root }}/kra-agent.pem flat=yes
