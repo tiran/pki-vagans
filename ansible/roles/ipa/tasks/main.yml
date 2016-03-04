@@ -1,0 +1,9 @@
+---
+- name: install FreeIPA client package
+  tags:
+    - ipa
+    - packages
+    - network
+  yum: name=freeipa-client state=present
+  when: network_access
+

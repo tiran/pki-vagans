@@ -3,6 +3,8 @@
 
 Vagrant.require_version ">= 1.6.0"
 
+ENV['ANSIBLE_CONFIG'] = "../ansible/ansible.cfg"
+
 Vagrant.configure(2) do |config|
     config.vm.box = "cheimes/freeipa-f23"
     config.vm.provider :libvirt do |domain|
@@ -17,7 +19,7 @@ Vagrant.configure(2) do |config|
       ansible.groups = {
           "ipaserver" => ["ipaserver"],
       }
-      ansible.verbose = 'vv'
+      #ansible.verbose = 'vv'
       ansible.extra_vars = {
           forwarder: '192.168.122.1',
           #network_access: false,

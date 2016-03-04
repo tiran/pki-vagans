@@ -1,5 +1,5 @@
 ---
 dependencies:
   - common
-  - 389ds
+  - pki-389ds
 

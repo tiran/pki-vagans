@@ -1,22 +1,15 @@
 ---
-# Fedora 23 doesn't come with Python 2. The bootstrap role installs
-# Python 2 and gathers facts once Python 2 is available.
-
 - name: install Dogtag PKI CA
   hosts: pki_server
   sudo: True
-  sudo_user: root
-  gather_facts: false
 
   roles:
-    - pkica
-    - pkikra
+    - pki-ca
+    - pki-kra
 
 - name: install FreeIPA server
   hosts: ipaserver
   sudo: True
-  sudo_user: root
-  gather_facts: false
   
   roles:
-    - ipaserver
+    - ipaserver-master
