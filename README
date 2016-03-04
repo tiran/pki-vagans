@@ -21,24 +21,11 @@ $ sudo dnf install ansible libvirt vagrant vagrant-libvirt
 $ sudo systemctl enable libvirtd
 $ sudo systemctl start libvirtd
 $ sudo usermod -G libvirt -a YOUR_USER
+
+Either restart your session or use newgrp to join the new user group
+(current shell only).
+
 $ newgrp libvirt
-
-LXC (outdated)
-==============
-
-$ sudo dnf install ansible libvirt vagrant vagrant-lxc lxc-templates lxc-extras
-$ sudo usermod -G vagrant -a YOUR_USER
-$ newgrp vagrant # or restart your session
-
-virtual network
----------------
-
-edit /etc/lxc/default.conf
-change lxc.network.link = virbr0
-
-$ sudo systemctl enable libvirtd
-$ sudo systemctl start libvirtd
-
 
 ===========
 Use Vagrant
