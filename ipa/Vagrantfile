@@ -5,26 +5,46 @@ Vagrant.require_version ">= 1.6.0"
 
 ENV['ANSIBLE_CONFIG'] = "../ansible/ansible.cfg"
 
+DOMAIN="ipa.example"
+
 Vagrant.configure(2) do |config|
     config.vm.box = "cheimes/freeipa-f23"
+
     config.vm.provider :libvirt do |domain|
         domain.memory = 1024
     end
 
-  config.vm.define "ipaserver" do |server|
-  end
+    config.vm.define "ipamaster" do |host|
+        host.vm.hostname = "master.#{DOMAIN}"
+    end
 
-  config.vm.provision "ansible" do |ansible|
-      ansible.playbook = "../ansible/playbook.yml"
-      ansible.groups = {
-          "ipaserver" => ["ipaserver"],
-      }
-      #ansible.verbose = 'vv'
-      ansible.extra_vars = {
-          forwarder: '192.168.122.1',
-          #network_access: false,
-          vagrant_root: File.dirname(__FILE__)
-      }
-  end
+    config.vm.define "ipareplica1" do |host|
+        host.vm.hostname = "replica1.#{DOMAIN}"
+    end
+
+    #config.vm.define "ipareplica2" do |host|
+    #    host.vm.hostname = "replica2.#{DOMAIN}"
+    #end
+
+    config.vm.define "ipaclient" do |host|
+        host.vm.hostname = "client1.#{DOMAIN}"
+    end
+
+    config.vm.provision "ansible" do |ansible|
+        #ansible.limit = "all"
+        ansible.playbook = "../ansible/playbook.yml"
+        ansible.groups = {
+            "ipaserver_master" => ["ipamaster"],
+            "ipaserver_replica" => ["ipareplica1", "ipareplica2"],
+            "ipa_client" => ["ipaclient"],
+        }
+        # ansible.verbose = 'vv'
+        ansible.extra_vars = {
+            network_access: false,
+            upgrade_packages: false,
+            vagrant_root: File.dirname(__FILE__),
+        }
+    end
+
 end
 

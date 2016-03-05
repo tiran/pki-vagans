@@ -4,7 +4,7 @@
     - 389ds
     - packages
     - network
-  yum: name=389-ds-base
+  yum: name=389-ds-base state=present
   when: network_access
 
 - name: create 389-DS instance
@@ -12,7 +12,7 @@
     - 389ds
   command: setup-ds.pl \
     --silent \
-    General.FullMachineName='{{hostname}}' \
+    General.FullMachineName='{{ ansible_fqdn }}' \
     General.SuiteSpotUserID=nobody \
     General.SuiteSpotGroup=nobody \
     slapd.ServerPort={{ldap_port}} \

@@ -1,11 +1,12 @@
 ---
-- name: install FreeIPA master
+- name: install FreeIPA master (5-7 minutes)
   tags:
     - ipaserver-master
   command: >
     ipa-server-install -U
-    --realm {{ ipa_realm }}
-    --domain {{ ipa_realm | lower }}
+    --realm {{ ansible_domain | upper }}
+    --domain {{ ansible_domain | lower }}
+    --hostname {{ ansible_fqdn }}
     --ds-password {{ ipa_dm_password }}
     --admin-password {{ ipa_admin_password }}
     --setup-dns
@@ -14,14 +15,53 @@
   args:
     creates: /etc/ipa/ca.crt
 
-- name: install KRA on FreeIPA master
+- name: install KRA on FreeIPA master (2-3 minutes)
   tags:
     - ipaserver-master
   command: >
     ipa-kra-install -U
     -p {{ ipa_dm_password }}
   args:
-    creates: /etc/httpd/alias/kra-agent.pem
+    creates: /etc/pki/pki-tomcat/kra/CS.cfg
+
+- name: restarted named-pkcs11 DNS server
+  tags:
+    - ipaserver-master
+  service: name=named-pkcs11 state=restarted
+
+- name: wait for DNS server to come up
+  tags:
+    - ipaserver-master
+  wait_for: port=53 delay=1 timeout=30
+
+- name: wait for KDC to come up
+  tags:
+    - ipaserver-master
+  wait_for: port=88 delay=1 timeout=30
+
+- name: signal FreeIPA master has been deployed
+  tags:
+    - ipaserver-master
+  file: path=/etc/ipa/MASTER_DEPLOYED state=touch
+
+- name: change replicas' resolv.conf to use FreeIPA DNS
+  tags:
+    - ipaserver-master
+  template: src=etc_resolvconf dest=/etc/resolv.conf
+  delegate_to: "{{item}}"
+  with_items: "{{ groups['ipaserver_replica'] }}"
+
+- name: change clients' resolv.conf to use FreeIPA DNS
+  tags:
+    - ipaserver-master
+  template: src=etc_resolvconf dest=/etc/resolv.conf
+  delegate_to: "{{item}}"
+  with_items: "{{ groups['ipa_client'] }}"
+
+- name: change master's resolv.conf to use FreeIPA DNS
+  tags:
+    - ipaserver-master
+  template: src=etc_resolvconf dest=/etc/resolv.conf
 
 - name: Fetch krb5config
   tags:

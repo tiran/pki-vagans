@@ -1,4 +1,20 @@
 ---
+- name: fix /etc/hosts
+  tags:
+    - common
+  template: src=etc_hosts dest=/etc/hosts
+
+- name: Set FQDN hostname
+  tags:
+    - common
+  sudo: yes
+  hostname: name={{ ansible_fqdn }}
+
+- name: Set timezone to UTC
+  tags:
+    - common
+  command: timedatectl set-timezone UTC
+
 - name: Disable repos to prevent network access
   tags:
     - common
@@ -34,7 +50,7 @@
     - common
     - packages
     - network
-  yum: name=yum-plugin-fastestmirror
+  yum: name=yum-plugin-fastestmirror state=present
   when: network_access and (ansible_distribution == "RedHat" or ansible_distribution == "CentOS")
 
 - name: Keep DNF cache
@@ -70,7 +86,10 @@
     - common
     - packages
     - network
-  yum: name=libselinux-python,selinux-policy
+  yum: name={{ item }} state=present
+  with_items:
+   - libselinux-python
+   - selinux-policy
   when: network_access
 
 - name: Create directory for custom RPMS
@@ -108,13 +127,25 @@
   selinux: state=disabled
   when: disable_selinux
 
+- name: install firewalld
+  tags:
+    - pki
+    - firewall
+    - packages
+    - network
+  yum: name={{ item }} state=present
+  with_items:
+    - firewalld
+    - python-firewall
+  when: network_access
+
 - name: check for firewalld
   tags:
     - common
   stat: path=/usr/sbin/firewalld
   register: has_firewalld
 
-- name: disable firewalld
+- name: Enable and start firewalld
   tags:
     - common
   service: name=firewalld enabled=yes state=started
@@ -125,7 +156,7 @@
     - common
     - packages
     - network
-  yum: name=rng-tools
+  yum: name=rng-tools state=present
   when: network_access
 
 - name: Start the rngd service
@@ -136,15 +167,8 @@
 - name: tty-less sudo
   tags:
     - common
-  sudo: yes
   lineinfile: dest=/etc/sudoers
               state=absent
               regexp='^Defaults(\s+)requiretty(\s*)$'
               validate='visudo -cf %s'
-
-- name: Set server hostname
-  tags:
-    - common
-  sudo: yes
-  hostname: name={{ hostname }}
 

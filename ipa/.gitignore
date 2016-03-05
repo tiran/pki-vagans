@@ -1,0 +1,5 @@
+ca.crt
+kra-agent.pem
+krb5.conf
+replica-info*.gpg
+

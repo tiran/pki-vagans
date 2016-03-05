@@ -1,0 +1,15 @@
+---
+- include: ../../ipa/tasks/waitformaster.yml
+
+- name: join FreeIPA
+  tags:
+    - ipaserver-client
+  command: >
+    ipa-client-install -U
+    --realm {{ ansible_domain | upper }}
+    --domain {{ ansible_domain | lower }}
+    --principal admin
+    --password {{ ipa_admin_password }}
+    --request-cert
+  args:
+    creates: /etc/ipa/ca.crt

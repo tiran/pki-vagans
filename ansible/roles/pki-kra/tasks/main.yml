@@ -4,7 +4,7 @@
     - pkikra
     - packages
     - network
-  yum: name=pki-kra
+  yum: name=pki-kra state=present
   when: network_access
 
 - name: Write KRA config template

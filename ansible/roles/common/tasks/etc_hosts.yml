@@ -1,2 +1,0 @@
-- name: fix /etc/hosts
-  template: src=etc_hosts dest=/etc/hosts

@@ -13,39 +13,26 @@
     - freeipa-server-dns
   when: network_access
 
+# we modify the file later but need the original DNS forwarder
+- name: make a copy of original resolv.conf
+  command: cp /etc/resolv.conf /etc/resolv.conf.orig
+  args:
+    creates: /etc/resolv.conf.orig
+
 - name: Get default DNS
-  resolver:
+  resolver: resolvconf=/etc/resolv.conf.orig
   register: dns_forwarder
   changed_when: false
-
-- name: install firewalld
-  tags:
-    - ipaserver
-    - packages
-    - network
-    - firewall
-  yum: name={{ item }} state=present
-  with_items:
-    - firewalld
-    - python-firewall
-  when: network_access
-
-- name: enable firewalld
-  tags:
-    - ipaserver
-    - firewall
-  service: enabled=yes
-           state=started
-           name=firewalld
 
 - name: Open Firewall for services
   tags:
     - ipaserver
     - firewall
-  firewalld: service={{ item }}
-             permanent=true
-             state=enabled
-             immediate=yes
+  firewalld: 
+    service={{ item }}
+    permanent=true
+    state=enabled
+    immediate=yes
   with_items:
     - http
     - https
@@ -55,19 +42,22 @@
     - kerberos
     - kpasswd
     - ntp
+  when: has_firewalld.stat.exists
 
 - name: Open Firewall for ports
   tags:
     - ipaserver
     - firewall
-  firewalld: port={{ item }}
-             permanent=true
-             state=enabled
-             immediate=yes
+  firewalld:
+    port={{ item }}
+    permanent=true
+    state=enabled
+    immediate=yes
   with_items:
     - 9180/tcp
     - 9443-9446/tcp
     - 9701/tcp
     - 7389/tcp
     - 8443/tcp
+  when: has_firewalld.stat.exists
 

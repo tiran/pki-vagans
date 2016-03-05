@@ -4,7 +4,7 @@
     - pkica
     - packages
     - network
-  yum: name=pki-ca
+  yum: name=pki-ca state=present
   when: network_access
 
 - name: Write CA config template

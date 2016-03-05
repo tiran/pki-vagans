@@ -1,6 +1,4 @@
 ---
-domain: example.org
-hostname: dogtag.{{domain}}
 suffix: dc=example,dc=org
 ldap_port: 389
 http_port: 8080

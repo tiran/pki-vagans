@@ -4,50 +4,39 @@
     - pki
     - packages
     - network
-  yum: name=pki-server,dogtag-pki-server-theme,openssl
-  when: network_access
-
-- name: install firewalld
-  tags:
-    - pki
-    - firewall
-    - packages
-    - network
   yum: name={{ item }} state=present
   with_items:
-    - firewalld
-    - python-firewall
+    - pki-server
+    - dogtag-pki-server-theme
+    - openssl
   when: network_access
-
-- name: enable firewalld
-  tags:
-    - pki
-    - firewall
-  service: enabled=yes
-           state=started
-           name=firewalld
 
 - name: Open Firewall for services
   tags:
     - pki
     - firewall
-  firewalld: service={{ item }}
-             permanent=true
-             state=enabled
-             immediate=yes
+  firewalld: 
+    service={{ item }}
+    permanent=true
+    state=enabled
+    immediate=yes
   with_items:
     - ssh
     - ldap
     - ldaps
+  when: has_firewalld.stat.exists
 
 - name: Open Firewall for ports
   tags:
     - pki
     - firewall
-  firewalld: port={{ item }}
-             permanent=true
-             state=enabled
-             immediate=yes
+  firewalld:
+    port={{ item }}
+    permanent=true
+    state=enabled
+    immediate=yes
   with_items:
     - 8080/tcp
     - 8443/tcp
+  when: has_firewalld.stat.exists
+
