@@ -97,6 +97,7 @@
     - common
     - rpm
   file: path=/vagrant/rpms state=directory mode=0755
+  changed_when: false
 
 - name: Synchronize RPMs
   tags:
@@ -110,6 +111,7 @@
     - rpms
   command: find -L /vagrant/rpms \( -type f -and -name '*.rpm' \) -printf '%p '
   register: custom_rpms
+  changed_when: false
 
 - name: install custom RPMs
   tags:

@@ -5,6 +5,13 @@ Vagrant.require_version ">= 1.6.0"
 
 ENV['ANSIBLE_CONFIG'] = "../ansible/ansible.cfg"
 
+# Workaround for ssh problem with ED25519 curve
+# SSH not up: #<Vagrant::Errors::NetSSHException: An error occurred in the underlying SSH library that Vagrant uses.
+# curve name mismatched
+if ENV.has_key?('SSH_AUTH_SOCK')
+    ENV.delete('SSH_AUTH_SOCK')
+end
+
 DOMAIN="ipa.example"
 
 Vagrant.configure(2) do |config|
@@ -12,6 +19,19 @@ Vagrant.configure(2) do |config|
 
     config.vm.provider :libvirt do |domain|
         domain.memory = 1024
+    end
+
+    #if Vagrant.has_plugin?("vagrant-triggers")
+    #    config.trigger.after :destroy do
+    #        run "rm -rf .vagrant"
+    #        run "rm -f ca.crt kra-agent.pem krb5.conf replica-info*.gpg"
+    #    end
+    #end
+
+    if Vagrant.has_plugin?("vagrant-hostmanager")
+        config.hostmanager.enabled = true
+        config.hostmanager.manage_host = true
+        config.hostmanager.manage_guest = false
     end
 
     config.vm.define "ipamaster" do |host|
@@ -28,6 +48,9 @@ Vagrant.configure(2) do |config|
 
     config.vm.define "ipaclient" do |host|
         host.vm.hostname = "client1.#{DOMAIN}"
+        host.vm.provider :libvirt do |domain|
+            domain.memory = 512
+        end
     end
 
     config.vm.provision "ansible" do |ansible|

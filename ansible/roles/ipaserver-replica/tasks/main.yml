@@ -43,6 +43,6 @@
     --forwarder {{ dns_forwarder.nameservers[0] }}
     /var/lib/ipa/replica-info-{{ ansible_fqdn }}.gpg
   args:
-    creates: /etc/ipa/ca.crt
+    creates: /etc/ipa/default.conf
 #    --setup-ca
 #    --setup-kra

@@ -17,7 +17,7 @@ Setup
 libvirt
 =======
 
-$ sudo dnf install ansible libvirt vagrant vagrant-libvirt
+$ sudo dnf install ansible libvirt vagrant vagrant-libvirt vagrant-hostmanager
 $ sudo systemctl enable libvirtd
 $ sudo systemctl start libvirtd
 $ sudo usermod -G libvirt -a YOUR_USER

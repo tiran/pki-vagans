@@ -13,7 +13,7 @@
     --ip-address {{ ansible_default_ipv4.address }}
     --forwarder {{ dns_forwarder.nameservers[0] }}
   args:
-    creates: /etc/ipa/ca.crt
+    creates: /etc/ipa/default.conf
 
 - name: install KRA on FreeIPA master (2-3 minutes)
   tags:
@@ -29,15 +29,24 @@
     - ipaserver-master
   service: name=named-pkcs11 state=restarted
 
-- name: wait for DNS server to come up
+- name: wait for services to come up
   tags:
     - ipaserver-master
-  wait_for: port=53 delay=1 timeout=30
+  wait_for: port={{ item }} delay=0 timeout=30
+  with_items:
+    - 53
+    - 88
+    - 389
+    - 80
+    - 443
 
-- name: wait for KDC to come up
+- name: sync client clocks
   tags:
     - ipaserver-master
-  wait_for: port=88 delay=1 timeout=30
+  command: ntpdate {{ ansible_default_ipv4.address }}
+  ignore_errors: yes
+  delegate_to: "{{item}}"
+  with_items: "{{ groups['ipa_client'] }}"
 
 - name: signal FreeIPA master has been deployed
   tags:

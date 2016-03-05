@@ -1,6 +1,13 @@
 ---
 - include: ../../ipa/tasks/waitformaster.yml
 
+# hack, Ansible is too fast.
+- name: Magic wait to make ipa-client-install work
+  tags:
+    - ipaserver-client
+  wait_for: path=/etc/ipa/default.conf delay=1 timeout=10 state=present
+  ignore_errors: yes
+
 - name: join FreeIPA
   tags:
     - ipaserver-client
@@ -11,5 +18,6 @@
     --principal admin
     --password {{ ipa_admin_password }}
     --request-cert
+    --force-join
   args:
-    creates: /etc/ipa/ca.crt
+    creates: /etc/ipa/default.conf
