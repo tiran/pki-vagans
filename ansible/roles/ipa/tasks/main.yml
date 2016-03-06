@@ -6,4 +6,3 @@
     - network
   yum: name=freeipa-client state=present
   when: network_access
-

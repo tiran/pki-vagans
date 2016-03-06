@@ -4,6 +4,7 @@
 - name: Prepare replication
   tags:
     - ipaserver-replica
+    - install
   command: >
     ipa-replica-prepare
     --password={{ ipa_dm_password }}
@@ -17,9 +18,11 @@
 - name: Fetch replication file
   tags:
     - ipaserver-replica
+    - install
+    - fetch
   fetch:
     src=/var/lib/ipa/replica-info-{{ ansible_fqdn }}.gpg
-    dest={{ vagrant_root }}/replica-info-{{ ansible_fqdn }}.gpg
+    dest={{ vagrant_root }}/inventory/replica-info-{{ ansible_fqdn }}.gpg
     flat=yes
   delegate_to: "{{item}}"
   with_items: "{{ groups['ipaserver_master'] }}"
@@ -27,13 +30,15 @@
 - name: Copy replication file
   tags:
     - ipaserver-replica
+    - install
   synchronize:
-    src={{ vagrant_root }}/replica-info-{{ ansible_fqdn }}.gpg
+    src={{ vagrant_root }}/inventory/replica-info-{{ ansible_fqdn }}.gpg
     dest=/var/lib/ipa/replica-info-{{ ansible_fqdn }}.gpg
 
 - name: install replica
   tags:
     - ipaserver-replica
+    - install
   command: >
     ipa-replica-install -U
     --password {{ ipa_dm_password }}

@@ -2,6 +2,7 @@
 - name: install FreeIPA master (5-7 minutes)
   tags:
     - ipaserver-master
+    - install
   command: >
     ipa-server-install -U
     --realm {{ ansible_domain | upper }}
@@ -18,20 +19,23 @@
 - name: install KRA on FreeIPA master (2-3 minutes)
   tags:
     - ipaserver-master
+    - install
   command: >
     ipa-kra-install -U
     -p {{ ipa_dm_password }}
   args:
     creates: /etc/pki/pki-tomcat/kra/CS.cfg
 
-- name: restarted named-pkcs11 DNS server
+- name: Make sure named-pkcs11 DNS is running
   tags:
     - ipaserver-master
-  service: name=named-pkcs11 state=restarted
+    - install
+  service: name=named-pkcs11 state=started
 
 - name: wait for services to come up
   tags:
     - ipaserver-master
+    - install
   wait_for: port={{ item }} delay=0 timeout=30
   with_items:
     - 53
@@ -43,19 +47,24 @@
 - name: sync client clocks
   tags:
     - ipaserver-master
+    - install
   command: ntpdate {{ ansible_default_ipv4.address }}
-  ignore_errors: yes
   delegate_to: "{{item}}"
   with_items: "{{ groups['ipa_client'] }}"
+  register: result
+  failed_when: "result.rc !=0 and 'NTP socket is in use' not in result.stderr"
+  changed_when: result.rc == 0
 
 - name: signal FreeIPA master has been deployed
   tags:
     - ipaserver-master
+    - install
   file: path=/etc/ipa/MASTER_DEPLOYED state=touch
 
 - name: change replicas' resolv.conf to use FreeIPA DNS
   tags:
     - ipaserver-master
+    - install
   template: src=etc_resolvconf dest=/etc/resolv.conf
   delegate_to: "{{item}}"
   with_items: "{{ groups['ipaserver_replica'] }}"
@@ -63,6 +72,7 @@
 - name: change clients' resolv.conf to use FreeIPA DNS
   tags:
     - ipaserver-master
+    - install
   template: src=etc_resolvconf dest=/etc/resolv.conf
   delegate_to: "{{item}}"
   with_items: "{{ groups['ipa_client'] }}"
@@ -70,27 +80,45 @@
 - name: change master's resolv.conf to use FreeIPA DNS
   tags:
     - ipaserver-master
+    - install
   template: src=etc_resolvconf dest=/etc/resolv.conf
+
+- name: Create Firefox prefs
+  tags:
+    - ipaserver-master
+    - install
+  template: src=firefox_prefs dest=/etc/ipa/prefs.js
+
+- name: Fetch Firefox prefs
+  tags:
+    - ipaserver-master
+    - install
+    - fetch
+  fetch: src=/etc/ipa/prefs.js
+         dest={{ vagrant_root }}/inventory/prefs.js
+         flat=yes
 
 - name: Fetch krb5config
   tags:
     - ipaserver-master
+    - install
     - fetch
   fetch: src=/etc/krb5.conf
-         dest={{ vagrant_root }}/krb5.conf
+         dest={{ vagrant_root }}/inventory/krb5.conf
          flat=yes
 
 - name: Fetch cacert
   tags:
     - ipaserver-master
+    - install
     - fetch
   fetch: src=/etc/ipa/ca.crt
-         dest={{ vagrant_root }}/ca.crt
+         dest={{ vagrant_root }}/inventory/ca.crt
          flat=yes
 
 - name: Fetch kra agent pem file
   tags:
     - ipaserver-master
+    - install
     - fetch
-  fetch: src=/etc/httpd/alias/kra-agent.pem dest={{ vagrant_root }}/kra-agent.pem flat=yes
-
+  fetch: src=/etc/httpd/alias/kra-agent.pem dest={{ vagrant_root }}/inventory/kra-agent.pem flat=yes

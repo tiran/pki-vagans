@@ -1,0 +1,15 @@
+user_pref("browser.startup.homepage", "https://{{ ansible_fqdn }}");
+
+pref("browser.rights.3.shown", true);
+pref("browser.startup.homepage_override.mstone","ignore");
+pref("datareporting.healthreport.service.enabled", false);
+pref("datareporting.policy.dataSubmissionEnabled", false);
+
+/* Kerberos SSO configuration */
+pref("network.negotiate-auth.trusted-uris", ".{{ ansible_domain | upper }}");
+
+/* These are the defaults */
+pref("network.negotiate-auth.gsslib", "");
+pref("network.negotiate-auth.using-native-gsslib", true);
+pref("network.negotiate-auth.allow-proxies", true);
+

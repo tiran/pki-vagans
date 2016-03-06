@@ -1,4 +1,6 @@
 ---
+# - debug: var=hostvars[inventory_hostname] verbosity=4
+
 - name: fix /etc/hosts
   tags:
     - common
@@ -10,10 +12,18 @@
   sudo: yes
   hostname: name={{ ansible_fqdn }}
 
+- name: Get timedatectl information
+  tags:
+    - common
+  command: timedatectl
+  register: timedatectl
+  changed_when: false
+
 - name: Set timezone to UTC
   tags:
     - common
   command: timedatectl set-timezone UTC
+  when: "'UTC' not in timedatectl.stdout"
 
 - name: Disable repos to prevent network access
   tags:
@@ -24,6 +34,7 @@
     - fedora
     - updates
   when: not network_access and ansible_distribution == "Fedora" and ansible_distribution_major_version >= "22"
+  changed_when: false
 
 - name: Enable repos
   tags:
@@ -34,6 +45,7 @@
     - fedora
     - updates
   when: network_access and ansible_distribution == "Fedora" and ansible_distribution_major_version >= "22"
+  changed_when: false
 
 - name: Auto select fastest yum mirror
   tags:
@@ -173,4 +185,3 @@
               state=absent
               regexp='^Defaults(\s+)requiretty(\s*)$'
               validate='visudo -cf %s'
-

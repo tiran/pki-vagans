@@ -15,10 +15,10 @@
 - name: create CA
   tags:
     - pkica
+    - install
   command: pkispawn -f /tmp/{{pki_instance_name}}-pkica.cfg -s CA
   args:
     creates: /etc/pki/{{pki_instance_name}}/ca/CS.cfg
 
 - include: ../../pki/tasks/limitmemory.yml
 - include: ../../pki/tasks/fetchadmincert.yml
-

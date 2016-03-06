@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+
+INVENTORY="$(pwd)/inventory"
+export KRB5_CONFIG="${INVENTORY}/krb5.conf"
+export KRB5CCNAME="FILE:${INVENTORY}/krb5cc"
+
+kinit $@
+klist

@@ -1,16 +1,25 @@
 ---
 - include: ../../ipa/tasks/waitformaster.yml
 
+- name: Check for /etc/ipa/default.conf
+  tags:
+    - ipa-client
+    - install
+  stat: path=/etc/ipa/default.conf
+  register: ipa_default_conf
+
 # hack, Ansible is too fast.
 - name: Magic wait to make ipa-client-install work
   tags:
-    - ipaserver-client
-  wait_for: path=/etc/ipa/default.conf delay=1 timeout=10 state=present
-  ignore_errors: yes
+    - ipa-client
+    - install
+  command: sleep 10
+  when: not ipa_default_conf.stat.exists
 
 - name: join FreeIPA
   tags:
-    - ipaserver-client
+    - ipa-client
+    - install
   command: >
     ipa-client-install -U
     --realm {{ ansible_domain | upper }}

@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+
+INVENTORY="$(pwd)/inventory"
+PROFILE="${INVENTORY}/firefoxprofile"
+
+export KRB5_CONFIG="${INVENTORY}/krb5.conf"
+export KRB5CCNAME="FILE:${INVENTORY}/krb5cc"
+
+rm -rf "${PROFILE}"
+mkdir "${PROFILE}"
+cp "${INVENTORY}/prefs.js" "${PROFILE}/prefs.js"
+certutil -N -d "${PROFILE}" --empty-password
+certutil -A -d "${PROFILE}" -n 'IPA CA' -i "${INVENTORY}/ca.crt" -t "TC,C,T"
+firefox -no-remote -profile "${PROFILE}"

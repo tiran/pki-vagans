@@ -39,4 +39,3 @@
     - 8080/tcp
     - 8443/tcp
   when: has_firewalld.stat.exists
-
