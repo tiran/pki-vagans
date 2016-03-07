@@ -23,7 +23,7 @@
   tags:
     - common
   command: timedatectl set-timezone UTC
-  when: "'UTC' not in timedatectl.stdout"
+  when: "'Time zone: UTC' not in timedatectl.stdout"
 
 - name: Disable repos to prevent network access
   tags:

@@ -2,7 +2,7 @@
 About
 =====
 
-Vagrant + Ansible for Dogtag PKI
+Vagrant + Ansible for FreeIPA and Dogtag PKI
 
 Authors:
     Christian Heimes <cheimes@redhat.com>
@@ -10,12 +10,14 @@ Authors:
 Parts of the playbook are based on Adam Young's rippowam
 https://github.com/admiyo/rippowam.
 
-=====
-Setup
-=====
+============
+Requirements
+============
 
-libvirt
-=======
+The FreeIPA setup needs about 2.5 GB of free RAM and 6 GB disk space.
+
+Install dependencies
+====================
 
 $ sudo dnf install ansible libvirt vagrant vagrant-libvirt vagrant-hostmanager
 $ sudo systemctl enable libvirtd
@@ -26,6 +28,12 @@ Either restart your session or use newgrp to join the new user group
 (current shell only).
 
 $ newgrp libvirt
+
+passwords
+=========
+
+The default password for the users root and vagrant, FreeIPA's admin user,
+389-DS, PKI CA and PKI KRA is **Secret123**.
 
 ===========
 Use Vagrant
@@ -47,7 +55,7 @@ $ vagrant provision
 Log into VM
 -----------
 
-$ vagrant ssh
+$ vagrant ssh <machine>
 
 Destroy VM
 ----------
@@ -60,6 +68,40 @@ Install custom RPMs
 Copy or symlink files or directories with RPMs into pki/rpms. The Ansible
 playbook will pick up all RPMs (even in symlinked and nested directory
 structures) and install them.
+
+
+FreeIPA
+=======
+
+$ cd ipa
+$ vagrant up
+
+Sometimes the initial 'vagrant up' fails to configure the client or replica. A
+second provisioning run with 'vagrant provision' fixes the issues.
+
+The FreeIPA playbook deploys three machines:
+
+  * ipamaster (master.ipa.example)
+  * ipareplica1 (replica1.ipa.example)
+  * ipaclient (client.ipa.example)
+
+
+When the machines are up, you can acquire a Kerberos ticket and start a local
+instance of Firefox to explore the WebUI. The admin password is 'Secret123'.
+
+$ ./do_kinit admin
+$ ./start_firefox
+
+Dogtag PKI
+==========
+
+$ cd pki
+$ vagrant up
+
+The playbook for Dogtag PKI deploys 389-DS, a CA and a KRA in one VM.
+
+ * pki_server (dogtag.pki.example)
+
 
 Python 3 dependencies
 ---------------------

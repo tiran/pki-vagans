@@ -5,18 +5,36 @@ Vagrant.require_version ">= 1.6.0"
 
 ENV['ANSIBLE_CONFIG'] = "../ansible/ansible.cfg"
 
+# Workaround for ssh problem with ED25519 curve
+# SSH not up: #<Vagrant::Errors::NetSSHException: An error occurred in the underlying SSH library that Vagrant uses.
+# curve name mismatched
+if ENV.has_key?('SSH_AUTH_SOCK')
+    ENV.delete('SSH_AUTH_SOCK')
+end
+
+DOMAIN="pki.example"
+
 Vagrant.configure(2) do |config|
     config.vm.box = "cheimes/dogtag-f23"
+
     config.vm.provider :libvirt do |domain|
         domain.memory = 1024
     end
 
+    # no rsync, Ansible playbook syncs required files manually
+    config.vm.synced_folder ".", "/vagrant", disabled: true
+
+    if Vagrant.has_plugin?("vagrant-hostmanager")
+        config.hostmanager.enabled = true
+        config.hostmanager.manage_host = true
+        config.hostmanager.manage_guest = false
+    end
+
     config.vm.define "pki_server" do |server|
-        server.vm.hostname = "dogtag.example.org"
+        server.vm.hostname = "dogtag.#{DOMAIN}"
     end
 
     config.vm.provision "ansible" do |ansible|
-        ansible.limit = "all"
         ansible.playbook = "../ansible/playbook.yml"
         ansible.groups = {
             "pki_server" => ["pki_server"],

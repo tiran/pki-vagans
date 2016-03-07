@@ -40,18 +40,26 @@ echo "Building Fedora ${FEDORA} X86_64 Vagrant box for ${NAME}"
 echo "Extra packages: $EXTRA_PKG"
 echo "This takes about 5 to 12 minutes"
 
-echo "Building Vagrant box with updates, Vagrant and Ansible dependencies"
-virt-builder \
-    --format qcow2 \
-    --run vagrantsetup \
-    --root-password password:vagrant \
-    --password vagrant:password:vagrant \
-    --update \
-    --install $VAGRANT_PKG \
-    --install $ANSIBLE_PKG \
-    --selinux-relabel \
-    --no-logfile \
-    fedora-${FEDORA} -o box.img
+if [ ! -f basebase-${FEDORA}.img ]; then
+    echo "Building Vagrant box with updates, Vagrant and Ansible dependencies"
+    virt-builder \
+        --format qcow2 \
+        --run vagrantsetup \
+        --root-password password:vagrant \
+        --password vagrant:password:vagrant \
+        --update \
+        --install $VAGRANT_PKG \
+        --install $ANSIBLE_PKG \
+        --selinux-relabel \
+        --no-logfile \
+        fedora-${FEDORA} -o basebox.img
+    trim basebox.img
+fi
+
+cp basebox-${FEDORA}.img box.img
+
+#echo "Add COPR"
+#virt-customize --format qcow2 --run freeipa_copr -a box.img
 
 echo "Customize with extra packages"
 virt-customize \
@@ -71,4 +79,3 @@ echo "Done. To use the new box, run:"
 echo "    vagrant box add ${BOXNAME} ${BOXNAME}.box"
 echo
 echo "You may remove box.img and ${BOXNAME}.box afterwards."
-
