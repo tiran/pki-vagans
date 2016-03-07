@@ -15,8 +15,8 @@ end
 DOMAIN="ipa.example"
 
 Vagrant.configure(2) do |config|
-    #config.vm.box = "cheimes/freeipa-f23"
-    config.vm.box = "cheimes/freeipa43-f23"
+    config.vm.box = "cheimes/freeipa-f23"
+    #config.vm.box = "cheimes/freeipa43-f23"
 
     config.vm.provider :libvirt do |domain|
         domain.memory = 1024
@@ -24,13 +24,6 @@ Vagrant.configure(2) do |config|
 
     # no rsync, Ansible playbook syncs required files manually
     config.vm.synced_folder ".", "/vagrant", disabled: true
-
-    #if Vagrant.has_plugin?("vagrant-triggers")
-    #    config.trigger.after :destroy do
-    #        run "rm -rf .vagrant"
-    #        run "rm -f ca.crt kra-agent.pem krb5.conf replica-info*.gpg"
-    #    end
-    #end
 
     if Vagrant.has_plugin?("vagrant-hostmanager")
         config.hostmanager.enabled = true
