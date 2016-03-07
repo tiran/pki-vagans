@@ -85,6 +85,22 @@
   args:
     creates: /usr/bin/yumdownloader
 
+- name: Add GPG for FreeIPA 4.3 COPR
+  tags:
+    - common
+    - packages
+    - network
+  rpm_key: key=https://copr-be.cloud.fedoraproject.org/results/@freeipa/freeipa-4-3/pubkey.gpg state=present
+  when: network_access and enable_copr
+
+- name: Enable FreeIPA 4.3 COPR
+  tags:
+    - common
+    - packages
+    - network
+  command: dnf copr enable -y @freeipa/freeipa-4-3
+  when: network_access and enable_copr
+
 - name: upgrade all packages
   tags:
     - common

@@ -20,8 +20,19 @@
     creates: /etc/resolv.conf.orig
 
 - name: Get default DNS
+  tags:
+    - ipaserver
+    - install
   resolver: resolvconf=/etc/resolv.conf.orig
   register: dns_forwarder
+  changed_when: false
+
+- name: Get reverse zone
+  tags:
+    - ipaserver
+    - install
+  reversezone: ipaddress={{ ansible_default_ipv4.address }}
+  register: reversezone
   changed_when: false
 
 - name: Open Firewall for services

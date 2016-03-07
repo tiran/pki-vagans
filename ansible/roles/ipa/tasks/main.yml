@@ -6,3 +6,12 @@
     - network
   yum: name=freeipa-client state=present
   when: network_access
+
+- name: get IPA version
+  tags:
+    - ipa
+    - packages
+    - network
+  command: ipa --version
+  register: ipaversion
+  changed_when: false

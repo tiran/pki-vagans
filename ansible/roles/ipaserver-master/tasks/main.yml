@@ -11,6 +11,7 @@
     --ds-password {{ ipa_dm_password }}
     --admin-password {{ ipa_admin_password }}
     --setup-dns
+    --reverse-zone {{ reversezone.reversezone }}
     --ip-address {{ ansible_default_ipv4.address }}
     --forwarder {{ dns_forwarder.nameservers[0] }}
   args:
@@ -44,6 +45,28 @@
     - 80
     - 443
 
+- name: Enable DNS sync ptr
+  tags:
+    - ipaserver-master
+    - install
+    - dns
+  ipa:
+    args="dnszone-mod {{ ansible_domain }}. --allow-sync-ptr=TRUE"
+    password="{{ ipa_admin_password }}"
+  register: result
+  ignore_errors: true
+  failed_when: "result.rc != 0 and 'no modifications' not in result.stderr"
+
+- name: Enable reverse DNS sync ptr
+  tags:
+    - ipaserver-master
+    - install
+  ipa:
+    args="dnszone-mod {{ reversezone.reversezone }} --allow-sync-ptr=TRUE"
+    password="{{ ipa_admin_password }}"
+  register: result
+  failed_when: "result.rc != 0 and 'no modifications' not in result.stderr"
+
 - name: sync client clocks
   tags:
     - ipaserver-master
@@ -54,12 +77,6 @@
   register: result
   failed_when: "result.rc !=0 and 'NTP socket is in use' not in result.stderr"
   changed_when: result.rc == 0
-
-- name: signal FreeIPA master has been deployed
-  tags:
-    - ipaserver-master
-    - install
-  file: path=/etc/ipa/MASTER_DEPLOYED state=touch
 
 - name: change replicas' resolv.conf to use FreeIPA DNS
   tags:
@@ -82,6 +99,12 @@
     - ipaserver-master
     - install
   template: src=etc_resolvconf dest=/etc/resolv.conf
+
+- name: signal FreeIPA master has been deployed
+  tags:
+    - ipaserver-master
+    - install
+  file: path=/etc/ipa/MASTER_DEPLOYED state=touch
 
 - name: Create Firefox prefs
   tags:

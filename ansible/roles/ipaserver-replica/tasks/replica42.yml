@@ -1,0 +1,53 @@
+---
+- include: ../../ipa/tasks/waitformaster.yml
+
+- name: Prepare replication
+  tags:
+    - ipaserver-replica
+    - install
+  command: >
+    ipa-replica-prepare
+    --password={{ ipa_dm_password }}
+    --ip-address={{ ansible_default_ipv4.address }}
+    {{ ansible_fqdn }}
+  args:
+    creates: /var/lib/ipa/replica-info-{{ ansible_fqdn }}.gpg
+  delegate_to: "{{item}}"
+  with_items: "{{ groups['ipaserver_master'] }}"
+
+- name: Fetch replication file
+  tags:
+    - ipaserver-replica
+    - install
+    - fetch
+  fetch:
+    src=/var/lib/ipa/replica-info-{{ ansible_fqdn }}.gpg
+    dest={{ vagrant_root }}/inventory/replica-info-{{ ansible_fqdn }}.gpg
+    flat=yes
+  delegate_to: "{{item}}"
+  with_items: "{{ groups['ipaserver_master'] }}"
+
+- name: Copy replication file
+  tags:
+    - ipaserver-replica
+    - install
+  synchronize:
+    src={{ vagrant_root }}/inventory/replica-info-{{ ansible_fqdn }}.gpg
+    dest=/var/lib/ipa/replica-info-{{ ansible_fqdn }}.gpg
+
+- name: install replica
+  tags:
+    - ipaserver-replica
+    - install
+  command: >
+    ipa-replica-install -U
+    --password {{ ipa_dm_password }}
+    --admin-password {{ ipa_admin_password }}
+    --setup-dns
+    --ip-address {{ ansible_default_ipv4.address }}
+    --forwarder {{ dns_forwarder.nameservers[0] }}
+    /var/lib/ipa/replica-info-{{ ansible_fqdn }}.gpg
+  args:
+    creates: /etc/ipa/default.conf
+#    --setup-ca
+#    --setup-kra

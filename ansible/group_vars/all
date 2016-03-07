@@ -3,7 +3,9 @@
 network_access: true
 # upgrade all packages?
 upgrade_packages: true
-
+# Enable FreeIPA 4.3 COPR
+enable_copr: false
+# password for admin, PKI and DS
 default_password: Secret123
 
 ipa_dm_password: "{{ default_password }}"

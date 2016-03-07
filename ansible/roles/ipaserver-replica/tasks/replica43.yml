@@ -1,0 +1,18 @@
+---
+# configure as client first, then promote to replica
+- include: ../../ipa/tasks/ipaclient.yml
+
+- name: install replica
+  tags:
+    - ipaserver-replica
+    - install
+  command: >
+    ipa-replica-install -U
+    --password {{ ipa_dm_password }}
+    --admin-password {{ ipa_admin_password }}
+    --setup-dns
+    --ip-address {{ ansible_default_ipv4.address }}
+    --forwarder {{ dns_forwarder.nameservers[0] }}
+  args:
+    creates:
+      /etc/ipa/REPLICA_INSTALLED

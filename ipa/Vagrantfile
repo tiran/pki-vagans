@@ -21,6 +21,9 @@ Vagrant.configure(2) do |config|
         domain.memory = 1024
     end
 
+    # no rsync, Ansible playbook syncs required files manually
+    config.vm.synced_folder ".", "/vagrant", disabled: true
+
     #if Vagrant.has_plugin?("vagrant-triggers")
     #    config.trigger.after :destroy do
     #        run "rm -rf .vagrant"
@@ -60,11 +63,12 @@ Vagrant.configure(2) do |config|
             "ipaserver_replica" => ["ipareplica1", "ipareplica2"],
             "ipa_client" => ["ipaclient"],
         }
-        # ansible.verbose = 'vv'
+        ansible.verbose = 'vv'
         # ansible.skip_tags = ['install']
         ansible.extra_vars = {
             network_access: false,
             upgrade_packages: false,
+            # enable_copr: true,
             vagrant_root: File.dirname(__FILE__),
         }
     end
