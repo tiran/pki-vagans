@@ -2,10 +2,9 @@
 - name: install pki-kra package
   tags:
     - pkikra
-    - packages
+    - package-install
     - network
   yum: name=pki-kra state=present
-  when: network_access
 
 - name: Write KRA config template
   tags:
@@ -15,7 +14,7 @@
 - name: create KRA
   tags:
     - pkikra
-    - install
+    - ipa-install
   command: pkispawn -f /tmp/{{pki_instance_name}}-pkikra.cfg -s KRA
   args:
     creates: /etc/pki/{{pki_instance_name}}/kra/CS.cfg

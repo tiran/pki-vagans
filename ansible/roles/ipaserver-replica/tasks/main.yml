@@ -10,6 +10,6 @@
 - name: flag replication installation
   tags:
     - ipaserver-replica
-    - install
+    - ipa-install
   file: path=/etc/ipa/REPLICA_INSTALLED state=touch
   changed_when: false

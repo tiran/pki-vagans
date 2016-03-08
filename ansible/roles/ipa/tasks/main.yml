@@ -1,17 +1,23 @@
 ---
-- name: install FreeIPA client package
+- name: install FreeIPA client package (Fedora)
   tags:
     - ipa
-    - packages
+    - package-install
     - network
   yum: name=freeipa-client state=present
-  when: network_access
+  when: ansible_distribution == "Fedora"
+
+- name: install FreeIPA client package (RHEL / CentOS)
+  tags:
+    - ipa
+    - package-install
+    - network
+  yum: name=ipa-client state=present
+  when: ansible_distribution == "RedHat" or ansible_distribution == "CentOS"
 
 - name: get IPA version
   tags:
     - ipa
-    - packages
-    - network
   command: ipa --version
   register: ipaversion
   changed_when: false

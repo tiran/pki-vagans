@@ -1,8 +1,8 @@
 ---
-- name: install FreeIPA package
+- name: install FreeIPA server package (Fedora)
   tags:
     - ipaserver
-    - packages
+    - package-install
     - network
   yum: name={{ item }} state=present
   with_items:
@@ -11,7 +11,21 @@
     - bind-dyndb-ldap
     - freeipa-server
     - freeipa-server-dns
-  when: network_access
+  when: ansible_distribution == "Fedora"
+
+- name: install FreeIPA server package (RHEL / CentOS)
+  tags:
+    - ipaserver
+    - package-install
+    - network
+  yum: name={{ item }} state=present
+  with_items:
+    - bind-pkcs11
+    - bind-pkcs11-utils
+    - bind-dyndb-ldap
+    - ipa-server
+    - ipa-server-dns
+  when: ansible_distribution == "RedHat" or ansible_distribution == "CentOS"
 
 # we modify the file later but need the original DNS forwarder
 - name: make a copy of original resolv.conf
@@ -22,7 +36,6 @@
 - name: Get default DNS
   tags:
     - ipaserver
-    - install
   resolver: resolvconf=/etc/resolv.conf.orig
   register: dns_forwarder
   changed_when: false
@@ -30,7 +43,7 @@
 - name: Get reverse zone
   tags:
     - ipaserver
-    - install
+    - ipa-install
   reversezone: ipaddress={{ ansible_default_ipv4.address }}
   register: reversezone
   changed_when: false
@@ -71,4 +84,3 @@
     - 7389/tcp
     - 8443/tcp
   when: has_firewalld.stat.exists
-

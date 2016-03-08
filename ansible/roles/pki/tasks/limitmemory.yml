@@ -2,14 +2,14 @@
 - name: check for tomcat memory limit
   tags:
     - pki
-    - install
+    - pki-install
   shell: grep -P '^JAVA_OPTS=.*-Xmx.*' /etc/sysconfig/{{pki_instance_name}} || true
   register: tomcat_memorylimit
 
 - name: limit tomcat memory
   tags:
     - pki
-    - install
+    - ipa-install
   lineinfile: dest=/etc/sysconfig/{{pki_instance_name}}
               regexp='^JAVA_OPTS="(.*?)(-Xm.*)?"$'
               line='JAVA_OPTS="\1 -Xmx256M -Xms256M"'
@@ -20,12 +20,12 @@
 - name: restart tomcat
   tags:
     - pki
-    - install
+    - pki-install
   service: name=pki-tomcatd@{{pki_instance_name}} state=restarted
   when: "'Xmx' not in tomcat_memorylimit.stdout"
 
 - name: wait for tomcat
   tags:
     - pki
-    - install
+    - pki-install
   wait_for: port={{https_port}} delay=1 timeout=60

@@ -2,7 +2,7 @@
 - name: install pki-ca package
   tags:
     - pkica
-    - packages
+    - package-install
     - network
   yum: name=pki-ca state=present
   when: network_access
@@ -15,7 +15,7 @@
 - name: create CA
   tags:
     - pkica
-    - install
+    - ipa-install
   command: pkispawn -f /tmp/{{pki_instance_name}}-pkica.cfg -s CA
   args:
     creates: /etc/pki/{{pki_instance_name}}/ca/CS.cfg

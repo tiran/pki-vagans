@@ -2,10 +2,9 @@
 - name: install 389-DS LDAP server
   tags:
     - 389ds
-    - packages
+    - package-install
     - network
   yum: name=389-ds-base state=present
-  when: network_access
 
 - name: create 389-DS instance
   tags:

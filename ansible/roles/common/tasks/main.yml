@@ -25,118 +25,88 @@
   command: timedatectl set-timezone UTC
   when: "'Time zone: UTC' not in timedatectl.stdout"
 
-- name: Disable repos to prevent network access
+- name: DNF or YUM?
   tags:
     - common
-    - network
-  command: dnf config-manager --set-disabled {{ item }}
-  with_items:
-    - fedora
-    - updates
-  when: not network_access and ansible_distribution == "Fedora" and ansible_distribution_major_version >= "22"
+  set_fact: dnf_package="{{ ansible_distribution == 'Fedora' and ansible_distribution_major_version >= '22' }}"
   changed_when: false
 
-- name: Enable repos
+- name: Default to enable_packages=false
   tags:
     - common
-    - network
-  command: dnf config-manager --set-enabled {{ item }}
-  with_items:
-    - fedora
-    - updates
-  when: network_access and ansible_distribution == "Fedora" and ansible_distribution_major_version >= "22"
+  set_fact: enable_packages=false
   changed_when: false
 
-- name: Auto select fastest yum mirror
+- name: Override enable_packages=true
   tags:
     - common
-  ini_file: dest=/etc/dnf/dnf.conf
-            section=main
-            option=fastestmirror
-            value=1
-            backup=yes
-  when: ansible_distribution == "Fedora" and ansible_distribution_major_version >= "22"
+    - package-install
+  set_fact: enable_packages=true
 
-- name: Auto-select fastest yum mirror
-  tags:
-    - common
-    - packages
-    - network
-  yum: name=yum-plugin-fastestmirror state=present
-  when: network_access and (ansible_distribution == "RedHat" or ansible_distribution == "CentOS")
+- include: dnf.yml
+  when: dnf_package
 
-- name: Keep DNF cache
-  tags:
-    - common
-  ini_file: dest=/etc/dnf/dnf.conf
-            section=main
-            option=keepcache
-            value=1
-            backup=yes
-  when: ansible_distribution == "Fedora" and ansible_distribution_major_version >= "22"
-
-- name: Enable yum for Fedora
-  tags:
-    - common
-    - packages
-    - network
-  command: dnf install yum-utils -y
-  when: network_access and ansible_distribution == "Fedora" and ansible_distribution_major_version >= "22"
-  args:
-    creates: /usr/bin/yumdownloader
+- include: yum.yml
+  when: not dnf_package
 
 - name: Add GPG for FreeIPA 4.3 COPR
   tags:
     - common
-    - packages
+    - package-install
+    - package-copr
     - network
   rpm_key: key=https://copr-be.cloud.fedoraproject.org/results/@freeipa/freeipa-4-3/pubkey.gpg state=present
-  when: network_access and enable_copr
 
 - name: Enable FreeIPA 4.3 COPR
   tags:
     - common
-    - packages
+    - package-install
+    - package-copr
     - network
   command: dnf copr enable -y @freeipa/freeipa-4-3
-  when: network_access and enable_copr
 
 - name: upgrade all packages
   tags:
     - common
-    - packages
+    - package-install
+    - package-upgrade
     - network
   yum: name=* state=latest
-  when: network_access and upgrade_packages
 
 - name: install selinux tools
   tags:
     - common
-    - packages
+    - package-install
     - network
   yum: name={{ item }} state=present
   with_items:
    - libselinux-python
    - selinux-policy
-  when: network_access
 
 - name: Create directory for custom RPMS
   tags:
     - common
-    - rpm
+    - custom-rpms
   file: path=/vagrant/rpms state=directory mode=0755
   changed_when: false
 
 - name: Synchronize RPMs
   tags:
     - common
-    - rpm
-  synchronize: src={{vagrant_root}}/rpms/ dest=/vagrant/rpms/ delete=true recursive=true copy_links=true
+    - custom-rpms
+  synchronize:
+    src={{vagrant_root}}/rpms/
+    dest=/vagrant/rpms/
+    delete=true
+    recursive=true
+    copy_links=true
+    rsync_opts="--exclude=README"
+  changed_when: false
 
 - name: find custom RPMs
   tags:
     - common
-    - rpms
+    - custom-rpms
   command: find -L /vagrant/rpms \( -type f -and -name '*.rpm' \) -printf '%p '
   register: custom_rpms
   changed_when: false
@@ -144,7 +114,7 @@
 - name: install custom RPMs
   tags:
     - common
-    - rpms
+    - custom-rpms
   command: dnf install --allowerasing --best -y {{ custom_rpms.stdout }}
   when: custom_rpms.stdout
 
@@ -161,33 +131,33 @@
   tags:
     - pki
     - firewall
-    - packages
+    - package-install
     - network
   yum: name={{ item }} state=present
   with_items:
     - firewalld
     - python-firewall
-  when: network_access
 
 - name: check for firewalld
   tags:
     - common
+    - firewall
   stat: path=/usr/sbin/firewalld
   register: has_firewalld
 
 - name: Enable and start firewalld
   tags:
     - common
+    - firewall
   service: name=firewalld enabled=yes state=started
   when: has_firewalld.stat.exists
 
 - name: Install rng tools
   tags:
     - common
-    - packages
+    - package-install
     - network
   yum: name=rng-tools state=present
-  when: network_access
 
 - name: Start the rngd service
   tags:

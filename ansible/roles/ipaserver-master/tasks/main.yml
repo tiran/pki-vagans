@@ -2,7 +2,7 @@
 - name: install FreeIPA master (5-7 minutes)
   tags:
     - ipaserver-master
-    - install
+    - ipa-install
   command: >
     ipa-server-install -U
     --realm {{ ansible_domain | upper }}
@@ -20,7 +20,7 @@
 - name: install KRA on FreeIPA master (2-3 minutes)
   tags:
     - ipaserver-master
-    - install
+    - ipa-install
   command: >
     ipa-kra-install -U
     -p {{ ipa_dm_password }}
@@ -30,13 +30,13 @@
 - name: Make sure named-pkcs11 DNS is running
   tags:
     - ipaserver-master
-    - install
+    - ipa-install
   service: name=named-pkcs11 state=started
 
 - name: wait for services to come up
   tags:
     - ipaserver-master
-    - install
+    - ipa-install
   wait_for: port={{ item }} delay=0 timeout=30
   with_items:
     - 53
@@ -48,8 +48,7 @@
 - name: Enable DNS sync ptr
   tags:
     - ipaserver-master
-    - install
-    - dns
+    - ipa-install
   ipa:
     args="dnszone-mod {{ ansible_domain }}. --allow-sync-ptr=TRUE"
     password="{{ ipa_admin_password }}"
@@ -60,7 +59,7 @@
 - name: Enable reverse DNS sync ptr
   tags:
     - ipaserver-master
-    - install
+    - ipa-install
   ipa:
     args="dnszone-mod {{ reversezone.reversezone }} --allow-sync-ptr=TRUE"
     password="{{ ipa_admin_password }}"
@@ -70,7 +69,7 @@
 - name: sync client clocks
   tags:
     - ipaserver-master
-    - install
+    - ipa-install
   command: ntpdate {{ ansible_default_ipv4.address }}
   delegate_to: "{{item}}"
   with_items: "{{ groups['ipa_client'] }}"
@@ -81,7 +80,7 @@
 - name: change replicas' resolv.conf to use FreeIPA DNS
   tags:
     - ipaserver-master
-    - install
+    - ipa-install
   template: src=etc_resolvconf dest=/etc/resolv.conf
   delegate_to: "{{item}}"
   with_items: "{{ groups['ipaserver_replica'] }}"
@@ -89,7 +88,7 @@
 - name: change clients' resolv.conf to use FreeIPA DNS
   tags:
     - ipaserver-master
-    - install
+    - ipa-install
   template: src=etc_resolvconf dest=/etc/resolv.conf
   delegate_to: "{{item}}"
   with_items: "{{ groups['ipa_client'] }}"
@@ -97,25 +96,25 @@
 - name: change master's resolv.conf to use FreeIPA DNS
   tags:
     - ipaserver-master
-    - install
+    - ipa-install
   template: src=etc_resolvconf dest=/etc/resolv.conf
 
 - name: signal FreeIPA master has been deployed
   tags:
     - ipaserver-master
-    - install
+    - ipa-install
   file: path=/etc/ipa/MASTER_DEPLOYED state=touch
 
 - name: Create Firefox prefs
   tags:
     - ipaserver-master
-    - install
+    - ipa-install
   template: src=firefox_prefs dest=/etc/ipa/prefs.js
 
 - name: Fetch Firefox prefs
   tags:
     - ipaserver-master
-    - install
+    - ipa-install
     - fetch
   fetch: src=/etc/ipa/prefs.js
          dest={{ vagrant_root }}/inventory/prefs.js
@@ -124,7 +123,7 @@
 - name: Fetch krb5config
   tags:
     - ipaserver-master
-    - install
+    - ipa-install
     - fetch
   fetch: src=/etc/krb5.conf
          dest={{ vagrant_root }}/inventory/krb5.conf
@@ -133,7 +132,7 @@
 - name: Fetch cacert
   tags:
     - ipaserver-master
-    - install
+    - ipa-install
     - fetch
   fetch: src=/etc/ipa/ca.crt
          dest={{ vagrant_root }}/inventory/ca.crt
@@ -142,6 +141,6 @@
 - name: Fetch kra agent pem file
   tags:
     - ipaserver-master
-    - install
+    - ipa-install
     - fetch
   fetch: src=/etc/httpd/alias/kra-agent.pem dest={{ vagrant_root }}/inventory/kra-agent.pem flat=yes

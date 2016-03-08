@@ -1,23 +1,17 @@
 ---
-- name: Check for /etc/ipa/default.conf
-  tags:
-    - ipa-client
-    - install
-  stat: path=/etc/ipa/default.conf
-  register: ipa_default_conf
-
 # hack, Ansible is too fast.
 - name: Magic wait to make ipa-client-install work
   tags:
     - ipa-client
-    - install
-  command: sleep 15
-  when: not ipa_default_conf.stat.exists
+    - ipa-install
+  command: sleep 10
+  args:
+    creates: /etc/ipa/default.conf
 
 - name: join FreeIPA
   tags:
     - ipa-client
-    - install
+    - ipa-install
   command: >
     ipa-client-install -U
     --realm {{ ansible_domain | upper }}

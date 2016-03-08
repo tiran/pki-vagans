@@ -2,14 +2,13 @@
 - name: install pki-server packages and dependencies
   tags:
     - pki
-    - packages
+    - package-install
     - network
   yum: name={{ item }} state=present
   with_items:
     - pki-server
     - dogtag-pki-server-theme
     - openssl
-  when: network_access
 
 - name: Open Firewall for services
   tags:
