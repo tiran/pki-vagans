@@ -42,10 +42,6 @@ Vagrant.configure(2) do |config|
         end
     end
 
-    #config.vm.define "ipareplica2" do |host|
-    #    host.vm.hostname = "replica2.#{DOMAIN}"
-    #end
-
     config.vm.define "ipaclient" do |host|
         host.vm.hostname = "client1.#{DOMAIN}"
         host.vm.provider :libvirt do |domain|
@@ -67,8 +63,8 @@ Vagrant.configure(2) do |config|
         # ipa-install: skip installation (ipa-server-install, ipa-client-install)
         ansible.skip_tags = [
             'package-install',
-            #'package-upgrade',
-            #'package-copr',
+            'package-upgrade',
+            'package-copr',
             #'ipa-install',
         ]
         ansible.extra_vars = {
