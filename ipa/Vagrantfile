@@ -17,6 +17,7 @@ DOMAIN="ipa.example"
 Vagrant.configure(2) do |config|
     config.vm.box = "cheimes/freeipa-f23"
     #config.vm.box = "cheimes/freeipa43-f23"
+    #config.vm.box = "cheimes/freeipa-centos72"
 
     # no rsync, Ansible playbook syncs required files manually
     config.vm.synced_folder ".", "/vagrant", disabled: true

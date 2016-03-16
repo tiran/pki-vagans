@@ -69,6 +69,12 @@ Copy or symlink files or directories with RPMs into pki/rpms. The Ansible
 playbook will pick up all RPMs (even in symlinked and nested directory
 structures) and install them.
 
+When something fails
+--------------------
+
+$ sudo systemctl restart libvirtd.service
+$ vagrant provision
+
 
 FreeIPA
 =======

@@ -9,8 +9,6 @@ VAGRANT_PKG="curl,rsync,yum-utils,which"
 ANSIBLE_PKG="python2,python2-dnf,libselinux-python,python-firewall,gnupg"
 ADDITIONAL_PGK="rng-tools,openssl"
 DOGTAG_PKG="pki-ca,pki-kra,pki-ocsp,pki-server,dogtag-pki-server-theme,389-ds-base"
-FREEIPA_PKG="freeipa-client,freeipa-server,freeipa-server-dns"
-FEDORA=23
 
 case $1 in
   freeipa)
@@ -22,12 +20,32 @@ case $1 in
     NAME=dogtag
     ;;
   *)
-    echo "$0 [dogtag|freeipa]"
+    echo "$0 [dogtag|freeipa] [centos|fedora]"
     exit 1
     ;;
 esac
 
-BOXNAME=${NAME}-f${FEDORA}
+case $2 in
+  centos)
+    OS_VERSION="centos-7.2"
+    SUFFIX="centos72"
+    PKGUPGRADE="yum -y upgrade"
+    FREEIPA_PKG="ipa-client,ipa-server,ipa-server-dns"
+    ;;
+  fedora)
+    OS_VERSION="fedora-23"
+    SUFFIX="f23"
+    PKGUPGRADE="dnf -y --best upgrade"
+    FREEIPA_PKG="freeipa-client,freeipa-server,freeipa-server-dns"
+    ;;
+  *)
+    echo "$0 [dogtag|freeipa] [centos|fedora]"
+    exit 1
+    ;;
+esac
+
+
+BOXNAME=${NAME}-${SUFFIX}
 
 function trimbox {
     echo "Cleaning up"
@@ -38,11 +56,11 @@ function trimbox {
     virt-sparsify --in-place $1
 }
 
-echo "Building Fedora ${FEDORA} X86_64 Vagrant box for ${NAME}"
+echo "Building ${OS_VERSION} X86_64 Vagrant box for ${NAME}"
 echo "Extra packages: $EXTRA_PKG"
 echo "This takes about 5 to 12 minutes"
 
-if [ ! -f basebox-${FEDORA}.img ]; then
+if [ ! -f basebox-${OS_VERSION}.img ]; then
     echo "Create Vagrant basebox"
     # I'm using 'dnf upgrade' instead of update to work around an issue with /dev/log
     virt-builder \
@@ -50,14 +68,14 @@ if [ ! -f basebox-${FEDORA}.img ]; then
         --run vagrantsetup \
         --root-password password:vagrant \
         --password vagrant:password:vagrant \
-        --run-command 'dnf -y --best upgrade || true' \
+        --run-command "${PKGUPGRADE} || true" \
         --update \
         --install $VAGRANT_PKG,$ANSIBLE_PKG,$ADDITIONAL_PGK \
-        fedora-${FEDORA} -o basebox-${FEDORA}.img
-    trimbox basebox-${FEDORA}.img
+        ${OS_VERSION} -o basebox-${OS_VERSION}.img
+    trimbox basebox-${OS_VERSION}.img
 fi
 
-cp basebox-${FEDORA}.img box.img
+cp basebox-${OS_VERSION}.img box.img
 
 #echo "Add COPR"
 #virt-customize --format qcow2 --run freeipa_copr -a box.img
@@ -65,7 +83,7 @@ cp basebox-${FEDORA}.img box.img
 echo "Customize with extra packages and update"
 virt-customize \
     --format qcow2 \
-    --run-command 'dnf -y --best upgrade || true' \
+    --run-command "${PKGUPGRADE} || true" \
     --update \
     --install $VAGRANT_PKG,$ANSIBLE_PKG,$ADDITIONAL_PGK \
     --install $EXTRA_PKG \
@@ -75,11 +93,11 @@ virt-customize \
 trimbox box.img
 
 echo "Creating box archive"
-rm -rf ${BOXNAME}
-mkdir ${BOXNAME}
+rm -f ${BOXNAME}.box
 tar cv ./metadata.json ./Vagrantfile ./box.img | xz -4 -T0 > ${BOXNAME}.box
 
 echo "Done. To use the new box, run:"
 echo "    vagrant box add ${BOXNAME} ${BOXNAME}.box"
 echo
 echo "You may remove box.img and ${BOXNAME}.box afterwards."
+
