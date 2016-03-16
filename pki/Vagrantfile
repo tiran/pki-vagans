@@ -46,10 +46,11 @@ Vagrant.configure(2) do |config|
         # package-copr: don't install and use COPR with latest FreeIPA
         # pki-install: skip installation (setup-ds, pkispawn)
         ansible.skip_tags = [
-            'package-install',
+            #'package-install',
             #'package-upgrade',
-            #'package-copr',
+            'package-copr',
             #'pki-install',
+            'dummy',
         ]
         ansible.extra_vars = {
             vagrant_root: File.dirname(__FILE__)

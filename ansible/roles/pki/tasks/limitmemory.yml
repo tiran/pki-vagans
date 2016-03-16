@@ -28,4 +28,4 @@
   tags:
     - pki
     - pki-install
-  wait_for: port={{https_port}} delay=1 timeout=60
+  wait_for: port={{https_port}} delay=0 timeout=60

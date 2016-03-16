@@ -6,17 +6,19 @@
 set -e
 
 VAGRANT_PKG="curl,rsync,yum-utils,which"
-ANSIBLE_PKG="python2,python2-dnf,libselinux-python,python-firewall"
-COMMON_EXTRA_PGK="rng-tools,openssl"
+ANSIBLE_PKG="python2,python2-dnf,libselinux-python,python-firewall,gnupg"
+ADDITIONAL_PGK="rng-tools,openssl"
+DOGTAG_PKG="pki-ca,pki-kra,pki-ocsp,pki-server,dogtag-pki-server-theme,389-ds-base"
+FREEIPA_PKG="freeipa-client,freeipa-server,freeipa-server-dns"
 FEDORA=23
 
 case $1 in
   freeipa)
-    EXTRA_PKG="freeipa-client,freeipa-server,freeipa-server-dns,$COMMON_EXTRA_PGK"
+    EXTRA_PKG=$DOGTAG_PKG,$FREEIPA_PKG
     NAME=freeipa
     ;;
   dogtag)
-    EXTRA_PKG="pki-ca,pki-kra,pki-server,dogtag-pki-server-theme,389-ds-base,$COMMON_EXTRA_PGK"
+    EXTRA_PKG=$DOGTAG_PKG
     NAME=dogtag
     ;;
   *)
@@ -40,20 +42,19 @@ echo "Building Fedora ${FEDORA} X86_64 Vagrant box for ${NAME}"
 echo "Extra packages: $EXTRA_PKG"
 echo "This takes about 5 to 12 minutes"
 
-if [ ! -f basebase-${FEDORA}.img ]; then
-    echo "Building Vagrant box with updates, Vagrant and Ansible dependencies"
+if [ ! -f basebox-${FEDORA}.img ]; then
+    echo "Create Vagrant basebox"
+    # I'm using 'dnf upgrade' instead of update to work around an issue with /dev/log
     virt-builder \
         --format qcow2 \
         --run vagrantsetup \
         --root-password password:vagrant \
         --password vagrant:password:vagrant \
+        --run-command 'dnf -y --best upgrade || true' \
         --update \
-        --install $VAGRANT_PKG \
-        --install $ANSIBLE_PKG \
-        --selinux-relabel \
-        --no-logfile \
-        fedora-${FEDORA} -o basebox.img
-    trim basebox.img
+        --install $VAGRANT_PKG,$ANSIBLE_PKG,$ADDITIONAL_PGK \
+        fedora-${FEDORA} -o basebox-${FEDORA}.img
+    trimbox basebox-${FEDORA}.img
 fi
 
 cp basebox-${FEDORA}.img box.img
@@ -61,19 +62,22 @@ cp basebox-${FEDORA}.img box.img
 #echo "Add COPR"
 #virt-customize --format qcow2 --run freeipa_copr -a box.img
 
-echo "Customize with extra packages"
+echo "Customize with extra packages and update"
 virt-customize \
     --format qcow2 \
+    --run-command 'dnf -y --best upgrade || true' \
+    --update \
+    --install $VAGRANT_PKG,$ANSIBLE_PKG,$ADDITIONAL_PGK \
     --install $EXTRA_PKG \
     --selinux-relabel \
-    --no-logfile \
     -a box.img
 
 trimbox box.img
 
 echo "Creating box archive"
-rm -f ${BOXNAME}.box
-tar cvJf ${BOXNAME}.box ./metadata.json ./Vagrantfile ./box.img
+rm -rf ${BOXNAME}
+mkdir ${BOXNAME}
+tar cv ./metadata.json ./Vagrantfile ./box.img | xz -4 -T0 > ${BOXNAME}.box
 
 echo "Done. To use the new box, run:"
 echo "    vagrant box add ${BOXNAME} ${BOXNAME}.box"

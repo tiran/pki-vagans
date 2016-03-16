@@ -3,6 +3,7 @@
   tags:
     - ipaserver-replica
     - ipa-install
+    - sleep
   command: sleep 5
   args:
     creates:
@@ -19,9 +20,9 @@
     ipa-replica-install -U
     --password {{ ipa_dm_password }}
     --admin-password {{ ipa_admin_password }}
-    --setup-dns
     --ip-address {{ ansible_default_ipv4.address }}
-    --forwarder {{ dns_forwarder.nameservers[0] }}
+    --setup-dns
+    {{ '--forwarder=%s' % dns_forwarder['nameservers'][0] if enable_network else '--no-forwarders' }}
   args:
     creates:
       /etc/ipa/REPLICA_INSTALLED

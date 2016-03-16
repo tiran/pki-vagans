@@ -2,11 +2,11 @@
 - name: wait for master deployment (may take 5 minutes or more)
   tags:
     - ipa-install
-  wait_for: path=/etc/ipa/MASTER_DEPLOYED state=present delay=1 timeout=600
+  wait_for: path=/etc/ipa/MASTER_DEPLOYED state=present delay=0 timeout=600
   delegate_to: "{{item}}"
   with_items: "{{ groups['ipaserver_master'] }}"
 
 - name: wait for master DNS configuration
   tags:
     - ipa-install
-  wait_for: path=/etc/resolv.conf search_regex=master delay=1
+  wait_for: path=/etc/resolv.conf search_regex=master delay=0 timeout=60

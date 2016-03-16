@@ -2,10 +2,10 @@
 - include: ../../ipa/tasks/waitformaster.yml
 
 - include: replica43.yml
-  when: "'4.3.' in ipaversion.stdout"
+  when: "'4.3.' in ipa_version.stdout"
 
 - include: replica42.yml
-  when: "'4.2.' in ipaversion.stdout"
+  when: "'4.2.' in ipa_version.stdout"
 
 - name: flag replication installation
   tags:

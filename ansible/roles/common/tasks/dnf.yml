@@ -1,14 +1,4 @@
 ---
-- name: Auto select fastest DNF mirror
-  tags:
-    - common
-    - package-install
-  ini_file: dest=/etc/dnf/dnf.conf
-            section=main
-            option=fastestmirror
-            value=1
-            backup=yes
-
 - name: Disable repos to prevent network access
   tags:
     - common
@@ -29,13 +19,13 @@
   when: enable_packages
   changed_when: false
 
-- name: Keep DNF cache
+- name: Auto select fastest DNF mirror
   tags:
     - common
     - package-install
   ini_file: dest=/etc/dnf/dnf.conf
             section=main
-            option=keepcache
+            option=fastestmirror
             value=1
             backup=yes
 

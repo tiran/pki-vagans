@@ -1,11 +1,4 @@
 ---
-- name: Auto-select fastest yum mirror
-  tags:
-    - common
-    - package-install
-    - network
-  yum: name=yum-plugin-fastestmirror state=present
-
 - name: Disable repos to prevent network access
   tags:
     - common
@@ -25,3 +18,10 @@
     - updates
   when: enable_packages
   changed_when: false
+
+- name: Auto-select fastest yum mirror
+  tags:
+    - common
+    - package-install
+    - network
+  yum: name=yum-plugin-fastestmirror state=present

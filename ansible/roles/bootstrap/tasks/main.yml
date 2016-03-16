@@ -1,19 +1,62 @@
 ---
+- name: Dummy (for ansible.skip_tags)
+  tags:
+    - dummy
+  raw: "true"
+  changed_when: false
+
+# A private network without forwarder has no default route. Ansible populates
+# ansible_default_ipv4.address from interface with a default route.
+#- name: Create some default route
+#  tags:
+#    - bootstrap
+#  raw: ip route | grep default >/dev/null || sudo ip route add default via $(ip route | tail -n1 | awk -F. '{printf "%u.%u.%u.1\n", $1, $2, $3}')
+#  changed_when: false
+
+- name: Check for dnf command
+  tags:
+    - package-install
+    - bootstrap
+  raw: "which dnf 2>/dev/null"
+  register: which_dnf
+  failed_when: "which_dnf.rc not in (0, 1)"
+  changed_when: false
+
+- name: Auto select fastest DNF mirror
+  tags:
+    - package-install
+    - bootstrap
+  ini_file: dest=/etc/dnf/dnf.conf
+            section=main
+            option=fastestmirror
+            value=1
+            backup=yes
+  when: which_dnf.rc == 0
+
+# Fedora 23 doesn't have Python 2 installed.
 - name: Refresh dnf cache
   tags:
     - package-install
     - network
     - bootstrap
-  raw: which dnf 2>/dev/null && dnf makecache
+  raw: "dnf makecache"
+  register: result
+  # ignore disabled repos
+  failed_when: "result.rc != 0 and 'Error: There are no enabled repos.' not in result.stdout_lines"
+  when: which_dnf.rc == 0
 
 - name: Install python2 and deps for ansible modules
   tags:
     - package-install
     - network
     - bootstrap
-  raw: which dnf 2>/dev/null && dnf install -y python2 python2-dnf libselinux-python
+  raw: "dnf install -y python2 python2-dnf libselinux-python"
   args:
     creates: /usr/bin/python2
+  register: result
+  # ignore disabled repos
+  failed_when: "result.rc != 0 and 'Error: There are no enabled repos.' not in result.stdout_lines"
+  when: which_dnf.rc == 0
 
 - name: Gather facts
   tags:

@@ -33,6 +33,12 @@ options:
     required: true
     default:
     aliases: []
+  ignore_no_modifications:
+    description:
+      - ignore 'ERROR: no modifications to be performed'
+    required: false
+    default: false
+    aliases: []
 author: Christian Heimes
 """
 
@@ -90,11 +96,13 @@ def main():
             args = dict(required=True),
             principal = dict(default='admin'),
             password = dict(required=True),
+            ignore_no_modifications = dict(default=False, type='bool'),
         )
     )
     args = module.params.get('args')
     principal = module.params.get('principal', 'admin')
     password = module.params.get('password')
+    ignore_nomod = module.params.get('ignore_no_modifications', False)
 
     ipa = IPA(module, args, principal, password)
     try:
@@ -105,12 +113,16 @@ def main():
             msg = '\n'.join((msg, e.output))
         module.fail_json(msg=msg)
 
-    kwargs = dict(rc=rc, stdout=stdout, stderr=stderr)
+    changed = True
+    if rc != 0 and ignore_nomod and 'no modifications' in stderr:
+        rc = 0
+        changed = False
 
+    kwargs = dict(rc=rc, stdout=stdout, stderr=stderr, changed=changed)
     if rc != 0:
         module.fail_json(msg='command failed', **kwargs)
     else:
-        module.exit_json(changed=True, **kwargs)
+        module.exit_json(**kwargs)
 
 
 # this is magic, see lib/ansible/module_common.py

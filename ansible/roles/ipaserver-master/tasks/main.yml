@@ -1,5 +1,5 @@
 ---
-- name: install FreeIPA master (5-7 minutes)
+- name: Install FreeIPA master (5-7 minutes)
   tags:
     - ipaserver-master
     - ipa-install
@@ -10,14 +10,13 @@
     --hostname {{ ansible_fqdn }}
     --ds-password {{ ipa_dm_password }}
     --admin-password {{ ipa_admin_password }}
-    --setup-dns
-    --reverse-zone {{ reversezone.reversezone }}
     --ip-address {{ ansible_default_ipv4.address }}
-    --forwarder {{ dns_forwarder.nameservers[0] }}
-  args:
-    creates: /etc/ipa/default.conf
+    --setup-dns
+    --reverse-zone={{ reversezone.reversezone }}
+    {{ '--forwarder=%s' % dns_forwarder['nameservers'][0] if enable_network else '--no-forwarders' }}
+  when: not ipa_installed
 
-- name: install KRA on FreeIPA master (2-3 minutes)
+- name: Install KRA on FreeIPA master (2-3 minutes)
   tags:
     - ipaserver-master
     - ipa-install
@@ -41,9 +40,23 @@
   with_items:
     - 53
     - 88
+    - 464
+    - 749
     - 389
+    - 636
     - 80
     - 443
+    - 8080
+    - 8443
+
+- name: Enable global DNS sync ptr
+  tags:
+    - ipaserver-master
+    - ipa-install
+  ipa:
+    args="dnsconfig-mod --allow-sync-ptr=TRUE"
+    password="{{ ipa_admin_password }}"
+    ignore_no_modifications=true
 
 - name: Enable DNS sync ptr
   tags:
@@ -52,9 +65,7 @@
   ipa:
     args="dnszone-mod {{ ansible_domain }}. --allow-sync-ptr=TRUE"
     password="{{ ipa_admin_password }}"
-  register: result
-  ignore_errors: true
-  failed_when: "result.rc != 0 and 'no modifications' not in result.stderr"
+    ignore_no_modifications=true
 
 - name: Enable reverse DNS sync ptr
   tags:
@@ -63,8 +74,7 @@
   ipa:
     args="dnszone-mod {{ reversezone.reversezone }} --allow-sync-ptr=TRUE"
     password="{{ ipa_admin_password }}"
-  register: result
-  failed_when: "result.rc != 0 and 'no modifications' not in result.stderr"
+    ignore_no_modifications=true
 
 - name: sync client clocks
   tags:
@@ -127,6 +137,15 @@
     - fetch
   fetch: src=/etc/krb5.conf
          dest={{ vagrant_root }}/inventory/krb5.conf
+         flat=yes
+
+- name: Fetch resolv.conf
+  tags:
+    - ipaserver-master
+    - ipa-install
+    - fetch
+  fetch: src=/etc/resolv.conf
+         dest={{ vagrant_root }}/inventory/resolv.conf
          flat=yes
 
 - name: Fetch cacert

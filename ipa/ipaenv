@@ -1,0 +1,7 @@
+#!/bin/sh
+set -e
+
+export IPA_INVENTORY="$(pwd)/inventory"
+export KRB5_CONFIG="${IPA_INVENTORY}/krb5.conf"
+export KRB5CCNAME="DIR:${IPA_INVENTORY}"
+

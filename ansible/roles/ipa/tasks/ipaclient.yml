@@ -4,9 +4,9 @@
   tags:
     - ipa-client
     - ipa-install
+    - sleep
   command: sleep 10
-  args:
-    creates: /etc/ipa/default.conf
+  when: not ipa_installed
 
 - name: join FreeIPA
   tags:
@@ -20,5 +20,4 @@
     --password {{ ipa_admin_password }}
     --request-cert
     --force-join
-  args:
-    creates: /etc/ipa/default.conf
+  when: not ipa_installed

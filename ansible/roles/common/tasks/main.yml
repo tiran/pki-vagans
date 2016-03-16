@@ -1,6 +1,9 @@
 ---
+- include: extravars.yml
+
 # - debug: var=hostvars[inventory_hostname] verbosity=4
 
+# DNS / hosts
 - name: fix /etc/hosts
   tags:
     - common
@@ -12,6 +15,7 @@
   sudo: yes
   hostname: name={{ ansible_fqdn }}
 
+# time zones
 - name: Get timedatectl information
   tags:
     - common
@@ -25,29 +29,24 @@
   command: timedatectl set-timezone UTC
   when: "'Time zone: UTC' not in timedatectl.stdout"
 
-- name: DNF or YUM?
-  tags:
-    - common
-  set_fact: dnf_package="{{ ansible_distribution == 'Fedora' and ansible_distribution_major_version >= '22' }}"
-  changed_when: false
-
-- name: Default to enable_packages=false
-  tags:
-    - common
-  set_fact: enable_packages=false
-  changed_when: false
-
-- name: Override enable_packages=true
-  tags:
-    - common
-    - package-install
-  set_fact: enable_packages=true
-
+# package manager
 - include: dnf.yml
   when: dnf_package
 
 - include: yum.yml
   when: not dnf_package
+
+  # copr
+- name: Install gpg command for COPR / rpm_key
+  tags:
+    - common
+    - package-install
+    - package-copr
+    - network
+  yum: name={{ item }} state=present
+  with_items:
+   - gnupg
+   - gnupg2
 
 - name: Add GPG for FreeIPA 4.3 COPR
   tags:
@@ -73,16 +72,7 @@
     - network
   yum: name=* state=latest
 
-- name: install selinux tools
-  tags:
-    - common
-    - package-install
-    - network
-  yum: name={{ item }} state=present
-  with_items:
-   - libselinux-python
-   - selinux-policy
-
+# custom RPMs
 - name: Create directory for custom RPMS
   tags:
     - common
@@ -118,6 +108,16 @@
   command: dnf install --allowerasing --best -y {{ custom_rpms.stdout }}
   when: custom_rpms.stdout
 
+- name: install selinux tools
+  tags:
+    - common
+    - package-install
+    - network
+  yum: name={{ item }} state=present
+  with_items:
+   - libselinux-python
+   - selinux-policy
+
 - name: disable selinux for 389-DS installation
   # for LXC, 389-DS installation hangs with:
   # SELinux policy is not managed or store cannot be accessed
@@ -127,6 +127,7 @@
   selinux: state=disabled
   when: disable_selinux
 
+# Firewall
 - name: install firewalld
   tags:
     - pki
@@ -152,6 +153,7 @@
   service: name=firewalld enabled=yes state=started
   when: has_firewalld.stat.exists
 
+# CPRNG
 - name: Install rng tools
   tags:
     - common

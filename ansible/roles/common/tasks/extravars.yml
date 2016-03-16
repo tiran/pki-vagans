@@ -1,0 +1,26 @@
+---
+- name: DNF or YUM?
+  tags:
+    - common
+  set_fact: dnf_package="{{ ansible_distribution == 'Fedora' and ansible_distribution_major_version >= '22' }}"
+  changed_when: false
+
+- name: Default facts (enable_packages, enable_network)
+  tags:
+    - common
+  set_fact: enable_packages=false enable_network=false
+  changed_when: false
+
+- name: Override enable_packages=true
+  tags:
+    - common
+    - package-install
+  set_fact: enable_packages=true
+  changed_when: false
+
+- name: Override enable_network=true
+  tags:
+    - common
+    - network
+  set_fact: enable_network=true
+  changed_when: false

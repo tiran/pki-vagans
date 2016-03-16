@@ -5,7 +5,6 @@
     - package-install
     - network
   yum: name=pki-ca state=present
-  when: network_access
 
 - name: Write CA config template
   tags:

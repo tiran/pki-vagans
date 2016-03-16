@@ -4,5 +4,7 @@ krb5.conf
 krb5cc
 prefs.js
 replica*.gpg
+resolv.conf
 firefoxprofile
-
+primary
+tkt*
