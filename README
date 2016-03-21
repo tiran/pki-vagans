@@ -19,7 +19,7 @@ The FreeIPA setup needs about 2.5 GB of free RAM and 6 GB disk space.
 Install dependencies
 ====================
 
-$ sudo dnf install ansible libvirt vagrant vagrant-libvirt vagrant-hostmanager
+$ sudo dnf install ansible libvirt vagrant vagrant-libvirt vagrant-hostmanager python-virtualenv
 $ sudo systemctl enable libvirtd
 $ sudo systemctl start libvirtd
 $ sudo usermod -G libvirt -a YOUR_USER
@@ -28,6 +28,17 @@ Either restart your session or use newgrp to join the new user group
 (current shell only).
 
 $ newgrp libvirt
+
+Ansible 2.0
+-----------
+
+The playbook uses some features from Ansible 2.0. To install Ansible 2 in a
+local virtual env, simple run run
+
+  $ make ansible-venv
+
+Vagrant will automatically pick up Ansible from the virtual env.
+
 
 passwords
 =========

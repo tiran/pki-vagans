@@ -43,9 +43,10 @@
     ipa-replica-install -U
     --password {{ ipa_dm_password }}
     --admin-password {{ ipa_admin_password }}
+    --mkhomedir
     --setup-dns
     --ip-address {{ ansible_default_ipv4.address }}
-    --forwarder {{ dns_forwarder.nameservers[0] }}
+    {{ '--forwarder=%s' % dns_forwarder['nameservers'][0] if enable_network else '--no-forwarders' }}
     /var/lib/ipa/replica-info-{{ ansible_fqdn }}.gpg
   args:
     creates:

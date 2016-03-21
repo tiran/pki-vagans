@@ -1,3 +1,5 @@
 .vagrant/
 *.rpm
 *.pyc
+venv/
+playbook.retry

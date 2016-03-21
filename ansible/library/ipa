@@ -3,9 +3,10 @@
 
 # (c) 2016, Christian Heimes <cheimes@redhat.com>
 
-import sys
+import re
 import subprocess
 import shlex
+
 
 DOCUMENTATION = """
 ---
@@ -39,6 +40,12 @@ options:
     required: false
     default: false
     aliases: []
+  ignore_already_exists:
+    description:
+      - ignore 'ERROR: ... already exists'
+    required: false
+    default: false
+    aliases: []
 author: Christian Heimes
 """
 
@@ -47,16 +54,20 @@ EXAMPLES = """
 
 class IPA(object):
     KINIT = 'kinit'
-    KDESTROY = 'kdestroy'
-    IPA = 'ipa'
+    KLIST = 'klist'
 
-    def __init__(self, module, args, principal, password):
+    def __init__(self, module, cmd, args, principal, password):
         self.module = module
+        self.cmd = cmd
         self.args = args
         self.principal = principal
         self.password = password
 
     def kinit(self):
+        rc = subprocess.call([self.KLIST, '-s'])
+        if rc == 0:
+            # we have a non-expired TGT
+            return
         cmd = [self.KINIT, self.principal]
         popen = subprocess.Popen(
             cmd,
@@ -68,11 +79,8 @@ class IPA(object):
         if popen.returncode != 0:
             raise subprocess.CalledProcessError(popen.returncode, cmd, stdout)
 
-    def kdestroy(self):
-        subprocess.check_call([self.KDESTROY])
-
     def ipa_cmd(self):
-        cmd = [self.IPA]
+        cmd = [self.cmd]
         cmd.extend(shlex.split(self.args))
         popen = subprocess.Popen(
             cmd,
@@ -84,27 +92,30 @@ class IPA(object):
 
     def __call__(self):
         self.kinit()
-        try:
-            return self.ipa_cmd()
-        finally:
-            self.kdestroy()
+        return self.ipa_cmd()
 
 
 def main():
     module = AnsibleModule(
         argument_spec = dict(
+            cmd = dict(default='ipa'),
             args = dict(required=True),
             principal = dict(default='admin'),
             password = dict(required=True),
+            result_regex = dict(default=None),
             ignore_no_modifications = dict(default=False, type='bool'),
+            ignore_already_exists = dict(default=False, type='bool'),
         )
     )
+    cmd = module.params.get('cmd', 'ipa')
     args = module.params.get('args')
     principal = module.params.get('principal', 'admin')
     password = module.params.get('password')
+    result_regex = module.params.get('result_regex')
     ignore_nomod = module.params.get('ignore_no_modifications', False)
+    ignore_exists = module.params.get('ignore_already_exists', False)
 
-    ipa = IPA(module, args, principal, password)
+    ipa = IPA(module, cmd, args, principal, password)
     try:
         rc, stdout, stderr = ipa()
     except Exception as e:
@@ -114,11 +125,24 @@ def main():
         module.fail_json(msg=msg)
 
     changed = True
-    if rc != 0 and ignore_nomod and 'no modifications' in stderr:
-        rc = 0
-        changed = False
+    if rc != 0:
+        if ignore_nomod and 'no modifications' in stderr:
+            rc = 0
+            changed = False
+        elif ignore_exists and 'already exists' in stderr:
+            rc = 0
+            changed = False
 
-    kwargs = dict(rc=rc, stdout=stdout, stderr=stderr, changed=changed)
+    results = []
+    if result_regex is not None:
+        result_regex = re.compile(result_regex)
+        for line in stdout.split('\n'):
+            mo = result_regex.search(line)
+            if not mo:
+                continue
+            results.append(mo.group(1))
+
+    kwargs = dict(rc=rc, stdout=stdout, stderr=stderr, changed=changed, results=results)
     if rc != 0:
         module.fail_json(msg='command failed', **kwargs)
     else:

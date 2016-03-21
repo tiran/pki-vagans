@@ -1,4 +1,5 @@
 ---
+# XXX sometimes fails when the client waits for the master before the master has set its TZ to UTC
 - name: wait for master deployment (may take 5 minutes or more)
   tags:
     - ipa-install

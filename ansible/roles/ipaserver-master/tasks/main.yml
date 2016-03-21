@@ -12,6 +12,8 @@
     --admin-password {{ ipa_admin_password }}
     --ip-address {{ ansible_default_ipv4.address }}
     --setup-dns
+    --mkhomedir
+    --ssh-trust-dns
     --reverse-zone={{ reversezone.reversezone }}
     {{ '--forwarder=%s' % dns_forwarder['nameservers'][0] if enable_network else '--no-forwarders' }}
   when: not ipa_installed
@@ -49,6 +51,42 @@
     - 8080
     - 8443
 
+- name: Set sensible defaults
+  tags:
+    - ipaserver-master
+    - ipa-install
+  ipa:
+    args="config-mod --defaultshell=/bin/bash"
+    password="{{ ipa_admin_password }}"
+    ignore_no_modifications=true
+
+- name: Set home directory to /export/home
+  tags:
+    - ipaserver-master
+    - ipa-install
+  ipa:
+    args="config-mod --homedirectory=/export/home"
+    password="{{ ipa_admin_password }}"
+    ignore_no_modifications=true
+
+- name: Set admin's home directory to /export/home/admin
+  tags:
+    - ipaserver-master
+    - ipa-install
+  ipa:
+    args="user-mod admin --homedir=/export/home/admin"
+    password="{{ ipa_admin_password }}"
+    ignore_no_modifications=true
+
+- name: Enable password and OTP loging
+  tags:
+    - ipaserver-master
+    - ipa-install
+  ipa:
+    args="config-mod --user-auth-type=password --user-auth-type=otp"
+    password="{{ ipa_admin_password }}"
+    ignore_no_modifications=true
+
 - name: Enable global DNS sync ptr
   tags:
     - ipaserver-master
@@ -76,38 +114,17 @@
     password="{{ ipa_admin_password }}"
     ignore_no_modifications=true
 
-- name: sync client clocks
-  tags:
-    - ipaserver-master
-    - ipa-install
-  command: ntpdate {{ ansible_default_ipv4.address }}
-  delegate_to: "{{item}}"
-  with_items: "{{ groups['ipa_client'] }}"
-  register: result
-  failed_when: "result.rc !=0 and 'NTP socket is in use' not in result.stderr"
-  changed_when: result.rc == 0
-
-- name: change replicas' resolv.conf to use FreeIPA DNS
-  tags:
-    - ipaserver-master
-    - ipa-install
-  template: src=etc_resolvconf dest=/etc/resolv.conf
-  delegate_to: "{{item}}"
-  with_items: "{{ groups['ipaserver_replica'] }}"
-
-- name: change clients' resolv.conf to use FreeIPA DNS
-  tags:
-    - ipaserver-master
-    - ipa-install
-  template: src=etc_resolvconf dest=/etc/resolv.conf
-  delegate_to: "{{item}}"
-  with_items: "{{ groups['ipa_client'] }}"
-
-- name: change master's resolv.conf to use FreeIPA DNS
-  tags:
-    - ipaserver-master
-    - ipa-install
-  template: src=etc_resolvconf dest=/etc/resolv.conf
+#- name: sync client clocks
+#  tags:
+#    - ipaserver-master
+#    - ipa-install
+#  command: ntpdate {{ ansible_default_ipv4.address }}
+#  delegate_to: "{{item}}"
+#  with_items: "{{ groups['ipa_client'] }}"
+#  register: result
+#  failed_when: "result.rc !=0 and 'NTP socket is in use' not in result.stderr"
+#  changed_when: result.rc == 0
+#  when: false
 
 - name: signal FreeIPA master has been deployed
   tags:
@@ -157,9 +174,29 @@
          dest={{ vagrant_root }}/inventory/ca.crt
          flat=yes
 
+- name: Fetch ipa default.conf
+  tags:
+    - ipaserver-master
+    - ipa-install
+    - fetch
+  fetch: src=/etc/ipa/default.conf
+         dest={{ vagrant_root }}/inventory/default.conf
+         flat=yes
+
 - name: Fetch kra agent pem file
   tags:
     - ipaserver-master
     - ipa-install
     - fetch
   fetch: src=/etc/httpd/alias/kra-agent.pem dest={{ vagrant_root }}/inventory/kra-agent.pem flat=yes
+
+- name: Get FreeIPA users
+  tags:
+    - ipaserver-master
+    - ipa-install
+  ipa:
+    args="user-find"
+    password="{{ ipa_admin_password }}"
+    result_regex="User\ login:\ ([\w\.-]*)"
+  register: ipa_users
+  changed_when: false

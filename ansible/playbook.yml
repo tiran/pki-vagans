@@ -1,29 +1,26 @@
 ---
 - name: install Dogtag PKI CA
   hosts: pki_server
-  sudo: True
-
   roles:
     - pki-ca
     - pki-kra
 
 - name: install FreeIPA server master
   hosts: ipaserver_master
-  sudo: True
-
   roles:
     - ipaserver-master
 
 - name: install FreeIPA server replica
   hosts: ipaserver_replica
-  sudo: True
-
   roles:
     - ipaserver-replica
 
 - name: install FreeIPA client
   hosts: ipa_client
-  sudo: True
-
   roles:
     - ipa-client
+
+- name: install FreeIPA NFS server
+  hosts: ipa_nfsserver
+  roles:
+    - ipa-nfsserver

@@ -1,17 +1,17 @@
 ---
-- name: Dummy (for ansible.skip_tags)
-  tags:
-    - dummy
-  raw: "true"
-  changed_when: false
-
 # A private network without forwarder has no default route. Ansible populates
 # ansible_default_ipv4.address from interface with a default route.
-#- name: Create some default route
-#  tags:
-#    - bootstrap
-#  raw: ip route | grep default >/dev/null || sudo ip route add default via $(ip route | tail -n1 | awk -F. '{printf "%u.%u.%u.1\n", $1, $2, $3}')
-#  changed_when: false
+- name: Create some default route
+  tags:
+    - bootstrap
+  raw: ip route | grep default >/dev/null || (sudo ip route add default via $(ip route | tail -n1 | awk -F. '{printf "%u.%u.%u.1\n", $1, $2, $3}'))
+  changed_when: false
+
+- name: Kick DHCP in case /etc/resolv.conf is missing nameserver
+  tags:
+    - bootstrap
+  raw: "if ! egrep -q ^nameserver /etc/resolv.conf; then ifdown eth0 && ifup eth0; fi"
+  changed_when: false
 
 - name: Check for dnf command
   tags:
@@ -62,3 +62,18 @@
   tags:
     - bootstrap
   setup:
+
+- name: Dump ssh-config
+  tags:
+    - bootstrap
+  become: no
+  local_action:
+      shell vagrant ssh-config > {{ vagrant_root }}/inventory/ssh-config
+  changed_when: false
+  failed_when: false
+
+- name: Dummy (for ansible.skip_tags)
+  tags:
+    - dummy
+  raw: "true"
+  changed_when: false

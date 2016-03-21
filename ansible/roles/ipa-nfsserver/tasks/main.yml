@@ -1,0 +1,147 @@
+---
+- include: ../../ipa/tasks/waitformaster.yml
+- include: ../../ipa/tasks/ipaclient.yml
+
+- name: install nfs-utils
+  tags:
+    - ipa-nfsserver
+    - package-install
+    - network
+  yum: name=nfs-utils state=present
+
+- name: Open Firewall for NFS
+  tags:
+    - ipa-nfsserver
+    - firewall
+  firewalld:
+    service={{ item }}
+    permanent=true
+    state=enabled
+    immediate=yes
+  with_items:
+    - nfs
+    - rpc-bind
+    - mountd
+  when: has_firewalld.stat.exists
+
+- name: Get keytab content
+  tags:
+    - ipa-nfsserver
+    - ipa-install
+  command: klist -ke /etc/krb5.keytab
+  register: keytab
+  changed_when: false
+
+- name: Create NFS service
+  tags:
+    - ipa-nfsserver
+    - ipa-install
+  ipa:
+    args="service-add nfs/{{ ansible_fqdn }}"
+    password="{{ ipa_admin_password }}"
+    ignore_already_exists=true
+  #delegate_to: "{{item}}"
+  #with_items: "{{ groups['ipaserver_master'] }}"
+  when: "'nfs/{{ ansible_fqdn }}' not in keytab.stdout"
+
+- name: Add NFS service to keytab
+  tags:
+    - ipa-nfsserver
+    - ipa-install
+  ipa: >
+    cmd=ipa-getkeytab
+    args="-s master.ipa.example -p nfs/{{ ansible_fqdn }} -k /etc/krb5.keytab"
+    password="{{ ipa_admin_password }}"
+  when: "'nfs/{{ ansible_fqdn }}' not in keytab.stdout"
+
+- name: Create /exports/home
+  tags:
+    - ipa-nfsserver
+    - ipa-install
+  file:
+    path=/export/home
+    state=directory
+    owner=root
+    group=root
+    mode=755
+    recurse=yes
+
+- name: Add NFS export
+  tags:
+    - ipa-nfsserver
+    - ipa-install
+  lineinfile:
+    dest=/etc/exports
+    regexp=^/export
+    line="/export *(rw,subtree_check,sec=krb5:krb5i:krb5p)"
+  notify:
+    - restart NFS
+
+- name: Enable NFS server
+  tags:
+    - ipa-nfsserver
+    - ipa-install
+  service: name={{ item }} enabled=yes state=started
+  with_items:
+    - nfs-secure
+    - nfs-server
+
+- name: add automount default location
+  tags:
+    - ipa-nfsserver
+    - ipa-install
+  ipa:
+    args="automountlocation-add default"
+    password="{{ ipa_admin_password }}"
+    ignore_already_exists=true
+
+- name: add auto.home map
+  tags:
+    - ipa-nfsserver
+    - ipa-install
+  ipa:
+    args="automountmap-add default auto.home"
+    password="{{ ipa_admin_password }}"
+    ignore_already_exists=true
+
+- name: add auto.home to auto.master
+  tags:
+    - ipa-nfsserver
+    - ipa-install
+  ipa:
+    args="automountkey-add default --key '/export/home' --info auto.home auto.master"
+    password="{{ ipa_admin_password }}"
+    ignore_already_exists=true
+
+- name: automountkey-add default auto.home
+  tags:
+    - ipa-nfsserver
+    - ipa-install
+  ipa:
+    args="automountkey-add default auto.home --key='*' --info='-fstype=nfs4,rw,sec=krb5,soft {{ ansible_fqdn }}:/export/home/&'"
+    password="{{ ipa_admin_password }}"
+    ignore_already_exists=true
+
+- name: Get FreeIPA users
+  tags:
+    - ipa-nfsserver
+    - ipa-nfs-homedirs
+    - ipa-install
+  ipa:
+    args="user-find"
+    password="{{ ipa_admin_password }}"
+    result_regex="User\ login:\ ([\w\.-]*)"
+  register: ipa_users
+  changed_when: false
+
+- name: Create home directory for FreeIPA users
+  tags:
+    - ipa-nfsserver
+    - ipa-nfs-homedirs
+    - ipa-install
+  shell: >
+    if [ ! -d /export/home/{{item}} ]; then
+      cp -r /etc/skel /export/home/{{item}}
+      chown -R {{ item }}: /export/home/{{item}}
+    fi
+  with_items: "{{ ipa_users.results }}"

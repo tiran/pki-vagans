@@ -10,20 +10,7 @@ ANSIBLE_PKG="python2,python2-dnf,libselinux-python,python-firewall,gnupg"
 ADDITIONAL_PGK="rng-tools,openssl"
 DOGTAG_PKG="pki-ca,pki-kra,pki-ocsp,pki-server,dogtag-pki-server-theme,389-ds-base"
 
-case $1 in
-  freeipa)
-    EXTRA_PKG=$DOGTAG_PKG,$FREEIPA_PKG
-    NAME=freeipa
-    ;;
-  dogtag)
-    EXTRA_PKG=$DOGTAG_PKG
-    NAME=dogtag
-    ;;
-  *)
-    echo "$0 [dogtag|freeipa] [centos|fedora]"
-    exit 1
-    ;;
-esac
+EXTRA_COMMANDS=""
 
 case $2 in
   centos)
@@ -38,12 +25,37 @@ case $2 in
     PKGUPGRADE="dnf -y --best upgrade"
     FREEIPA_PKG="freeipa-client,freeipa-server,freeipa-server-dns"
     ;;
+  rhel)
+    OS_VERSION="rhel-7.2"
+    SUFFIX="rhel72"
+    PKGUPGRADE="yum -y upgrade"
+    FREEIPA_PKG="ipa-client,ipa-server,ipa-server-dns"
+    ;;
   *)
     echo "$0 [dogtag|freeipa] [centos|fedora]"
     exit 1
     ;;
 esac
 
+case $1 in
+  freeipa)
+    NAME=freeipa
+    EXTRA_PKG=$DOGTAG_PKG,$FREEIPA_PKG
+    ;;
+  freeipa43-copr)
+    NAME=freeipa43
+    EXTRA_PKG=$DOGTAG_PKG,$FREEIPA_PKG
+    EXTRA_COMMANDS="${EXTRA_COMMANDS} --run freeipa43_copr"
+    ;;
+  dogtag)
+    NAME=dogtag
+    EXTRA_PKG=$DOGTAG_PKG
+    ;;
+  *)
+    echo "$0 [dogtag|freeipa] [centos|fedora]"
+    exit 1
+    ;;
+esac
 
 BOXNAME=${NAME}-${SUFFIX}
 
@@ -71,18 +83,19 @@ if [ ! -f basebox-${OS_VERSION}.img ]; then
         --run-command "${PKGUPGRADE} || true" \
         --update \
         --install $VAGRANT_PKG,$ANSIBLE_PKG,$ADDITIONAL_PGK \
+        --selinux-relabel \
         ${OS_VERSION} -o basebox-${OS_VERSION}.img
     trimbox basebox-${OS_VERSION}.img
 fi
 
+echo "cp basebox-${OS_VERSION}.img box.img"
 cp basebox-${OS_VERSION}.img box.img
-
-#echo "Add COPR"
-#virt-customize --format qcow2 --run freeipa_copr -a box.img
 
 echo "Customize with extra packages and update"
 virt-customize \
     --format qcow2 \
+    --run-command "mkdir -p /run/lock" \
+    $EXTRA_COMMANDS \
     --run-command "${PKGUPGRADE} || true" \
     --update \
     --install $VAGRANT_PKG,$ANSIBLE_PKG,$ADDITIONAL_PGK \
@@ -96,8 +109,10 @@ echo "Creating box archive"
 rm -f ${BOXNAME}.box
 tar cv ./metadata.json ./Vagrantfile ./box.img | xz -4 -T0 > ${BOXNAME}.box
 
+rm box.img
+
 echo "Done. To use the new box, run:"
 echo "    vagrant box add ${BOXNAME} ${BOXNAME}.box"
 echo
-echo "You may remove box.img and ${BOXNAME}.box afterwards."
+echo "You may remove ${BOXNAME}.box afterwards."
 

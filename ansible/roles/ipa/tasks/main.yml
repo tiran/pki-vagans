@@ -1,10 +1,47 @@
 ---
+- name: gather facts from FreeIPA master server
+  setup:
+  delegate_to: "{{item}}"
+  delegate_facts: True
+  with_items: "{{ groups['ipaserver_master'] }}"
+
+# we modify the file later but need the original DNS forwarder
+- name: make a copy of original resolv.conf
+  tags:
+    - ipa
+  command: cp /etc/resolv.conf /etc/resolv.conf.orig
+  args:
+    creates: /etc/resolv.conf.orig
+
+- name: Get default DNS
+  tags:
+    - ipa
+  resolver: resolvconf=/etc/resolv.conf.orig
+  register: dns_forwarder
+  changed_when: false
+
+- name: Get reverse zone
+  tags:
+    - ipa
+  reversezone: ipaddress={{ ansible_default_ipv4.address }}
+  register: reversezone
+  changed_when: false
+
+- name: change resolv.conf to use FreeIPA DNS
+  tags:
+    - ipa
+    - ipa-install
+  template: src=etc_resolvconf dest=/etc/resolv.conf
+
 - name: install FreeIPA client package (Fedora)
   tags:
     - ipa
     - package-install
     - network
-  yum: name=freeipa-client state=present
+  yum: name={{ item }} state=present
+  with_items:
+   - freeipa-client
+   - freeipa-admintools
   when: ansible_distribution == "Fedora"
 
 - name: install FreeIPA client package (RHEL / CentOS)
@@ -12,7 +49,10 @@
     - ipa
     - package-install
     - network
-  yum: name=ipa-client state=present
+  yum: name={{ item }} state=present
+  with_items:
+   - ipa-client
+   - ipa-admintools
   when: ansible_distribution == "RedHat" or ansible_distribution == "CentOS"
 
 - name: get IPA version
@@ -32,7 +72,7 @@
 - name: Check for /etc/ipa/default.conf
   tags:
     - ipa
-  stat: path=/etc/ipa/ca.crt
+  stat: path=/etc/ipa/default.conf
   register: stat_ipa_defaultconf
   changed_when: false
 

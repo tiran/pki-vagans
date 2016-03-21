@@ -12,7 +12,6 @@
 - name: Set FQDN hostname
   tags:
     - common
-  sudo: yes
   hostname: name={{ ansible_fqdn }}
 
 # time zones

@@ -8,6 +8,21 @@
   command: sleep 10
   when: not ipa_installed
 
+- name: Create /export home directory with correct context
+  tags:
+    - ipa-client
+    - ipa-install
+  file:
+    path=/export
+    state=directory
+    owner=root
+    group=root
+    mode=755
+    seuser=system_u
+    serole=object_r
+    setype=home_root_t
+    selevel=s0
+
 - name: join FreeIPA
   tags:
     - ipa-client
@@ -20,4 +35,6 @@
     --password {{ ipa_admin_password }}
     --request-cert
     --force-join
+    --mkhomedir
+    --ssh-trust-dns
   when: not ipa_installed
