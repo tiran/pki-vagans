@@ -94,6 +94,7 @@ cp basebox-${OS_VERSION}.img box.img
 echo "Customize with extra packages and update"
 virt-customize \
     --format qcow2 \
+    --timezone UTC \
     --run-command "mkdir -p /run/lock" \
     $EXTRA_COMMANDS \
     --run-command "${PKGUPGRADE} || true" \

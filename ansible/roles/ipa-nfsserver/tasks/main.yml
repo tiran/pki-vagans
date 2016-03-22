@@ -64,7 +64,10 @@
     owner=root
     group=root
     mode=755
-    recurse=yes
+    seuser=system_u
+    serole=object_r
+    setype=home_root_t
+    selevel=s0
 
 - name: Add NFS export
   tags:
@@ -134,14 +137,36 @@
   register: ipa_users
   changed_when: false
 
+# XXX are these sensible settings for SELinux context?
 - name: Create home directory for FreeIPA users
   tags:
     - ipa-nfsserver
     - ipa-nfs-homedirs
     - ipa-install
   shell: >
-    if [ ! -d /export/home/{{item}} ]; then
-      cp -r /etc/skel /export/home/{{item}}
-      chown -R {{ item }}: /export/home/{{item}}
-    fi
+    if [ ! -d /export/home/{{ item }} ]; then
+      cp -r /etc/skel /export/home/{{ item }};
+      touch /export/home/{{ item }}/NFS;
+      chcon -R unconfined_u:object_r:user_home_t:s0 /export/home/{{ item }};
+      chown -R {{ item }}: /export/home/{{ item }};
+    fi;
   with_items: "{{ ipa_users.results }}"
+
+- include: ../../ipa/tasks/waitforclients.yml
+
+- name: Run ipa-client-automount on master, replicas and clients
+  tags:
+    - ipa-nfsserver
+    - ipa-install
+  command:
+    ipa-client-automount --unattended
+  register: result
+  failed_when: "result.rc != 0 and 'automount is already configured' not in result.stderr"
+  changed_when: "result.rc == 0"
+  delegate_to: "{{item}}"
+  with_items: "{{ groups['ipaserver_master'] + groups['ipaserver_replica'] + groups['ipa_client'] }}"
+
+#- name: restart client autofs
+#  service: name=autofs state=restarted
+#  delegate_to: "{{item}}"
+#  with_items: "{{ groups['ipa_client'] }}"

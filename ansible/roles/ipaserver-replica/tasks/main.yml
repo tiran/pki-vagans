@@ -11,5 +11,9 @@
   tags:
     - ipaserver-replica
     - ipa-install
-  file: path=/etc/ipa/REPLICA_INSTALLED state=touch
+  copy:
+    content="PKI playbook"
+    dest=/etc/ipa/REPLICA_INSTALLED
   changed_when: false
+
+- include: ../../ipa/tasks/ipaclientinstalled.yml

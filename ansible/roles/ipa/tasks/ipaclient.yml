@@ -38,3 +38,5 @@
     --mkhomedir
     --ssh-trust-dns
   when: not ipa_installed
+
+- include: ../../ipa/tasks/ipaclientinstalled.yml

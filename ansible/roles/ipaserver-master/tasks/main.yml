@@ -130,7 +130,11 @@
   tags:
     - ipaserver-master
     - ipa-install
-  file: path=/etc/ipa/MASTER_DEPLOYED state=touch
+  copy:
+    content="PKI playbook"
+    dest=/etc/ipa/MASTER_DEPLOYED
+
+- include: ../../ipa/tasks/ipaclientinstalled.yml
 
 - name: Create Firefox prefs
   tags:
