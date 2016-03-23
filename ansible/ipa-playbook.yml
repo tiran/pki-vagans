@@ -4,15 +4,10 @@
   pre_tasks:
     # https://github.com/mitchellh/vagrant/issues/6526
     - name: "wait for the node to be ready"
+      tags:
+        - bootstrap
       become: false
-      local_action: wait_for host={{ ansible_ssh_host }} port={{ ansible_ssh_port }}
-
-
-- name: install Dogtag PKI CA
-  hosts: pki_server
-  roles:
-    - pki-ca
-    - pki-kra
+      local_action: wait_for host={{ ansible_ssh_host }} port={{ ansible_ssh_port }} delay=1
 
 # Use roles instead of meta to parallelize common tasks
 - name: install IPA base system
@@ -36,21 +31,28 @@
 
 # serialized tasks
 - name: install FreeIPA server master
-  hosts: ipaserver_master
+  hosts:
+    - ipaserver_master
   roles:
     - ipaserver-master
 
 - name: install FreeIPA server replica
-  hosts: ipaserver_replica
+  hosts:
+    - ipaserver_replica
   roles:
     - ipaserver-replica
 
 - name: install FreeIPA client
-  hosts: ipa_client
+  hosts:
+   - ipa_client
+   - ipa_nfsserver
   roles:
     - ipa-client
+  # workaround for join race-condition in 4.3.0
+  serial: 1
 
 - name: install FreeIPA NFS server
-  hosts: ipa_nfsserver
+  hosts:
+    - ipa_nfsserver
   roles:
     - ipa-nfsserver

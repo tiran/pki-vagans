@@ -1,0 +1,9 @@
+
+playbook: ansible/pki-playbook.yml
+
+  play #1 (safe-guard against race condition):	TAGS: []
+    TASK TAGS: [bootstrap]
+
+  play #2 (install Dogtag PKI CA):	TAGS: []
+    TASK TAGS: [389ds, bootstrap, common, custom-rpms, dummy, firewall, ipa-install, lxc, network, package-copr, package-install, package-upgrade, pki, pki-install, pkica, pkikra]
+

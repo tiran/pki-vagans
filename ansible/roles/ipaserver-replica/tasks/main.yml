@@ -1,6 +1,4 @@
 ---
-- include: ../../ipa/tasks/waitformaster.yml
-
 - include: replica43.yml
   when: "'4.3.' in ipa_version.stdout"
 
@@ -16,4 +14,4 @@
     dest=/etc/ipa/REPLICA_INSTALLED
   changed_when: false
 
-- include: ../../ipa/tasks/ipaclientinstalled.yml
+- include: ../../ipa-client/tasks/ipaclientinstalled.yml

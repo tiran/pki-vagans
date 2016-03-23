@@ -6,7 +6,7 @@ Vagrant.require_version ">= 1.6.0"
 HERE = File.dirname(__FILE__)
 ENV['ANSIBLE_CONFIG'] = "#{HERE}/../ansible/ansible.cfg"
 # virtual env for Ansible 2
-ENV['PATH'] = "#{HERE}/../venv/bin:" + ENV['PATH']
+# ENV['PATH'] = "#{HERE}/../venv/bin:" + ENV['PATH']
 
 # Workaround for ssh problem with ED25519 curve
 # SSH not up: #<Vagrant::Errors::NetSSHException: An error occurred in the underlying SSH library that Vagrant uses.
@@ -65,14 +65,14 @@ Vagrant.configure(2) do |config|
         # execution. It makes the output more readable, too.
         host.vm.provision "ansible" do |ansible|
             ansible.limit = "all"
-            ansible.playbook = "../ansible/playbook.yml"
+            ansible.playbook = "../ansible/ipa-playbook.yml"
             ansible.groups = {
                 "ipaserver_master" => ["ipamaster"],
                 "ipaserver_replica" => ["ipareplica1"],
                 "ipa_client" => ["ipaclient1"],
                 "ipa_nfsserver" => ["ipanfsserver"],
             }
-            ansible.verbose = 'vv'
+            #ansible.verbose = 'vv'
             # package-install: don't download and install packages from the internet
             # package-upgrade: don't upgrade all packages
             # package-copr: don't install and use COPR with latest FreeIPA

@@ -1,7 +1,4 @@
 ---
-- include: ../../ipa/tasks/waitformaster.yml
-- include: ../../ipa/tasks/ipaclient.yml
-
 - name: install nfs-utils
   tags:
     - ipa-nfsserver
@@ -149,8 +146,6 @@
       chown -R {{ item }}: /export/home/{{ item }};
     fi;
   with_items: "{{ ipa_users.results }}"
-
-- include: ../../ipa/tasks/waitforclients.yml
 
 - name: Run ipa-client-automount on master, replicas and clients
   tags:

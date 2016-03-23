@@ -1,10 +1,4 @@
 ---
-- name: gather facts from FreeIPA master server
-  setup:
-  delegate_to: "{{item}}"
-  delegate_facts: True
-  with_items: "{{ groups['ipaserver_master'] }}"
-
 # we modify the file later but need the original DNS forwarder
 - name: make a copy of original resolv.conf
   tags:
@@ -26,12 +20,6 @@
   reversezone: ipaddress={{ ansible_default_ipv4.address }}
   register: reversezone
   changed_when: false
-
-- name: change resolv.conf to use FreeIPA DNS
-  tags:
-    - ipa
-    - ipa-install
-  template: src=etc_resolvconf dest=/etc/resolv.conf
 
 - name: install FreeIPA client package (Fedora)
   tags:

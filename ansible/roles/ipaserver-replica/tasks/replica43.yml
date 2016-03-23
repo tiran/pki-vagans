@@ -1,17 +1,6 @@
 ---
-- name: Extra sleep again to prevent race condition (#5653)
-  tags:
-    - ipaserver-replica
-    - ipa-install
-    - sleep
-  command: sleep 5
-  args:
-    creates:
-      /etc/ipa/REPLICA_INSTALLED
-  when: wait_for_server
-
 # configure as client first, then promote to replica
-- include: ../../ipa/tasks/ipaclient.yml
+- include: ../../ipa-client/tasks/main.yml
 
 - name: install replica
   tags:

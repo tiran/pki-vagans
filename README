@@ -29,17 +29,6 @@ Either restart your session or use newgrp to join the new user group
 
 $ newgrp libvirt
 
-Ansible 2.0
------------
-
-The playbook uses some features from Ansible 2.0. To install Ansible 2 in a
-local virtual env, simple run run
-
-  $ make ansible-venv
-
-Vagrant will automatically pick up Ansible from the virtual env.
-
-
 passwords
 =========
 

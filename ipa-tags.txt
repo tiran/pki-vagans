@@ -1,0 +1,24 @@
+
+playbook: ansible/ipa-playbook.yml
+
+  play #1 (safe-guard against race condition):	TAGS: []
+    TASK TAGS: [bootstrap]
+
+  play #2 (install IPA base system):	TAGS: []
+    TASK TAGS: [bootstrap, common, custom-rpms, dummy, firewall, ipa, lxc, network, package-copr, package-install, package-upgrade, pki]
+
+  play #3 (install IPA server system):	TAGS: []
+    TASK TAGS: [firewall, ipaserver, network, package-install]
+
+  play #4 (install FreeIPA server master):	TAGS: []
+    TASK TAGS: [fetch, ipa, ipa-install, ipaserver-master]
+
+  play #5 (install FreeIPA server replica):	TAGS: []
+    TASK TAGS: [fetch, ipa, ipa-client, ipa-install, ipaserver-replica]
+
+  play #6 (install FreeIPA client):	TAGS: []
+    TASK TAGS: [ipa, ipa-client, ipa-install]
+
+  play #7 (install FreeIPA NFS server):	TAGS: []
+    TASK TAGS: [firewall, ipa-install, ipa-nfs-homedirs, ipa-nfsserver, network, package-install]
+

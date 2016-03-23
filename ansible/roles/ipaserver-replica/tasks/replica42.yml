@@ -1,6 +1,4 @@
 ---
-- include: ../../ipa/tasks/waitformaster.yml
-
 - name: Prepare replication
   tags:
     - ipaserver-replica

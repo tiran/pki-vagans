@@ -28,11 +28,15 @@
   args:
     creates: /etc/pki/pki-tomcat/kra/CS.cfg
 
-- name: Make sure named-pkcs11 DNS is running
+# XXX workaround for race condition
+# KRA restarts LDAP, which disconnects bind-ldap plugin. The reconnect
+# interval is 60 seconds. A restart make sure named is working properly.
+- name: Make sure named-pkcs11 DNS is restarted
   tags:
     - ipaserver-master
     - ipa-install
-  service: name=named-pkcs11 state=started
+  service: name=named-pkcs11 state=restarted
+  changed_when: false
 
 - name: wait for services to come up
   tags:
@@ -114,17 +118,13 @@
     password="{{ ipa_admin_password }}"
     ignore_no_modifications=true
 
-#- name: sync client clocks
-#  tags:
-#    - ipaserver-master
-#    - ipa-install
-#  command: ntpdate {{ ansible_default_ipv4.address }}
-#  delegate_to: "{{item}}"
-#  with_items: "{{ groups['ipa_client'] }}"
-#  register: result
-#  failed_when: "result.rc !=0 and 'NTP socket is in use' not in result.stderr"
-#  changed_when: result.rc == 0
-#  when: false
+- name: change resolv.conf to use FreeIPA DNS on all IPA systems
+  tags:
+    - ipaserver-master
+    - ipa-install
+  template: src=etc_resolvconf dest=/etc/resolv.conf
+  delegate_to: "{{item}}"
+  with_items: "{{ groups['ipaserver_master'] + groups['ipaserver_replica'] + groups['ipa_client'] + groups['ipa_nfsserver'] }}"
 
 - name: signal FreeIPA master has been deployed
   tags:
@@ -134,7 +134,7 @@
     content="PKI playbook"
     dest=/etc/ipa/MASTER_DEPLOYED
 
-- include: ../../ipa/tasks/ipaclientinstalled.yml
+- include: ../../ipa-client/tasks/ipaclientinstalled.yml
 
 - name: Create Firefox prefs
   tags:
@@ -193,14 +193,3 @@
     - ipa-install
     - fetch
   fetch: src=/etc/httpd/alias/kra-agent.pem dest={{ vagrant_root }}/inventory/kra-agent.pem flat=yes
-
-- name: Get FreeIPA users
-  tags:
-    - ipaserver-master
-    - ipa-install
-  ipa:
-    args="user-find"
-    password="{{ ipa_admin_password }}"
-    result_regex="User\ login:\ ([\w\.-]*)"
-  register: ipa_users
-  changed_when: false
