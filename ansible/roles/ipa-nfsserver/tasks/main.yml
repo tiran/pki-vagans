@@ -37,11 +37,9 @@
     - ipa-nfsserver
     - ipa-install
   ipa:
-    args="service-add nfs/{{ ansible_fqdn }}"
+    args="service-add --force nfs/{{ ansible_fqdn }}"
     password="{{ ipa_admin_password }}"
     ignore_already_exists=true
-  #delegate_to: "{{item}}"
-  #with_items: "{{ groups['ipaserver_master'] }}"
   when: "'nfs/{{ ansible_fqdn }}' not in keytab.stdout"
 
 - name: Add NFS service to keytab
@@ -165,8 +163,3 @@
   changed_when: "result.rc == 0"
   delegate_to: "{{item}}"
   with_items: "{{ groups['ipaserver_master'] + groups['ipaserver_replica'] + groups['ipa_client'] }}"
-
-#- name: restart client autofs
-#  service: name=autofs state=restarted
-#  delegate_to: "{{item}}"
-#  with_items: "{{ groups['ipa_client'] }}"

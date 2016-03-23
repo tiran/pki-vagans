@@ -7,3 +7,4 @@
   register: result
   delegate_to: "{{item}}"
   with_items: "{{ groups['ipaserver_master'] + groups['ipaserver_replica'] + groups['ipa_client'] + groups['ipa_nfsserver'] }}"
+  when: wait_for_server

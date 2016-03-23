@@ -4,3 +4,4 @@ default_password: Secret123
 
 ipa_dm_password: "{{ default_password }}"
 ipa_admin_password: "{{ default_password }}"
+wait_for_server: false

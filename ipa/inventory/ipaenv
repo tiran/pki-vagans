@@ -1,5 +1,3 @@
-#!/bin/sh
-export IPA_INVENTORY="$(pwd)/inventory"
+export IPA_INVENTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export KRB5_CONFIG="${IPA_INVENTORY}/krb5.conf"
 export KRB5CCNAME="DIR:${IPA_INVENTORY}"
-

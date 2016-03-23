@@ -1,0 +1,12 @@
+Host *
+    GSSAPIAuthentication yes
+    GSSAPIDelegateCredentials yes
+    PreferredAuthentications gssapi-with-mic
+    VerifyHostKeyDNS yes
+    # pubkey auth slows us down
+    PubkeyAuthentication no
+    IdentitiesOnly yes
+    IdentityFile /dev/null
+    # don't use host key validation for the demo
+    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no

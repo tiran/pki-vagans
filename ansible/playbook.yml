@@ -1,10 +1,40 @@
 ---
+- name: safe-guard against race condition
+  hosts: all
+  pre_tasks:
+    # https://github.com/mitchellh/vagrant/issues/6526
+    - name: "wait for the node to be ready"
+      become: false
+      local_action: wait_for host={{ ansible_ssh_host }} port={{ ansible_ssh_port }}
+
+
 - name: install Dogtag PKI CA
   hosts: pki_server
   roles:
     - pki-ca
     - pki-kra
 
+# Use roles instead of meta to parallelize common tasks
+- name: install IPA base system
+  any_errors_fatal: true
+  hosts:
+    - ipaserver_master
+    - ipaserver_replica
+    - ipa_client
+    - ipa_nfsserver
+  roles:
+    - ipa
+
+# parallized
+- name: install IPA server system
+  any_errors_fatal: true
+  hosts:
+    - ipaserver_master
+    - ipaserver_replica
+  roles:
+    - ipaserver
+
+# serialized tasks
 - name: install FreeIPA server master
   hosts: ipaserver_master
   roles:

@@ -3,7 +3,10 @@
 
 Vagrant.require_version ">= 1.6.0"
 
-ENV['ANSIBLE_CONFIG'] = "../ansible/ansible.cfg"
+HERE = File.dirname(__FILE__)
+ENV['ANSIBLE_CONFIG'] = "#{HERE}/../ansible/ansible.cfg"
+# virtual env for Ansible 2
+ENV['PATH'] = "#{HERE}/../venv/bin:" + ENV['PATH']
 
 # Workaround for ssh problem with ED25519 curve
 # SSH not up: #<Vagrant::Errors::NetSSHException: An error occurred in the underlying SSH library that Vagrant uses.
@@ -53,7 +56,7 @@ Vagrant.configure(2) do |config|
             'dummy',
         ]
         ansible.extra_vars = {
-            vagrant_root: File.dirname(__FILE__)
+            vagrant_root: HERE
         }
     end
 end

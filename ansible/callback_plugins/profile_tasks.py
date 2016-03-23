@@ -46,17 +46,21 @@ class CallbackModule(object):
             reverse=True,
         )
 
-        # Just keep the top 10
-        results = results[:10]
-
         # Print the timings
+        fast = 0
+        fast_threshold = 0.5
         for name, elapsed in results:
+            if elapsed < fast_threshold:
+                fast += 1
+                continue
             print(
                 "{0:-<70}{1:->9}".format(
                     '{0} '.format(name),
                     ' {0:.02f}s'.format(elapsed),
                 )
             )
+
+        print("{0} tasks faster than {1} seconds".format(fast, fast_threshold))
 
         total_seconds = sum([x[1] for x in self.stats.items()])
         print("\nPlaybook finished: {0}, {1} total tasks.  {2} elapsed. \n".format(

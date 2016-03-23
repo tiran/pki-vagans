@@ -1,17 +1,26 @@
 
 playbook: ansible/playbook.yml
 
-  play #1 (pki_server): install Dogtag PKI CA	TAGS: []
+  play #1 (all): safe-guard against race condition	TAGS: []
+      TASK TAGS: []
+
+  play #2 (pki_server): install Dogtag PKI CA	TAGS: []
       TASK TAGS: [389ds, bootstrap, common, custom-rpms, dummy, firewall, ipa-install, lxc, network, package-copr, package-install, package-upgrade, pki, pkica, pkikra]
 
-  play #2 (ipaserver_master): install FreeIPA server master	TAGS: []
-      TASK TAGS: [bootstrap, common, custom-rpms, dummy, fetch, firewall, ipa, ipa-install, ipaserver, ipaserver-master, lxc, network, package-copr, package-install, package-upgrade, pki]
+  play #3 (ipaserver_master,ipaserver_replica,ipa_client,ipa_nfsserver): install IPA base system	TAGS: []
+      TASK TAGS: [bootstrap, common, custom-rpms, dummy, firewall, ipa, ipa-install, lxc, network, package-copr, package-install, package-upgrade, pki]
 
-  play #3 (ipaserver_replica): install FreeIPA server replica	TAGS: []
-      TASK TAGS: [bootstrap, common, custom-rpms, dummy, firewall, ipa, ipa-install, ipaserver, ipaserver-replica, lxc, network, package-copr, package-install, package-upgrade, pki]
+  play #4 (ipaserver_master,ipaserver_replica): install IPA server system	TAGS: []
+      TASK TAGS: [firewall, ipaserver, network, package-install]
 
-  play #4 (ipa_client): install FreeIPA client	TAGS: []
-      TASK TAGS: [bootstrap, common, custom-rpms, dummy, firewall, ipa, ipa-client, ipa-install, lxc, network, package-copr, package-install, package-upgrade, pki]
+  play #5 (ipaserver_master): install FreeIPA server master	TAGS: []
+      TASK TAGS: [fetch, ipa-install, ipaserver-master]
 
-  play #5 (ipa_nfsserver): install FreeIPA NFS server	TAGS: []
-      TASK TAGS: [bootstrap, common, custom-rpms, dummy, firewall, ipa, ipa-client, ipa-install, ipa-nfs-homedirs, ipa-nfsserver, lxc, network, package-copr, package-install, package-upgrade, pki]
+  play #6 (ipaserver_replica): install FreeIPA server replica	TAGS: []
+      TASK TAGS: [ipa-install, ipaserver-replica]
+
+  play #7 (ipa_client): install FreeIPA client	TAGS: []
+      TASK TAGS: []
+
+  play #8 (ipa_nfsserver): install FreeIPA NFS server	TAGS: []
+      TASK TAGS: [firewall, ipa-install, ipa-nfs-homedirs, ipa-nfsserver, network, package-install]

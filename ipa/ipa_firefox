@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 
-. $(pwd)/ipaenv
+. inventory/ipaenv
 
 PROFILE="${IPA_INVENTORY}/firefoxprofile"
 

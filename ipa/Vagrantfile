@@ -18,8 +18,8 @@ end
 DOMAIN="ipa.example"
 
 Vagrant.configure(2) do |config|
-    config.vm.box = "cheimes/freeipa-f23"
-    #config.vm.box = "cheimes/freeipa43-f23"
+    #config.vm.box = "cheimes/freeipa-f23"
+    config.vm.box = "cheimes/freeipa43-f23"
     #config.vm.box = "cheimes/freeipa-centos72"
     #config.vm.box = "freeipa-rhel72"
 
@@ -47,7 +47,7 @@ Vagrant.configure(2) do |config|
         end
     end
 
-    config.vm.define "ipaclient" do |host|
+    config.vm.define "ipaclient1" do |host|
         host.vm.hostname = "client1.#{DOMAIN}"
         host.vm.provider :libvirt do |domain|
             domain.memory = 256
@@ -59,32 +59,36 @@ Vagrant.configure(2) do |config|
         host.vm.provider :libvirt do |domain|
             domain.memory = 256
         end
-    end
 
-    config.vm.provision "ansible" do |ansible|
-        ansible.playbook = "../ansible/playbook.yml"
-        ansible.groups = {
-            "ipaserver_master" => ["ipamaster"],
-            "ipaserver_replica" => ["ipareplica1", "ipareplica2"],
-            "ipa_client" => ["ipaclient"],
-            "ipa_nfsserver" => ["ipanfsserver"],
-        }
-        ansible.verbose = 'vv'
-        # package-install: don't download and install packages from the internet
-        # package-upgrade: don't upgrade all packages
-        # package-copr: don't install and use COPR with latest FreeIPA
-        # network: Don't use network (no DNS forwarder, no package installations)
-        # ipa-install: skip installation (ipa-server-install, ipa-client-install)
-        ansible.skip_tags = [
-            'package-install',
-            'package-upgrade',
-            'package-copr',
-            #'network',
-            #'ipa-install',
-            'dummy',
-        ]
-        ansible.extra_vars = {
-            vagrant_root: HERE,
-        }
+        # Vagrant's parallized Ansible is just too fragile. Use one instance
+        # of Ansible with limit=all and let Ansible take care of parallel
+        # execution. It makes the output more readable, too.
+        host.vm.provision "ansible" do |ansible|
+            ansible.limit = "all"
+            ansible.playbook = "../ansible/playbook.yml"
+            ansible.groups = {
+                "ipaserver_master" => ["ipamaster"],
+                "ipaserver_replica" => ["ipareplica1"],
+                "ipa_client" => ["ipaclient1"],
+                "ipa_nfsserver" => ["ipanfsserver"],
+            }
+            ansible.verbose = 'vv'
+            # package-install: don't download and install packages from the internet
+            # package-upgrade: don't upgrade all packages
+            # package-copr: don't install and use COPR with latest FreeIPA
+            # network: Don't use network (no DNS forwarder, no package installations)
+            # ipa-install: skip installation (ipa-server-install, ipa-client-install)
+            ansible.skip_tags = [
+                'package-install',
+                'package-upgrade',
+                'package-copr',
+                #'network',
+                #'ipa-install',
+                'dummy',
+            ]
+            ansible.extra_vars = {
+                vagrant_root: HERE,
+            }
+        end
     end
 end

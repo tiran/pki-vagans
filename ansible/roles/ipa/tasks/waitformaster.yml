@@ -6,6 +6,7 @@
   wait_for: path=/etc/ipa/MASTER_DEPLOYED state=present delay=0 timeout=600
   delegate_to: "{{item}}"
   with_items: "{{ groups['ipaserver_master'] }}"
+  when: wait_for_server
 
 - name: wait for master DNS configuration
   tags:

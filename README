@@ -96,18 +96,20 @@ $ vagrant up
 Sometimes the initial 'vagrant up' fails to configure the client or replica. A
 second provisioning run with 'vagrant provision' fixes the issues.
 
-The FreeIPA playbook deploys three machines:
+The FreeIPA playbook deploys four machines:
 
   * ipamaster (master.ipa.example)
   * ipareplica1 (replica1.ipa.example)
-  * ipaclient (client.ipa.example)
+  * ipaclient1 (client1.ipa.example)
+  * ipanfsserver (nfsserver.ipa.example)
 
 
 When the machines are up, you can acquire a Kerberos ticket and start a local
 instance of Firefox to explore the WebUI. The admin password is 'Secret123'.
 
-$ ./do_kinit admin
-$ ./start_firefox
+$ ./ipa_kinit admin
+$ ./ipa_firefox
+$ ./ipa_ssh admin@client1.ipa.example
 
 Dogtag PKI
 ==========

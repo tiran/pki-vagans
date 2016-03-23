@@ -1,17 +1,31 @@
 ---
 # A private network without forwarder has no default route. Ansible populates
 # ansible_default_ipv4.address from interface with a default route.
+- name: Check default route
+  tags:
+    - bootstrap
+  raw: ip route | grep -q default
+  failed_when: false
+  register: default_route
+
 - name: Create some default route
   tags:
     - bootstrap
-  raw: ip route | grep default >/dev/null || (sudo ip route add default via $(ip route | tail -n1 | awk -F. '{printf "%u.%u.%u.1\n", $1, $2, $3}'))
-  changed_when: false
+  raw: sudo ip route add default via $(ip route | tail -n1 | awk -F. '{printf "%u.%u.%u.1\n", $1, $2, $3}')
+  when: "default_route.rc != 0"
+
+- name: Check nameserver in /etc/resolv.conf
+  tags:
+    - bootstrap
+  raw: egrep -q ^nameserver /etc/resolv.conf
+  failed_when: false
+  register: has_nameserver
 
 - name: Kick DHCP in case /etc/resolv.conf is missing nameserver
   tags:
     - bootstrap
-  raw: "if ! egrep -q ^nameserver /etc/resolv.conf; then ifdown eth0 && ifup eth0; fi"
-  changed_when: false
+  raw: "ifdown eth0 && ifup eth0"
+  when: "has_nameserver.rc != 0"
 
 - name: Check for dnf command
   tags:

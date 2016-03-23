@@ -6,7 +6,7 @@
     - ipa-install
     - sleep
   command: sleep 10
-  when: not ipa_installed
+  when: not ipa_installed and wait_for_server
 
 - name: Create /export home directory with correct context
   tags:

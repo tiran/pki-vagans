@@ -8,6 +8,7 @@
   args:
     creates:
       /etc/ipa/REPLICA_INSTALLED
+  when: wait_for_server
 
 # configure as client first, then promote to replica
 - include: ../../ipa/tasks/ipaclient.yml

@@ -1,0 +1,6 @@
+#!/bin/bash
+set -e
+
+. inventory/ipaenv
+
+ssh -F "${IPA_INVENTORY}/ipa_ssh_config" $@
