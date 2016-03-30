@@ -1,22 +1,22 @@
 ---
-- name: Disable repos to prevent network access
+- name: Disable yum repos to prevent network access
   tags:
     - common
   command: yum-config-manager --disable {{ item }}
   with_items:
     - fedora
     - updates
-  when: not enable_packages
+  when: not enable_network
   changed_when: false
 
-- name: Enable repos
+- name: Enable yum repos
   tags:
     - common
   command: yum-config-manager --enable {{ item }}
   with_items:
     - fedora
     - updates
-  when: enable_packages
+  when: enable_network
   changed_when: false
 
 - name: Auto-select fastest yum mirror

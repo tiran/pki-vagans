@@ -1,5 +1,18 @@
 user_pref("browser.startup.homepage", "https://{{ ansible_fqdn }}");
 
+pref("browser.newtabpage.pinned", '[
+{"url":"https://{{ ansible_fqdn }}/","title":"IPA: Master"},
+{% for host in groups['ipaserver_replica'] %}
+{"url":"https://{{ hostvars[host].ansible_fqdn }}/","title":"IPA: {{ hostvars[host].ansible_hostname }}"},
+{% endfor %}
+{% for host in groups['ipa_httpexample'] %}
+{"url":"http://{{ hostvars[host].ansible_fqdn }}/example","title":"HTTP example"},
+{% endfor %}
+{"url":"http://www.freeipa.org","title":"FreeIPA"}
+]');
+user_pref("browser.newtabpage.enhanced", true);
+user_pref("browser.newtabpage.introShown", true);
+
 pref("browser.rights.3.shown", true);
 pref("browser.startup.homepage_override.mstone","ignore");
 pref("datareporting.healthreport.service.enabled", false);
@@ -12,4 +25,3 @@ pref("network.negotiate-auth.trusted-uris", ".{{ ansible_domain | upper }}");
 pref("network.negotiate-auth.gsslib", "");
 pref("network.negotiate-auth.using-native-gsslib", true);
 pref("network.negotiate-auth.allow-proxies", true);
-

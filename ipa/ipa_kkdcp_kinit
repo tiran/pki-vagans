@@ -1,0 +1,7 @@
+#!/bin/bash
+set -e
+
+. inventory/ipaenv_kkdcp
+
+kinit $@
+klist

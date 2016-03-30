@@ -1,5 +1,6 @@
 ---
 - name: safe-guard against race condition
+  any_errors_fatal: true
   hosts: all
   pre_tasks:
     # https://github.com/mitchellh/vagrant/issues/6526
@@ -12,11 +13,7 @@
 # Use roles instead of meta to parallelize common tasks
 - name: install IPA base system
   any_errors_fatal: true
-  hosts:
-    - ipaserver_master
-    - ipaserver_replica
-    - ipa_client
-    - ipa_nfsserver
+  hosts: all
   roles:
     - ipa
 
@@ -43,16 +40,38 @@
     - ipaserver-replica
 
 - name: install FreeIPA client
+  any_errors_fatal: true
   hosts:
    - ipa_client
+   - ipa_httpexample
    - ipa_nfsserver
+   - ipa_smbserver
+   - ipa_vpnserver
   roles:
     - ipa-client
   # workaround for join race-condition in 4.3.0
   serial: 1
+
+- name: install OpenConnect VPN server for FreeIPA
+  hosts:
+    - ipa_vpnserver
+  roles:
+    - ipa-vpnserver
 
 - name: install FreeIPA NFS server
   hosts:
     - ipa_nfsserver
   roles:
     - ipa-nfsserver
+
+- name: install FreeIPA Samba server
+  hosts:
+    - ipa_smbserver
+  roles:
+    - ipa-smbserver
+
+- name: install FreeIPA Samba server
+  hosts:
+    - ipa_httpexample
+  roles:
+    - ipa-httpexample

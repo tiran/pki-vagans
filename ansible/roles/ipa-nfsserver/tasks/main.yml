@@ -45,7 +45,7 @@
     - ipa-install
   ipa: >
     cmd=ipa-getkeytab
-    args="-s master.ipa.example -p nfs/{{ ansible_fqdn }} -k /etc/krb5.keytab"
+    args="-s {{ ipa_master_fqdn }} -p nfs/{{ ansible_fqdn }} -k /etc/krb5.keytab"
     password="{{ ipa_admin_password }}"
   when: "'nfs/{{ ansible_fqdn }}' not in keytab.stdout"
 
@@ -157,4 +157,4 @@
   failed_when: "result.rc != 0 and 'automount is already configured' not in result.stderr"
   changed_when: "result.rc == 0"
   delegate_to: "{{item}}"
-  with_items: "{{ groups['ipaserver_master'] + groups['ipaserver_replica'] + groups['ipa_client'] }}"
+  with_items: "{{ groups['ipa_nfsclient'] }}"

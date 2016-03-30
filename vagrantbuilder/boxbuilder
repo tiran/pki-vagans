@@ -10,6 +10,10 @@ ANSIBLE_PKG="python2,python2-dnf,libselinux-python,python-firewall,gnupg"
 ADDITIONAL_PGK="rng-tools,openssl"
 DOGTAG_PKG="pki-ca,pki-kra,pki-ocsp,pki-server,dogtag-pki-server-theme,389-ds-base"
 
+OCSERV_PKG="ocserv,openconnect,bridge-utils"
+SAMBA_PKG="samba,samba-client,sssd-libwbclient"
+HTTPD_PKG="httpd,mod_auth_gssapi,mod_authnz_pam,mod_intercept_form_submit,mod_lookup_identity,libsss_simpleifp,sssd-dbus,mod_nss,mod_session"
+
 EXTRA_COMMANDS=""
 
 case $2 in
@@ -40,11 +44,11 @@ esac
 case $1 in
   freeipa)
     NAME=freeipa
-    EXTRA_PKG=$DOGTAG_PKG,$FREEIPA_PKG
+    EXTRA_PKG=$DOGTAG_PKG,$FREEIPA_PKG,$OCSERV_PKG,$SAMBA_PKG,$HTTPD_PKG
     ;;
   freeipa43-copr)
     NAME=freeipa43
-    EXTRA_PKG=$DOGTAG_PKG,$FREEIPA_PKG
+    EXTRA_PKG=$DOGTAG_PKG,$FREEIPA_PKG,$OCSERV_PKG,$SAMBA_PKG,$HTTPD_PKG
     EXTRA_COMMANDS="${EXTRA_COMMANDS} --run freeipa43_copr"
     ;;
   dogtag)

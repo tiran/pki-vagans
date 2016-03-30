@@ -1,0 +1,196 @@
+---
+- name: install Apache modules
+  tags:
+    - ipa-httpexample
+    - package-install
+    - network
+  yum: name={{ item }} state=present
+  with_items:
+    - httpd
+    - mod_auth_gssapi
+    - mod_authnz_pam
+    - mod_intercept_form_submit
+    - mod_lookup_identity
+    - libsss_simpleifp
+    - sssd-dbus
+    - mod_nss
+    - mod_session
+  notify:
+    - restart httpd
+    - restart sssd
+
+- name: Open Firewall for Apache
+  tags:
+    - ipa-httpexample
+    - firewall
+  firewalld:
+    service={{ item }}
+    permanent=true
+    state=enabled
+    immediate=yes
+  with_items:
+    - http
+    - https
+  when: has_firewalld.stat.exists
+
+- name: setsebool allow_httpd_mod_auth_pam on
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  seboolean: name=httpd_mod_auth_pam state=yes persistent=yes
+  notify:
+    - restart httpd
+
+- name: setsebool httpd_dbus_sssd on
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  seboolean: name=httpd_dbus_sssd state=yes persistent=yes
+  notify:
+    - restart httpd
+
+- name: Get keytab content
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  command: klist -ke /etc/httpd.keytab
+  register: keytab
+  changed_when: false
+  failed_when: "keytab.rc != 0 and 'not found' not in keytab.stderr"
+
+- name: Create HTTP service
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  ipa:
+    args="service-add --force HTTP/{{ ansible_fqdn }}"
+    password="{{ ipa_admin_password }}"
+    ignore_already_exists=true
+  when: "'HTTP/{{ ansible_fqdn }}' not in keytab.stdout"
+
+- name: Add HTTP service to keytab
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  ipa: >
+    cmd=ipa-getkeytab
+    args="-s {{ ipa_master_fqdn }} -p HTTP/{{ ansible_fqdn }} -k /etc/httpd.keytab"
+    password="{{ ipa_admin_password }}"
+  when: "'HTTP/{{ ansible_fqdn }}' not in keytab.stdout"
+  notify:
+    - restart httpd
+
+- name: chown /etc/httpd.keytab
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  file:
+    path=/etc/httpd.keytab
+    owner=apache
+    group=apache
+    mode=600
+    seuser=unconfined_u
+    serole=object_r
+    setype=httpd_config_t
+    selevel=s0
+  notify:
+    - restart httpd
+
+# SSSD
+- name: Add ldap_user_extra_attrs to sssd.conf
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  ini_file:
+    dest=/etc/sssd/sssd.conf
+    section="domain/{{ ansible_domain }}"
+    option=ldap_user_extra_attrs
+    value="mail, givenname, sn"
+  notify:
+    - restart sssd
+    - flush sssd
+
+- name: Add [ifp]allowed_uids to sssd.conf
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  ini_file:
+    dest=/etc/sssd/sssd.conf
+    section="ifp"
+    option=allowed_uids
+    value="apache, root"
+  notify:
+    - restart sssd
+    - flush sssd
+
+- name: Add [ifp]user_attributes to sssd.conf
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  ini_file:
+    dest=/etc/sssd/sssd.conf
+    section="ifp"
+    option=user_attributes
+    value="+mail, +givenname, +sn"
+  notify:
+    - restart sssd
+    - flush sssd
+
+# XXX may override additional values
+- name: Add [ifp]user_attributes to sssd.conf
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  ini_file:
+    dest=/etc/sssd/sssd.conf
+    section="sssd"
+    option=services
+    value="nss, sudo, pam, autofs, ssh, ifp"
+  notify:
+    - restart sssd
+    - flush sssd
+
+# Example app
+- name: Create Apache config for example
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  template:
+    src=example.conf
+    dest=/etc/httpd/conf.d/example.conf
+  notify:
+    - restart httpd
+
+- name: Create Apache example app
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  copy:
+    src=example/
+    dest=/srv/www/example/
+    mode=644
+    directory_mode=755
+    owner=root
+    group=root
+    seuser=system_u
+    serole=object_r
+    setype=httpd_sys_content_t
+    selevel=s0
+  notify:
+    - restart httpd
+
+- name: Create PAM service for Apache example app
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  template:
+    src=pam_http_example
+    dest=/etc/pam.d/http_example
+  notify:
+    - restart httpd
+
+- name: Enable Apache HTTPD service
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  service: name=httpd.service enabled=yes state=started

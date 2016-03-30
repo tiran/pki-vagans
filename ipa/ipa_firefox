@@ -10,4 +10,4 @@ mkdir "${PROFILE}"
 cp "${IPA_INVENTORY}/prefs.js" "${PROFILE}/prefs.js"
 certutil -N -d "${PROFILE}" --empty-password
 certutil -A -d "${PROFILE}" -n 'IPA CA' -i "${IPA_INVENTORY}/ca.crt" -t "TC,C,T"
-firefox -no-remote -profile "${PROFILE}"
+firefox -no-remote -profile "${PROFILE}" $@

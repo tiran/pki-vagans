@@ -19,6 +19,15 @@ playbook: ansible/ipa-playbook.yml
   play #6 (install FreeIPA client):	TAGS: []
     TASK TAGS: [ipa, ipa-client, ipa-install]
 
-  play #7 (install FreeIPA NFS server):	TAGS: []
+  play #7 (install OpenConnect VPN server for FreeIPA):	TAGS: []
+    TASK TAGS: [fetch, firewall, ipa-install, ipa-vpnserver, network, package-install]
+
+  play #8 (install FreeIPA NFS server):	TAGS: []
     TASK TAGS: [firewall, ipa-install, ipa-nfs-homedirs, ipa-nfsserver, network, package-install]
+
+  play #9 (install FreeIPA Samba server):	TAGS: []
+    TASK TAGS: [firewall, ipa-install, ipa-smbserver, network, package-install]
+
+  play #10 (install FreeIPA Samba server):	TAGS: []
+    TASK TAGS: [firewall, ipa-httpexample, ipa-install, network, package-install]
 

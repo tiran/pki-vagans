@@ -1,22 +1,22 @@
 ---
-- name: Disable repos to prevent network access
+- name: Disable dnf repos to prevent network access
   tags:
     - common
   command: dnf config-manager --set-disabled {{ item }}
   with_items:
     - fedora
     - updates
-  when: not enable_packages
+  when: not enable_network
   changed_when: false
 
-- name: Enable repos
+- name: Enable dnf repos
   tags:
     - common
   command: dnf config-manager --set-enabled {{ item }}
   with_items:
     - fedora
     - updates
-  when: enable_packages
+  when: enable_network
   changed_when: false
 
 - name: Auto select fastest DNF mirror

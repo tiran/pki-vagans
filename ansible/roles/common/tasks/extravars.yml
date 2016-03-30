@@ -24,3 +24,17 @@
     - network
   set_fact: enable_network=true
   changed_when: false
+
+- name: Get nmcli device info
+  tags:
+    - common
+  shell:
+    "nmcli -t -f GENERAL.CONNECTION device show {{ ansible_default_ipv4.interface }} | awk -F: '{print $2}'"
+  register: result
+  changed_when: false
+
+- name: Set nmcli device info fact
+  tags:
+    - common
+  set_fact: nm_conn="'{{ result.stdout_lines[0] }}'"
+  changed_when: false

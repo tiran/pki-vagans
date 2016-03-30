@@ -1,0 +1,9 @@
+---
+- name: restart httpd
+  service: name=httpd state=restarted
+
+- name: restart sssd
+  service: name=sssd state=restarted
+
+- name: flush sssd
+  command: sss_cache -E

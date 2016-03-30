@@ -1,0 +1,3 @@
+---
+- name: restart ocserv
+  service: name=ocserv state=restarted

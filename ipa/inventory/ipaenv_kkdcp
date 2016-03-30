@@ -1,2 +1,2 @@
 export IPA_INVENTORY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-export KRB5_CONFIG="${IPA_INVENTORY}/krb5.conf"
+export KRB5_CONFIG="${IPA_INVENTORY}/krb5_kkdcp.conf"

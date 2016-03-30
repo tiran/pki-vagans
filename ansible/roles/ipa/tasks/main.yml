@@ -21,6 +21,13 @@
   register: reversezone
   changed_when: false
 
+- name: Set ipa master fact
+  tags:
+    - ipa
+  set_fact:
+    ipa_master_fqdn="{{ hostvars[groups['ipaserver_master'][0]]['ansible_fqdn'] }}"
+  when: ipa_master_fqdn is not defined
+
 - name: install FreeIPA client package (Fedora)
   tags:
     - ipa

@@ -1,0 +1,9 @@
+---
+- name: restart samba
+  service: name={{ item }} state=restarted
+  with_items:
+    - smb.service
+    - nmb.service
+
+- name: restart sssd
+  service: name=sssd state=restarted

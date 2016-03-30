@@ -1,0 +1,180 @@
+---
+- name: install ocserv VPN server
+  tags:
+    - ipa-vpnserver
+    - package-install
+    - network
+  yum: name=ocserv state=present
+
+- name: Open Firewall services for ocserv VPN server
+  tags:
+    - ipa-vpnserver
+    - firewall
+  firewalld:
+    service={{ item }}
+    permanent=true
+    state=enabled
+    immediate=yes
+  with_items:
+    - https
+  when: has_firewalld.stat.exists
+
+- name: Open Firewall DTLS UDP port for ocserv VPN server
+  tags:
+    - ipa-vpnserver
+    - firewall
+  firewalld:
+    port={{ item }}
+    permanent=true
+    state=enabled
+    immediate=yes
+  with_items:
+    - 443/udp
+  when: has_firewalld.stat.exists
+
+- name: Get keytab /etc/ocserv/key.tab content
+  tags:
+    - ipa-vpnserver
+    - ipa-install
+  command: klist -ke /etc/ocserv/key.tab
+  register: keytab
+  changed_when: false
+  failed_when: "keytab.rc != 0 and 'not found' not in keytab.stderr"
+
+- name: Create VPN service
+  tags:
+    - ipa-vpnserver
+    - ipa-install
+  ipa:
+    args="service-add --force HTTP/{{ ansible_fqdn }}"
+    password="{{ ipa_admin_password }}"
+    ignore_already_exists=true
+  when: "'HTTP/{{ ansible_fqdn }}' not in keytab.stdout"
+
+- name: Add VPN service to keytab /etc/ocserv/key.tab
+  tags:
+    - ipa-vpnserver
+    - ipa-install
+  ipa: >
+    cmd=ipa-getkeytab
+    args="-s {{ ipa_master_fqdn }} -p HTTP/{{ ansible_fqdn }} -k /etc/ocserv/key.tab"
+    password="{{ ipa_admin_password }}"
+  when: "'HTTP/{{ ansible_fqdn }}' not in keytab.stdout"
+
+- name: Look for /etc/pki/ocserv/public/server.crt
+  tags:
+    - ipa-vpnserver
+    - ipa-install
+  stat: path=/etc/pki/ocserv/public/server.crt
+  register: vpn_server_crt
+
+- name: Generate private key /etc/pki/ocserv/private/server.key
+  tags:
+    - ipa-vpnserver
+    - ipa-install
+  command: >
+    certtool
+    --generate-privkey
+    --outfile /etc/pki/ocserv/private/server.key
+  args:
+    creates:
+      /etc/pki/ocserv/private/server.key
+  when: not vpn_server_crt.stat.exists
+  notify:
+    - restart ocserv
+
+- name: Create CSR template
+  tags:
+    - ipa-vpnserver
+    - ipa-install
+  template: src=csr_template dest=/etc/pki/ocserv/public/server.csr.template
+  when: not vpn_server_crt.stat.exists
+
+- name: Generate cert request file /etc/pki/ocserv/public/server.csr
+  tags:
+    - ipa-vpnserver
+    - ipa-install
+  command: >
+    certtool
+    --generate-request
+    --load-privkey /etc/pki/ocserv/private/server.key
+    --outfile /etc/pki/ocserv/public/server.csr
+    --template /etc/pki/ocserv/public/server.csr.template
+  args:
+    creates:
+      /etc/ocserv/server.csr
+  when: not vpn_server_crt.stat.exists
+
+# XXX use certmonger?
+- name: Request certificate from FreeIPA
+  tags:
+    - ipa-vpnserver
+    - ipa-install
+  ipa:
+    args="cert-request --principal HTTP/{{ ansible_fqdn }} /etc/pki/ocserv/public/server.csr"
+    password="{{ ipa_admin_password }}"
+    ignore_already_exists=true
+    result_regex="Serial number:\s*(\d+)"
+  register: cert
+  when: not vpn_server_crt.stat.exists
+
+- name: Fetch cert as /etc/pki/ocserv/public/server.crt
+  tags:
+    - ipa-vpnserver
+    - ipa-install
+  ipa:
+    args="cert-show {{ cert.results[0] }} --out=/etc/pki/ocserv/public/server.crt"
+    password="{{ ipa_admin_password }}"
+    ignore_already_exists=true
+  when: not vpn_server_crt.stat.exists
+  notify:
+    - restart ocserv
+
+- name: Create a link from /etc/pki/ocserv/cacerts/ca.crt to /etc/ipa/ca.crt
+  tags:
+    - ipa-vpnserver
+    - ipa-install
+  file:
+    src=/etc/ipa/ca.crt
+    dest=/etc/pki/ocserv/cacerts/ca.crt
+    state=link
+  notify:
+    - restart ocserv
+
+- name: Write ocserv.conf
+  tags:
+    - ipa-vpnserver
+    - ipa-install
+  template:
+    src=ocserv.conf
+    dest=/etc/ocserv/ocserv.conf
+    force=yes
+    backup=true
+  notify:
+    - restart ocserv
+
+# XXX incomplete, routing is missing
+
+- name: Enable ocserv
+  tags:
+    - ipa-vpnserver
+    - ipa-install
+  service: name=ocserv enabled=yes state=started
+
+- name: Write custom krb5.conf
+  tags:
+    - ipa-vpnserver
+    - ipa-install
+  template:
+    src=../../ipa/templates/krb5.conf
+    dest=/tmp/krb5.conf
+
+- name: Fetch krb5config
+  tags:
+    - ipa-vpnserver
+    - ipa-install
+    - fetch
+  fetch:
+    src=/tmp/krb5.conf
+    dest={{ vagrant_root }}/inventory/krb5_kkdcp.conf
+    flat=yes

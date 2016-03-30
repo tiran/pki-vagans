@@ -152,6 +152,19 @@
   service: name=firewalld enabled=yes state=started
   when: has_firewalld.stat.exists
 
+- name: Open firewall ports elemental services
+  tags:
+    - common
+    - firewall
+  firewalld:
+    service={{ item }}
+    permanent=true
+    state=enabled
+    immediate=yes
+  with_items:
+    - ssh
+  when: has_firewalld.stat.exists
+
 # CPRNG
 - name: Install rng tools
   tags:

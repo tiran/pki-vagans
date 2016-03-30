@@ -1,0 +1,85 @@
+---
+- name: install Samba dependencies
+  tags:
+    - ipa-smbserver
+    - package-install
+    - network
+  yum: name={{ item }} state=present
+  with_items:
+    - samba
+    - samba-client
+    - sssd-libwbclient
+  notify:
+    - restart sssd
+    - restart samba
+
+- name: Open Firewall for Samba
+  tags:
+    - ipa-smbserver
+    - firewall
+  firewalld:
+    service={{ item }}
+    permanent=true
+    state=enabled
+    immediate=yes
+  with_items:
+    - samba
+  when: has_firewalld.stat.exists
+
+- name: setsebool samba_enable_home_dirs on
+  tags:
+    - ipa-smbserver
+    - ipa-install
+  seboolean: name=samba_enable_home_dirs state=yes persistent=yes
+
+- name: Get keytab content
+  tags:
+    - ipa-smbserver
+    - ipa-install
+  command: klist -ke /etc/samba/samba.keytab
+  register: keytab
+  changed_when: false
+  failed_when: "keytab.rc != 0 and 'not found' not in keytab.stderr"
+
+- name: Create CIFS service
+  tags:
+    - ipa-smbserver
+    - ipa-install
+  ipa:
+    args="service-add --force cifs/{{ ansible_fqdn }}"
+    password="{{ ipa_admin_password }}"
+    ignore_already_exists=true
+  when: "'cifs/{{ ansible_fqdn }}' not in keytab.stdout"
+
+- name: Add CIFS service to keytab
+  tags:
+    - ipa-smbserver
+    - ipa-install
+  ipa: >
+    cmd=ipa-getkeytab
+    args="-s {{ ipa_master_fqdn }} -p cifs/{{ ansible_fqdn }} -k /etc/samba/samba.keytab"
+    password="{{ ipa_admin_password }}"
+  when: "'cifs/{{ ansible_fqdn }}' not in keytab.stdout"
+  notify:
+    - restart samba
+
+- name: Write smb.conf
+  tags:
+    - ipa-smbserver
+    - ipa-install
+  template:
+    src=smb.conf
+    dest=/etc/samba/smb.conf
+    force=yes
+    backup=true
+  notify:
+    - restart samba
+
+- name: Enable Samba services
+  tags:
+    - ipa-smbserver
+    - ipa-install
+  service: name={{ item }} enabled=yes state=started
+  with_items:
+    - smb.service
+    - nmb.service

@@ -24,7 +24,7 @@
 - name: Kick DHCP in case /etc/resolv.conf is missing nameserver
   tags:
     - bootstrap
-  raw: "ifdown eth0 && ifup eth0"
+  raw: "systemctl restart NetworkManager"
   when: "has_nameserver.rc != 0"
 
 - name: Check for dnf command

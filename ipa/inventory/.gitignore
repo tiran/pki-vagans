@@ -1,12 +1,10 @@
 ca.crt
 *default.conf
 kra-agent.pem
-krb5.conf
-krb5cc
+krb5*.conf
+ccache*
 prefs.js
 replica*.gpg
 resolv.conf
 firefoxprofile
-primary
-tkt*
 ssh-config

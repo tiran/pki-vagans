@@ -80,18 +80,22 @@ FreeIPA
 =======
 
 $ cd ipa
-$ vagrant up
+$ vagrant up --no-provision
+$ vagrant provision
 
-Sometimes the initial 'vagrant up' fails to configure the client or replica. A
-second provisioning run with 'vagrant provision' fixes the issues.
+Vagrant's multi-machine setup can run into a race condition and starts
+provisioning before all machines have a new SSH key.
+'vagrant up --no-provision' followed by 'vagrant provision' is more stable.
+Sometimes the initial 'vagrant provision' fails to configure the client or
+replica. A second provisioning run with 'vagrant provision' fixes the issues.
 
-The FreeIPA playbook deploys four machines:
+The FreeIPA playbook deploys five machines:
 
-  * ipamaster (master.ipa.example)
+  * ipamaster (master.ipa.example) with CA and KRA
   * ipareplica1 (replica1.ipa.example)
   * ipaclient1 (client1.ipa.example)
-  * ipanfsserver (nfsserver.ipa.example)
-
+  * ipafilesserver (fileserver.ipa.example) for NFS and Samba
+  * ipavpnserver (vpn.ipa.example) for ocserv VPN
 
 When the machines are up, you can acquire a Kerberos ticket and start a local
 instance of Firefox to explore the WebUI. The admin password is 'Secret123'.
