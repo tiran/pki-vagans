@@ -32,6 +32,24 @@
     - 443/udp
   when: has_firewalld.stat.exists
 
+# http://www.infradead.org/ocserv/recipes-ocserv-pseudo-bridge.html
+- name: Enable IPv4 proxy_arp
+  tags:
+    - ipa-vpnserver
+    - ipa-install
+  sysctl: name="net.ipv4.conf.all.proxy_arp" value=1 state=present reload=true
+
+- name: Enable masquerading
+  tags:
+    - ipa-vpnserver
+    - ipa-install
+  command: firewall-cmd --add-masquerade
+  register: result
+  changed_when: "'ALREADY_ENABLED' not in result.stdout"
+  when: has_firewalld.stat.exists
+  notify:
+    - permanent masquerade
+
 - name: Get keytab /etc/ocserv/key.tab content
   tags:
     - ipa-vpnserver
