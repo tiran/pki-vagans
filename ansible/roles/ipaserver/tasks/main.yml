@@ -37,29 +37,7 @@
     state=enabled
     immediate=yes
   with_items:
-    - http
-    - https
-    - ldap
-    - ldaps
+    - freeipa-ldap
+    - freeipa-ldaps
     - dns
-    - kerberos
-    - kpasswd
-    - ntp
-  when: has_firewalld.stat.exists
-
-- name: Open Firewall for ports
-  tags:
-    - ipaserver
-    - firewall
-  firewalld:
-    port={{ item }}
-    permanent=true
-    state=enabled
-    immediate=yes
-  with_items:
-    - 9180/tcp
-    - 9443-9446/tcp
-    - 9701/tcp
-    - 7389/tcp
-    - 8443/tcp
   when: has_firewalld.stat.exists
