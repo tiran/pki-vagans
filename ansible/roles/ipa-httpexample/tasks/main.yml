@@ -53,7 +53,7 @@
   tags:
     - ipa-httpexample
     - ipa-install
-  command: klist -ke /etc/httpd.keytab
+  command: klist -ke {{ http_keytab }}
   register: keytab
   changed_when: false
   failed_when: "keytab.rc != 0 and 'not found' not in keytab.stderr"
@@ -74,18 +74,18 @@
     - ipa-install
   ipa: >
     cmd=ipa-getkeytab
-    args="-s {{ ipa_master_fqdn }} -p HTTP/{{ ansible_fqdn }} -k /etc/httpd.keytab"
+    args="-s {{ ipa_master_fqdn }} -p HTTP/{{ ansible_fqdn }} -k {{ http_keytab }}"
     password="{{ ipa_admin_password }}"
   when: "'HTTP/{{ ansible_fqdn }}' not in keytab.stdout"
   notify:
     - restart httpd
 
-- name: chown /etc/httpd.keytab
+- name: chown http.keytab
   tags:
     - ipa-httpexample
     - ipa-install
   file:
-    path=/etc/httpd.keytab
+    path={{ http_keytab }}
     owner=apache
     group=apache
     mode=600
@@ -93,6 +93,93 @@
     serole=object_r
     setype=httpd_config_t
     selevel=s0
+  notify:
+    - restart httpd
+
+# mod_nss cert
+- name: Get ipa-getcert list
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  command:
+    ipa-getcert list
+  register:
+    ipa_getcert
+  changed_when: false
+
+- name: Set has_server_cert fact
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  set_fact: has_server_cert="{{'location=\'/etc/httpd/alias\',nickname=\'Server-Cert\'' in ipa_getcert.stdout}}"
+  changed_when: false
+
+- name: Restart certmonger when in state CA_UNREACHABLE
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  service: name=certmonger.service enabled=yes state=restarted
+  when: "'CA_UNREACHABLE' in ipa_getcert.stdout"
+
+- name: Remove example certs from /etc/httpd/alias NSSDB
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  command:
+    certutil -D -d /etc/httpd/alias/ -n 'Server-Cert'
+  when: not has_server_cert
+  notify:
+    - restart httpd
+
+- name: Request certificate with ipa-getcert
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  ipa:
+    cmd=ipa-getcert
+    args="request -d /etc/httpd/alias -n 'Server-Cert' -t 'NSS Certificate DB' -T caIPAserviceCert -C /usr/libexec/ipa/certmonger/restart_httpd"
+    password="{{ ipa_admin_password }}"
+  when: not has_server_cert
+  notify:
+    - restart httpd
+
+- name: Replace nss.conf port 8443 with 443
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  replace: dest=/etc/httpd/conf.d/nss.conf regexp='8443' replace='443' backup=yes
+  notify:
+    - restart httpd
+
+- name: Enable rewrite engine for nss.conf
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  lineinfile:
+    dest=/etc/httpd/conf.d/nss.conf
+    regexp='^RewriteEngine'
+    line='RewriteEngine On'
+    insertafter='^NSSEngine'
+  notify:
+    - restart httpd
+
+- name: Add rewrite rule for / to nss.conf
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  lineinfile:
+    dest=/etc/httpd/conf.d/nss.conf
+    regexp='^RewriteRule'
+    line='RewriteRule ^/$ https://{{ ansible_fqdn }}/example [L,NC,R=301]'
+    insertafter='^RewriteEngine'
+  notify:
+    - restart httpd
+
+- name: Remove welcome.conf
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  file: dest=/etc/httpd/conf.d/welcome.conf state=absent
   notify:
     - restart httpd
 

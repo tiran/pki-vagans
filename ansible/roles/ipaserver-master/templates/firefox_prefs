@@ -6,7 +6,7 @@ pref("browser.newtabpage.pinned", '[
 {"url":"https://{{ hostvars[host].ansible_fqdn }}/","title":"IPA: {{ hostvars[host].ansible_hostname }}"},
 {% endfor %}
 {% for host in groups['ipa_httpexample'] | default([]) %}
-{"url":"http://{{ hostvars[host].ansible_fqdn }}/example","title":"HTTP example"},
+{"url":"https://{{ hostvars[host].ansible_fqdn }}/example","title":"HTTP example"},
 {% endfor %}
 {"url":"http://www.freeipa.org","title":"FreeIPA"}
 ]');
