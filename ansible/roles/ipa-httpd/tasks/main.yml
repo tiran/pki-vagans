@@ -120,20 +120,12 @@
   notify:
     - restart httpd
 
-# https://fedorahosted.org/freeipa/ticket/5653
-- name: WORKAROUND 5653, restart certmonger
+# Also a workaround for https://fedorahosted.org/freeipa/ticket/5653
+- name: Wait for certmonger
   tags:
     - ipa-httpd
     - ipa-install
-  service: name=certmonger.service state=restarted
-  when: not has_server_cert
-
-- name: WORKAROUND 5653, sleep to give certmonger a chance to fetch a cert
-  tags:
-    - ipa-httpd
-    - ipa-install
-  command: sleep 10
-  when: not has_server_cert
+  waitforcertmonger:
 
 - name: Replace nss.conf port 8443 with 443
   tags:

@@ -14,7 +14,7 @@ https://github.com/admiyo/rippowam.
 Requirements
 ============
 
-The FreeIPA setup needs about 2.5 GB of free RAM and 6 GB disk space.
+The FreeIPA setup needs about 2.5 to 3 GB of free RAM and 6 GB disk space.
 
 Install dependencies
 ====================
@@ -89,13 +89,14 @@ provisioning before all machines have a new SSH key.
 Sometimes the initial 'vagrant provision' fails to configure the client or
 replica. A second provisioning run with 'vagrant provision' fixes the issues.
 
-The FreeIPA playbook deploys five machines:
+The FreeIPA playbook deploys six machines:
 
   * ipamaster (master.ipa.example) with CA and KRA
   * ipareplica1 (replica1.ipa.example)
   * ipaclient1 (client1.ipa.example)
-  * ipafilesserver (fileserver.ipa.example) for NFS and Samba
+  * ipafilesserver (fileserver.ipa.example) for NFS, Samba and Apache demos
   * ipavpnserver (vpn.ipa.example) for ocserv VPN
+  * ipaidpserver (idp.ipa.example) for Ipsilon IdP
 
 When the machines are up, you can acquire a Kerberos ticket and start a local
 instance of Firefox to explore the WebUI. The admin password is 'Secret123'.
