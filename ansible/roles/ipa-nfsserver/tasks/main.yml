@@ -45,7 +45,7 @@
     - ipa-install
   ipa: >
     cmd=ipa-getkeytab
-    args="-s {{ ipa_master_fqdn }} -p nfs/{{ ansible_fqdn }} -k /etc/krb5.keytab"
+    args="-s $IPA_SERVER -p nfs/{{ ansible_fqdn }} -k /etc/krb5.keytab"
     password="{{ ipa_admin_password }}"
   when: "'nfs/{{ ansible_fqdn }}' not in keytab.stdout"
 

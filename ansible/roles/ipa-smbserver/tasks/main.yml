@@ -57,7 +57,7 @@
     - ipa-install
   ipa: >
     cmd=ipa-getkeytab
-    args="-s {{ ipa_master_fqdn }} -p cifs/{{ ansible_fqdn }} -k /etc/samba/samba.keytab"
+    args="-s $IPA_SERVER -p cifs/{{ ansible_fqdn }} -k /etc/samba/samba.keytab"
     password="{{ ipa_admin_password }}"
   when: "'cifs/{{ ansible_fqdn }}' not in keytab.stdout"
   notify:

@@ -32,7 +32,7 @@ Vagrant.configure(2) do |config|
         config.hostmanager.manage_guest = false
     end
 
-    # 250 MB is enough for VPN, NFS and client
+    # 256 MB is enough for VPN, NFS and client
     config.vm.provider :libvirt do |domain|
         domain.memory = 256
     end
@@ -60,6 +60,10 @@ Vagrant.configure(2) do |config|
         host.vm.hostname = "vpn.#{DOMAIN}"
     end
 
+    config.vm.define "ipaidpserver" do |host|
+        host.vm.hostname = "idp.#{DOMAIN}"
+    end
+
     config.vm.define "ipaclient1" do |host|
         host.vm.hostname = "client1.#{DOMAIN}"
 
@@ -77,6 +81,8 @@ Vagrant.configure(2) do |config|
                 "ipa_nfsserver" => ["ipafileserver"],
                 "ipa_smbserver" => ["ipafileserver"],
                 "ipa_httpexample" => ["ipafileserver"],
+                "ipa_ipsilon_idp" => ["ipaidpserver"],
+                "ipa_sp_example" => ["ipafileserver"],
                 "ipa_nfsclient" => ["ipamaster", "ipareplica1", "ipaclient1"],
             }
             ansible.verbose = 'vv'
@@ -93,9 +99,10 @@ Vagrant.configure(2) do |config|
                 #'ipa-install',
                 'dummy',
             ]
+            # ansible.tags = ['bootstrap', 'common']
             ansible.extra_vars = {
                 vagrant_root: HERE,
-                ipa_master_fqdn: "master.#{DOMAIN}"
+                #ipa_master_fqdn: "master.#{DOMAIN}"
             }
         end
     end

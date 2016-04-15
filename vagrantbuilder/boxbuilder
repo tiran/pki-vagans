@@ -13,6 +13,7 @@ DOGTAG_PKG="pki-ca,pki-kra,pki-ocsp,pki-server,dogtag-pki-server-theme,389-ds-ba
 OCSERV_PKG="ocserv,openconnect,bridge-utils"
 SAMBA_PKG="samba,samba-client,sssd-libwbclient"
 HTTPD_PKG="httpd,mod_auth_gssapi,mod_authnz_pam,mod_intercept_form_submit,mod_lookup_identity,libsss_simpleifp,sssd-dbus,mod_nss,mod_session"
+IPSILON_PKG="ipsilon,ipsilon-client,ipsilon-saml2,ipsilon-openid,ipsilon-persona,ipsilon-authform,ipsilon-infosssd,ipsilon-tools-ipa,ipsilon-authgssapi,ipsilon-authfas,ipsilon-authpam"
 
 EXTRA_COMMANDS=""
 
@@ -44,11 +45,11 @@ esac
 case $1 in
   freeipa)
     NAME=freeipa
-    EXTRA_PKG=$DOGTAG_PKG,$FREEIPA_PKG,$OCSERV_PKG,$SAMBA_PKG,$HTTPD_PKG
+    EXTRA_PKG=$DOGTAG_PKG,$FREEIPA_PKG,$OCSERV_PKG,$SAMBA_PKG,$HTTPD_PKG,$IPSILON_PKG
     ;;
   freeipa43-copr)
     NAME=freeipa43
-    EXTRA_PKG=$DOGTAG_PKG,$FREEIPA_PKG,$OCSERV_PKG,$SAMBA_PKG,$HTTPD_PKG
+    EXTRA_PKG=$DOGTAG_PKG,$FREEIPA_PKG,$OCSERV_PKG,$SAMBA_PKG,$HTTPD_PKG,$IPSILON_PKG
     EXTRA_COMMANDS="${EXTRA_COMMANDS} --run freeipa43_copr"
     ;;
   dogtag)

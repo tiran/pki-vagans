@@ -5,8 +5,14 @@ pref("browser.newtabpage.pinned", '[
 {% for host in groups['ipaserver_replica'] | default([]) %}
 {"url":"https://{{ hostvars[host].ansible_fqdn }}/","title":"IPA: {{ hostvars[host].ansible_hostname }}"},
 {% endfor %}
+{% for host in groups['ipa_ipsilon_idp'] | default([]) %}
+{"url":"https://{{ hostvars[host].ansible_fqdn }}/idp","title":"Ipsilon IdP"},
+{% endfor %}
+{% for host in groups['ipa_sp_example'] | default([]) %}
+{"url":"https://{{ hostvars[host].ansible_fqdn }}/sp_example","title":"HTTP mod_auth_mellon with Ipsilon example"},
+{% endfor %}
 {% for host in groups['ipa_httpexample'] | default([]) %}
-{"url":"https://{{ hostvars[host].ansible_fqdn }}/example","title":"HTTP example"},
+{"url":"https://{{ hostvars[host].ansible_fqdn }}/example","title":"HTTP mod_auth_gssapi / mod_lookup identity example"},
 {% endfor %}
 {"url":"http://www.freeipa.org","title":"FreeIPA"}
 ]');

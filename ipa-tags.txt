@@ -5,7 +5,7 @@ playbook: ansible/ipa-playbook.yml
     TASK TAGS: [bootstrap]
 
   play #2 (install IPA base system):	TAGS: []
-    TASK TAGS: [bootstrap, common, custom-rpms, dummy, firewall, ipa, lxc, network, package-copr, package-install, package-upgrade, pki]
+    TASK TAGS: [bootstrap, common, custom-rpms, dummy, firewall, install, ipa, lxc, network, package-copr, package-install, package-upgrade, pki]
 
   play #3 (install IPA server system):	TAGS: []
     TASK TAGS: [firewall, ipaserver, network, package-install]
@@ -28,6 +28,12 @@ playbook: ansible/ipa-playbook.yml
   play #9 (install FreeIPA Samba server):	TAGS: []
     TASK TAGS: [firewall, ipa-install, ipa-smbserver, network, package-install]
 
-  play #10 (install FreeIPA Samba server):	TAGS: []
-    TASK TAGS: [firewall, ipa-httpexample, ipa-install, network, package-install]
+  play #10 (install FreeIPA HTTP example app):	TAGS: []
+    TASK TAGS: [firewall, ipa-http, ipa-httpd, ipa-httpexample, ipa-install, network, package-install]
+
+  play #11 (install Ipsilon Identity Provider):	TAGS: []
+    TASK TAGS: [firewall, install, ipa-http, ipa-httpd, ipa-install, ipa-ipsilon-idp, network, package-install]
+
+  play #12 (install Ipsilon SP example):	TAGS: []
+    TASK TAGS: [firewall, install, ipa-http, ipa-httpd, ipa-install, ipa-sp-example, network, package-install]
 

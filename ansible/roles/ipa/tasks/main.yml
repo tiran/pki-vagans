@@ -21,13 +21,6 @@
   register: reversezone
   changed_when: false
 
-- name: Set ipa master fact
-  tags:
-    - ipa
-  set_fact:
-    ipa_master_fqdn="{{ hostvars[groups['ipaserver_master'][0]]['ansible_fqdn'] }}"
-  when: ipa_master_fqdn is not defined
-
 - name: install FreeIPA client package (Fedora)
   tags:
     - ipa
@@ -49,6 +42,23 @@
    - ipa-client
    - ipa-admintools
   when: ansible_distribution == "RedHat" or ansible_distribution == "CentOS"
+
+- name: Disable mod_ssl configuration
+  tags:
+    - ipa
+    - install
+  copy:
+    src=replaced
+    dest={{ item }}
+    backup=true
+    owner=root
+    group=root
+    mode=644
+  with_items:
+    - /etc/httpd/conf.d/ssl.conf
+    - /etc/httpd/conf.modules.d/00-ssl.conf
+  notify:
+    - stop httpd
 
 - name: get IPA version
   tags:

@@ -3,6 +3,7 @@
 
 # (c) 2016, Christian Heimes <cheimes@redhat.com>
 
+from ConfigParser import SafeConfigParser
 import re
 import subprocess
 import shlex
@@ -114,6 +115,13 @@ def main():
     result_regex = module.params.get('result_regex')
     ignore_nomod = module.params.get('ignore_no_modifications', False)
     ignore_exists = module.params.get('ignore_already_exists', False)
+
+    if '$IPA_SERVER' in args:
+        cfg = SafeConfigParser()
+        with open('/etc/ipa/default.conf') as f:
+            cfg.readfp(f)
+        server = cfg.get('global', 'server')
+        args = args.replace('$IPA_SERVER', server)
 
     ipa = IPA(module, cmd, args, principal, password)
     try:

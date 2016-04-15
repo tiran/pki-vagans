@@ -1,0 +1,158 @@
+---
+- name: install Apache HTTPD base
+  tags:
+    - ipa-httpd
+    - package-install
+    - network
+  yum: name={{ item }} state=present
+  with_items:
+    - httpd
+    - mod_nss
+  notify:
+    - restart httpd
+    - restart sssd
+
+- name: Open Firewall for Apache
+  tags:
+    - ipa-httpd
+    - firewall
+  firewalld:
+    service={{ item }}
+    permanent=true
+    state=enabled
+    immediate=yes
+  with_items:
+    - http
+    - https
+  when: has_firewalld.stat.exists
+
+- name: Get keytab content
+  tags:
+    - ipa-httpd
+    - ipa-install
+  command: klist -ke {{ http_keytab }}
+  register: keytab
+  changed_when: false
+  failed_when: "keytab.rc != 0 and 'not found' not in keytab.stderr"
+
+- name: Create HTTP service
+  tags:
+    - ipa-httpd
+    - ipa-install
+  ipa:
+    args="service-add --force HTTP/{{ ansible_fqdn }}"
+    password="{{ ipa_admin_password }}"
+    ignore_already_exists=true
+  when: "'HTTP/{{ ansible_fqdn }}' not in keytab.stdout"
+
+- name: Add HTTP service to keytab
+  tags:
+    - ipa-httpd
+    - ipa-install
+  ipa: >
+    cmd=ipa-getkeytab
+    args="-s $IPA_SERVER -p HTTP/{{ ansible_fqdn }} -k {{ http_keytab }}"
+    password="{{ ipa_admin_password }}"
+  when: "'HTTP/{{ ansible_fqdn }}' not in keytab.stdout"
+  notify:
+    - restart httpd
+
+- name: chown http.keytab
+  tags:
+    - ipa-httpd
+    - ipa-install
+  file:
+    path={{ http_keytab }}
+    owner=apache
+    group=apache
+    mode=600
+    seuser=unconfined_u
+    serole=object_r
+    setype=httpd_config_t
+    selevel=s0
+  notify:
+    - restart httpd
+
+# mod_nss cert
+- name: Get ipa-getcert list
+  tags:
+    - ipa-httpd
+    - ipa-install
+  command:
+    ipa-getcert list
+  register:
+    ipa_getcert
+  changed_when: false
+
+- name: Set has_server_cert fact
+  tags:
+    - ipa-httpd
+    - ipa-install
+  set_fact: has_server_cert="{{'location=\'/etc/httpd/alias\',nickname=\'Server-Cert\'' in ipa_getcert.stdout}}"
+  changed_when: false
+
+- name: Restart certmonger when in state CA_UNREACHABLE
+  tags:
+    - ipa-httpd
+    - ipa-install
+  service: name=certmonger.service enabled=yes state=restarted
+  when: "'CA_UNREACHABLE' in ipa_getcert.stdout"
+
+- name: Remove example certs from /etc/httpd/alias NSSDB
+  tags:
+    - ipa-httpd
+    - ipa-install
+  command:
+    certutil -D -d /etc/httpd/alias/ -n 'Server-Cert'
+  when: not has_server_cert
+  notify:
+    - restart httpd
+
+- name: Request certificate with ipa-getcert
+  tags:
+    - ipa-httpd
+    - ipa-install
+  ipa:
+    cmd=ipa-getcert
+    args="request -d /etc/httpd/alias -n 'Server-Cert' -t 'NSS Certificate DB' -T caIPAserviceCert -C /usr/libexec/ipa/certmonger/restart_httpd"
+    password="{{ ipa_admin_password }}"
+  when: not has_server_cert
+  notify:
+    - restart httpd
+
+# https://fedorahosted.org/freeipa/ticket/5653
+- name: WORKAROUND 5653, restart certmonger
+  tags:
+    - ipa-httpd
+    - ipa-install
+  service: name=certmonger.service state=restarted
+  when: not has_server_cert
+
+- name: WORKAROUND 5653, sleep to give certmonger a chance to fetch a cert
+  tags:
+    - ipa-httpd
+    - ipa-install
+  command: sleep 10
+  when: not has_server_cert
+
+- name: Replace nss.conf port 8443 with 443
+  tags:
+    - ipa-httpd
+    - ipa-install
+  replace: dest=/etc/httpd/conf.d/nss.conf regexp='8443' replace='443' backup=yes
+  notify:
+    - restart httpd
+
+- name: Remove welcome.conf
+  tags:
+    - ipa-httpd
+    - ipa-install
+  file: dest=/etc/httpd/conf.d/welcome.conf state=absent
+  notify:
+    - restart httpd
+
+- name: Enable Apache HTTPD service
+  tags:
+    - ipa-http
+    - ipa-install
+  service: name=httpd.service enabled=yes

@@ -17,20 +17,7 @@ HTML = """
     </div>
     <div class="container-fluid">
         <dl>
-            <dt>REMOTE_USER</dt>
-            <dd>{username}</dd>
-            <dt>REMOTE_USER_FULLNAME</dt>
-            <dd>{fullname}</dd>
-            <dt>REMOTE_USER_SN</dt>
-            <dd>{sn}</dd>
-            <dt>REMOTE_USER_GIVENNAME</dt>
-            <dd>{givenname}</dd>
-            <dt>REMOTE_USER_UID</dt>
-            <dd>{uid}</dd>
-            <dt>REMOTE_USER_EMAIL</dt>
-            <dd>{email}</dd>
-            <dt>REMOTE_GROUPS</dt>
-            <dd>{remote_groups}</dd>
+{envvars}
         </dl>
         <!--
         <pre>{env}</pre>
@@ -44,15 +31,31 @@ HTML = """
 
 def application(environ, start_response):
     status = '200 OK'
+
+    envvars = []
+    prefixes = ('REMOTE_USER', 'REMOTE_GROUPS')
+
+    # {% if app_mellon %}
+
+    prefixes += ('MELLON_',)
+
+    # {% endif %}
+
+    for k, v in sorted(environ.iteritems()):
+        if not k.startswith(prefixes):
+            continue
+        envvars.append('<dt>{0}</dt>'.format(k))
+        if k.lower().endswith('groups'):
+            envvars.append('<dd><ul>')
+            for group in sorted(v.split(':')):
+                envvars.append('    <li>{0}</li>'.format(group))
+            envvars.append('</ul></dd>')
+        else:
+            envvars.append('<dd>{0}</dd>'.format(v))
+
     kwargs = dict(
-        title='Example app',
-        username=environ.get('REMOTE_USER', 'n/a'),
-        fullname=environ.get('REMOTE_USER_FULLNAME', 'n/a'),
-        sn=environ.get('REMOTE_USER_SN', 'n/a'),
-        givenname=environ.get('REMOTE_USER_GIVENNAME', 'n/a'),
-        uid=environ.get('REMOTE_USER_UID', 'n/a'),
-        email=environ.get('REMOTE_USER_EMAIL', 'n/a'),
-        remote_groups=environ.get('REMOTE_USER_GROUPS', 'n/a'),
+        title='{{ app_title }}',
+        envvars='\n'.join(envvars),
         env=pformat(environ)
     )
     output = HTML.format(**kwargs)

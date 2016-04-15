@@ -75,7 +75,7 @@
     - ipa-install
   ipa: >
     cmd=ipa-getkeytab
-    args="-s {{ ipa_master_fqdn }} -p HTTP/{{ ansible_fqdn }} -k /etc/ocserv/key.tab"
+    args="-s $IPA_SERVER -p HTTP/{{ ansible_fqdn }} -k /etc/ocserv/key.tab"
     password="{{ ipa_admin_password }}"
   when: "'HTTP/{{ ansible_fqdn }}' not in keytab.stdout"
 

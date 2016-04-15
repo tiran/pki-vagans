@@ -1,0 +1,67 @@
+---
+- name: Install Ipsilon server packages
+  tags:
+    - ipa-ipsilon-idp
+    - package-install
+    - network
+  yum: name={{ item }} state=present
+  with_items:
+    - ipsilon
+    - ipsilon-saml2
+    - ipsilon-openid
+    - ipsilon-persona
+    - ipsilon-authform
+    - ipsilon-infosssd
+    - ipsilon-tools-ipa
+    - ipsilon-authgssapi
+
+- name: Disable mod_ssl configuration
+  tags:
+    - ipa-ipsilon-idp
+    - install
+  copy:
+    src=../../ipa/files/replaced
+    dest={{ item }}
+    backup=true
+    owner=root
+    group=root
+    mode=644
+  with_items:
+    - /etc/httpd/conf.d/ssl.conf
+    - /etc/httpd/conf.modules.d/00-ssl.conf
+  notify:
+    - restart httpd
+
+- name: Install Ipsilon IdP
+  tags:
+    - ipa-ipsilon-idp
+    - install
+  command: >
+    ipsilon-server-install
+      --admin-user admin
+      --secure yes
+      --openid yes
+      --persona yes
+      --saml2 yes
+      --saml2-metadata-validity 185
+      --form yes
+      --gssapi yes
+      --gssapi-httpd-keytab /etc/httpd/conf/http.keytab
+      --info-sssd yes
+      --info-sssd-domain {{ ansible_domain }}
+      --ipa yes
+  args:
+    creates: /etc/ipsilon/idp/idp.conf
+  notify:
+    - restart httpd
+
+- name: Use NSS instead of mod_ssl
+  tags:
+    - ipa-ipsilon-idp
+    - install
+  replace:
+    regexp='SSLRequireSSL'
+    replace='NSSRequireSSL'
+    dest=/etc/httpd/conf.d/ipsilon-idp.conf
+  notify:
+    - restart httpd

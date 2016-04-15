@@ -1,0 +1,103 @@
+---
+- name: Install Ipsilon client package
+  tags:
+    - ipa-sp-example
+    - package-install
+    - network
+  yum: name={{ item }} state=present
+  with_items:
+    - ipsilon-client
+    - mod_nss
+    - mod_wsgi
+
+- name: Set IdP url fact
+  tags:
+    - ipa-sp-example
+    - install
+  set_fact: idp_fqdn="{{ hostvars[groups['ipa_ipsilon_idp'][0]].ansible_fqdn }}"
+  when: groups['ipa_ipsilon_idp']
+
+- name: Check for /etc/httpd/conf.d/ipsilon-saml.conf
+  tags:
+    - ipa-sp-example
+    - install
+  stat: path=/etc/httpd/conf.d/ipsilon-saml.conf
+  register: ipsilon_saml
+
+- name: Write password to file
+  tags:
+    - ipa-sp-example
+    - ipa-install
+  template:
+    src=admin_password
+    dest=/root/admin_password
+  when: not ipsilon_saml.stat.exists and groups['ipa_ipsilon_idp']
+
+- name: Install Ipsilon client
+  tags:
+    - ipa-sp-example
+    - install
+  command: >
+    ipsilon-client-install
+    --admin-user admin
+    --admin-password /root/admin_password
+    --saml-idp-url https://{{ idp_fqdn }}/idp/
+    --saml-sp-name 'Fileserver'
+    --saml-idp-metadata https://{{ idp_fqdn }}/idp/saml2/metadata
+    --saml-auth /sp_example
+  args:
+    creates:
+      /etc/httpd/conf.d/ipsilon-saml.conf
+  when: groups['ipa_ipsilon_idp']
+
+- name: Remove password file
+  tags:
+    - ipa-sp-example
+    - ipa-install
+  file: dest=/root/admin_password state=absent
+
+- name: Create /srv/www/sp_example
+  tags:
+    - ipa-sp-example
+    - ipa-install
+  file:
+    path=/srv/www/sp_example
+    mode=755
+    state=directory
+    owner=root
+    group=root
+    seuser=system_u
+    serole=object_r
+    setype=httpd_sys_content_t
+    selevel=s0
+
+- name: Create Apache SP example app
+  tags:
+    - ipa-sp-example
+    - ipa-install
+  template:
+    src=../../ipa-httpexample/templates/wsgi.py
+    dest=/srv/www/sp_example/wsgi.py
+    mode=644
+    directory_mode=755
+    owner=root
+    group=root
+    seuser=system_u
+    serole=object_r
+    setype=httpd_sys_content_t
+    selevel=s0
+  when: groups['ipa_ipsilon_idp']
+  notify:
+    - restart httpd
+
+- name: Overwrite ipsilon-saml.conf with custom config
+  tags:
+    - ipa-sp-example
+    - ipa-install
+  template:
+    src=sp_example.conf
+    dest=/etc/httpd/conf.d/ipsilon-saml.conf
+    backup=true
+  when: groups['ipa_ipsilon_idp']
+  notify:
+    - restart httpd

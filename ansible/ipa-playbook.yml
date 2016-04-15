@@ -17,7 +17,6 @@
   roles:
     - ipa
 
-# parallized
 - name: install IPA server system
   any_errors_fatal: true
   hosts:
@@ -26,7 +25,6 @@
   roles:
     - ipaserver
 
-# serialized tasks
 - name: install FreeIPA server master
   hosts:
     - ipaserver_master
@@ -43,10 +41,11 @@
   any_errors_fatal: true
   hosts:
    - ipa_client
-   - ipa_httpexample
    - ipa_nfsserver
    - ipa_smbserver
    - ipa_vpnserver
+   - ipa_httpexample
+   - ipa_ipsilon_idp
   roles:
     - ipa-client
   # workaround for join race-condition in 4.3.0
@@ -70,8 +69,20 @@
   roles:
     - ipa-smbserver
 
-- name: install FreeIPA Samba server
+- name: install FreeIPA HTTP example app
   hosts:
     - ipa_httpexample
   roles:
     - ipa-httpexample
+
+- name: install Ipsilon Identity Provider
+  hosts:
+    - ipa_ipsilon_idp
+  roles:
+    - ipa-ipsilon-idp
+
+- name: install Ipsilon SP example
+  hosts:
+    - ipa_sp_example
+  roles:
+    - ipa-sp-example

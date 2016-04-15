@@ -6,7 +6,6 @@
     - network
   yum: name={{ item }} state=present
   with_items:
-    - httpd
     - mod_auth_gssapi
     - mod_authnz_pam
     - mod_intercept_form_submit
@@ -18,20 +17,6 @@
   notify:
     - restart httpd
     - restart sssd
-
-- name: Open Firewall for Apache
-  tags:
-    - ipa-httpexample
-    - firewall
-  firewalld:
-    service={{ item }}
-    permanent=true
-    state=enabled
-    immediate=yes
-  with_items:
-    - http
-    - https
-  when: has_firewalld.stat.exists
 
 - name: setsebool allow_httpd_mod_auth_pam on
   tags:
@@ -46,108 +31,6 @@
     - ipa-httpexample
     - ipa-install
   seboolean: name=httpd_dbus_sssd state=yes persistent=yes
-  notify:
-    - restart httpd
-
-- name: Get keytab content
-  tags:
-    - ipa-httpexample
-    - ipa-install
-  command: klist -ke {{ http_keytab }}
-  register: keytab
-  changed_when: false
-  failed_when: "keytab.rc != 0 and 'not found' not in keytab.stderr"
-
-- name: Create HTTP service
-  tags:
-    - ipa-httpexample
-    - ipa-install
-  ipa:
-    args="service-add --force HTTP/{{ ansible_fqdn }}"
-    password="{{ ipa_admin_password }}"
-    ignore_already_exists=true
-  when: "'HTTP/{{ ansible_fqdn }}' not in keytab.stdout"
-
-- name: Add HTTP service to keytab
-  tags:
-    - ipa-httpexample
-    - ipa-install
-  ipa: >
-    cmd=ipa-getkeytab
-    args="-s {{ ipa_master_fqdn }} -p HTTP/{{ ansible_fqdn }} -k {{ http_keytab }}"
-    password="{{ ipa_admin_password }}"
-  when: "'HTTP/{{ ansible_fqdn }}' not in keytab.stdout"
-  notify:
-    - restart httpd
-
-- name: chown http.keytab
-  tags:
-    - ipa-httpexample
-    - ipa-install
-  file:
-    path={{ http_keytab }}
-    owner=apache
-    group=apache
-    mode=600
-    seuser=unconfined_u
-    serole=object_r
-    setype=httpd_config_t
-    selevel=s0
-  notify:
-    - restart httpd
-
-# mod_nss cert
-- name: Get ipa-getcert list
-  tags:
-    - ipa-httpexample
-    - ipa-install
-  command:
-    ipa-getcert list
-  register:
-    ipa_getcert
-  changed_when: false
-
-- name: Set has_server_cert fact
-  tags:
-    - ipa-httpexample
-    - ipa-install
-  set_fact: has_server_cert="{{'location=\'/etc/httpd/alias\',nickname=\'Server-Cert\'' in ipa_getcert.stdout}}"
-  changed_when: false
-
-- name: Restart certmonger when in state CA_UNREACHABLE
-  tags:
-    - ipa-httpexample
-    - ipa-install
-  service: name=certmonger.service enabled=yes state=restarted
-  when: "'CA_UNREACHABLE' in ipa_getcert.stdout"
-
-- name: Remove example certs from /etc/httpd/alias NSSDB
-  tags:
-    - ipa-httpexample
-    - ipa-install
-  command:
-    certutil -D -d /etc/httpd/alias/ -n 'Server-Cert'
-  when: not has_server_cert
-  notify:
-    - restart httpd
-
-- name: Request certificate with ipa-getcert
-  tags:
-    - ipa-httpexample
-    - ipa-install
-  ipa:
-    cmd=ipa-getcert
-    args="request -d /etc/httpd/alias -n 'Server-Cert' -t 'NSS Certificate DB' -T caIPAserviceCert -C /usr/libexec/ipa/certmonger/restart_httpd"
-    password="{{ ipa_admin_password }}"
-  when: not has_server_cert
-  notify:
-    - restart httpd
-
-- name: Replace nss.conf port 8443 with 443
-  tags:
-    - ipa-httpexample
-    - ipa-install
-  replace: dest=/etc/httpd/conf.d/nss.conf regexp='8443' replace='443' backup=yes
   notify:
     - restart httpd
 
@@ -172,14 +55,6 @@
     regexp='^RewriteRule'
     line='RewriteRule ^/$ https://{{ ansible_fqdn }}/example [L,NC,R=301]'
     insertafter='^RewriteEngine'
-  notify:
-    - restart httpd
-
-- name: Remove welcome.conf
-  tags:
-    - ipa-httpexample
-    - ipa-install
-  file: dest=/etc/httpd/conf.d/welcome.conf state=absent
   notify:
     - restart httpd
 
@@ -248,7 +123,7 @@
   notify:
     - restart httpd
 
-- name: Create Apache example app
+- name: Copy Apache example app files
   tags:
     - ipa-httpexample
     - ipa-install
@@ -266,6 +141,25 @@
   notify:
     - restart httpd
 
+- name: Create Apache example app
+  tags:
+    - ipa-httpexample
+    - ipa-install
+  template:
+    src=wsgi.py
+    dest=/srv/www/example/wsgi.py
+    mode=644
+    directory_mode=755
+    owner=root
+    group=root
+    seuser=system_u
+    serole=object_r
+    setype=httpd_sys_content_t
+    selevel=s0
+  when: groups['ipa_ipsilon_idp']
+  notify:
+    - restart httpd
+
 - name: Create PAM service for Apache example app
   tags:
     - ipa-httpexample
@@ -275,9 +169,3 @@
     dest=/etc/pam.d/http_example
   notify:
     - restart httpd
-
-- name: Enable Apache HTTPD service
-  tags:
-    - ipa-httpexample
-    - ipa-install
-  service: name=httpd.service enabled=yes state=started
