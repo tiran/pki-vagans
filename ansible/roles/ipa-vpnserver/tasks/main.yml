@@ -84,69 +84,25 @@
     - ipa-vpnserver
     - ipa-install
   stat: path=/etc/pki/ocserv/public/server.crt
-  register: vpn_server_crt
+  register: vpn_server_cert
 
-- name: Generate private key /etc/pki/ocserv/private/server.key
-  tags:
-    - ipa-vpnserver
-    - ipa-install
-  command: >
-    certtool
-    --generate-privkey
-    --outfile /etc/pki/ocserv/private/server.key
-  args:
-    creates:
-      /etc/pki/ocserv/private/server.key
-  when: not vpn_server_crt.stat.exists
-  notify:
-    - restart ocserv
-
-- name: Create CSR template
-  tags:
-    - ipa-vpnserver
-    - ipa-install
-  template: src=csr_template dest=/etc/pki/ocserv/public/server.csr.template
-  when: not vpn_server_crt.stat.exists
-
-- name: Generate cert request file /etc/pki/ocserv/public/server.csr
-  tags:
-    - ipa-vpnserver
-    - ipa-install
-  command: >
-    certtool
-    --generate-request
-    --load-privkey /etc/pki/ocserv/private/server.key
-    --outfile /etc/pki/ocserv/public/server.csr
-    --template /etc/pki/ocserv/public/server.csr.template
-  args:
-    creates:
-      /etc/ocserv/server.csr
-  when: not vpn_server_crt.stat.exists
-
-# XXX use certmonger?
-- name: Request certificate from FreeIPA
+- name: Request certificate /etc/pki/ocserv/public/server.crt with ipa-getcert
   tags:
     - ipa-vpnserver
     - ipa-install
   ipa:
-    args="cert-request --principal HTTP/{{ ansible_fqdn }} /etc/pki/ocserv/public/server.csr"
+    cmd=ipa-getcert
+    args="request -k /etc/pki/ocserv/private/server.key -f /etc/pki/ocserv/public/server.crt -T caIPAserviceCert -C 'systemctl reload-or-restart ocserv.service'"
     password="{{ ipa_admin_password }}"
-    ignore_already_exists=true
-    result_regex="Serial number:\s*(\d+)"
-  register: cert
-  when: not vpn_server_crt.stat.exists
+  when: not vpn_server_cert.stat.exists
+  notify:
+    - restart ocserv
 
-- name: Fetch cert as /etc/pki/ocserv/public/server.crt
+- name: Wait for certmonger
   tags:
     - ipa-vpnserver
     - ipa-install
-  ipa:
-    args="cert-show {{ cert.results[0] }} --out=/etc/pki/ocserv/public/server.crt"
-    password="{{ ipa_admin_password }}"
-    ignore_already_exists=true
-  when: not vpn_server_crt.stat.exists
-  notify:
-    - restart ocserv
+  waitforcertmonger:
 
 - name: Create a link from /etc/pki/ocserv/cacerts/ca.crt to /etc/ipa/ca.crt
   tags:

@@ -1,4 +1,0 @@
-cn = "{{ ansible_fqdn }}"
-signing_key
-tls_www_server
-encryption_key
