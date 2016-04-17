@@ -18,13 +18,13 @@ options:
     description:
       - how many retries
     required: false
-    default: 10
+    default: 6
     aliases: []
   sleep:
     description:
       - how long to sleep between retries
     required: false
-    default: 3
+    default: 5
     aliases: []
 author: Christian Heimes
 """
@@ -58,8 +58,8 @@ def main():
         )
     )
 
-    max_retries = int(module.params.get('max_retries', 10))
-    sleep = int(module.params.get('sleep', 3))
+    max_retries = int(module.params.get('max_retries', 6))
+    sleep = int(module.params.get('sleep', 5))
 
     states = []
     kwargs = {'states': states, 'stdout': '', 'changed': False}
@@ -68,7 +68,7 @@ def main():
         try:
             status, stdout = get_status()
         except CAUnreachable as e:
-            status = False
+            status = 'CA_UNREACHABLE'
             stdout = e.args[0]
             subprocess.check_call(['systemctl', 'restart', 'certmonger.service'])
 

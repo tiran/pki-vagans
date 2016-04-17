@@ -18,7 +18,7 @@
 - name: Disable mod_ssl configuration
   tags:
     - ipa-ipsilon-idp
-    - install
+    - ipa-install
   copy:
     src=../../ipa/files/replaced
     dest={{ item }}
@@ -35,7 +35,7 @@
 - name: Install Ipsilon IdP
   tags:
     - ipa-ipsilon-idp
-    - install
+    - ipa-install
   command: >
     ipsilon-server-install
       --admin-user admin
@@ -58,7 +58,7 @@
 - name: Use NSS instead of mod_ssl
   tags:
     - ipa-ipsilon-idp
-    - install
+    - ipa-install
   replace:
     regexp='SSLRequireSSL'
     replace='NSSRequireSSL'

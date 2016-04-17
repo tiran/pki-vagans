@@ -46,7 +46,7 @@
 - name: Disable mod_ssl configuration
   tags:
     - ipa
-    - install
+    - ipa-install
   copy:
     src=replaced
     dest={{ item }}

@@ -1,0 +1,78 @@
+<!DOCTYPE NETSCAPE-Bookmark-file-1>
+<!-- This is an automatically generated file.
+     It will be read and overwritten.
+     DO NOT EDIT! -->
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<TITLE>Bookmarks</TITLE>
+<H1>Bookmarks Menu</H1>
+
+<DL><p>
+    <DT><A HREF="place:folder=BOOKMARKS_MENU&folder=UNFILED_BOOKMARKS&folder=TOOLBAR&queryType=1&sort=12&maxResults=10&excludeQueries=1" ADD_DATE="1460900932" LAST_MODIFIED="1460900932">Recently Bookmarked</A>
+    <DT><A HREF="place:type=6&sort=14&maxResults=10" ADD_DATE="1460900932" LAST_MODIFIED="1460900932">Recent Tags</A>
+    <DT><H3 ADD_DATE="1460900932" LAST_MODIFIED="1460900932" PERSONAL_TOOLBAR_FOLDER="true">Bookmarks Toolbar</H3>
+    <DL><p>
+        <DT><A HREF="https://{{ ansible_fqdn }}/" LAST_CHARSET="UTF-8">IPA Master</A>
+        <DD>IPA Master
+{% for host in groups['ipaserver_replica'] | default([]) %}
+        <DT><A HREF="https://{{ hostvars[host].ansible_fqdn }}/" LAST_CHARSET="UTF-8">IPA: {{ hostvars[host].ansible_hostname }}</A>
+        <DD>IPA: {{ hostvars[host].ansible_hostname }}
+{% endfor %}
+{% for host in groups['ipa_ipsilon_idp'] | default([]) %}
+        <DT><A HREF="https://{{ hostvars[host].ansible_fqdn }}/idp" LAST_CHARSET="UTF-8">Ipsilon IdP</A>
+        <DD>Ipsilon Id}
+{% endfor %}
+{% for host in groups['ipa_sp_example'] | default([]) %}
+        <DT><A HREF="https://{{ hostvars[host].ansible_fqdn }}/sp_example/" LAST_CHARSET="UTF-8">mod_auth_mellon Ipsilon</A>
+        <DD>mod_auth_mellon Ipsilon
+{% endfor %}
+{% for host in groups['ipa_httpexample'] | default([]) %}
+        <DT><A HREF="https://{{ hostvars[host].ansible_fqdn }}/example/" LAST_CHARSET="UTF-8">mod_auth_gssapi / mod_lookup_identity</A>
+        <DD>mod_auth_gssapi / mod_lookup_identity
+{% endfor %}
+        <DT><A HREF="http://www.freeipa.org/" ADD_DATE="1158286602" LAST_MODIFIED="1176675660" LAST_CHARSET="UTF-8">FreeIPA</A>
+        <DD>FreeIPA.
+        <HR>
+        <DT><A HREF="http://docs.fedoraproject.org/" ADD_DATE="1158286602" LAST_MODIFIED="1176675660" LAST_CHARSET="UTF-8">Fedora Documentation</A>
+        <DD>Fedora Documentation.
+        <DT><H3 ADD_DATE="1130967903" LAST_MODIFIED="1367341253">Fedora Project</H3>
+        <DL><p>
+            <DT><A HREF="http://fedoraproject.org/" ADD_DATE="1158286779" LAST_MODIFIED="1176675285" LAST_CHARSET="UTF-8">Fedora Project</A>
+            <DD>Home of the Fedora Project.
+            <DT><A HREF="http://ask.fedoraproject.org/" ADD_DATE="1351508148" LAST_MODIFIED="1351508148" LAST_CHARSET="UTF-8">Ask Fedora: Community Knowledge Base and Support Forum</A>
+            <DD>Ask Fedora: Community Knowledge Base and Support Forum.
+            <DT><A HREF="http://fedoramagazine.org/" ADD_DATE="1367341224" LAST_MODIFIED="1367341224" LAST_CHARSET="UTF-8">Fedora Magazine | News, announcements, and technical information about the Fedora Linux distribution</A>
+            <DT><A HREF="http://planet.fedoraproject.org/" ADD_DATE="1176675201" LAST_MODIFIED="1241208858" LAST_CHARSET="UTF-8">Planet Fedora</A>
+            <DD>Blogs by Fedora contributors.
+            <DT><A HREF="http://forums.fedoraforum.org/" ADD_DATE="1130967896" LAST_MODIFIED="1176675301" LAST_CHARSET="ISO-8859-1">Fedora Forum</A>
+            <DD>Fedora Forums for community interaction.
+            <DT><A HREF="https://fedoraproject.org/wiki/Join" ADD_DATE="1241209418" LAST_MODIFIED="1428608906">Join the Fedora Project</A>
+            <DD>Join the Fedora Project!
+            <DT><A HREF="file:///usr/share/doc/fedora-release-notes/index.html" ADD_DATE="1351508092" LAST_MODIFIED="1385561052" LAST_CHARSET="UTF-8">Release Notes</A>
+            <DD>This document provides the release notes for Fedora.
+        </DL><p>
+        <DT><H3 ADD_DATE="1176674113" LAST_MODIFIED="1241208802">Red Hat</H3>
+        <DL><p>
+            <DT><A HREF="http://www.redhat.com/" ADD_DATE="1176674148" LAST_MODIFIED="1176674158" LAST_CHARSET="ISO-8859-1">Red Hat</A>
+            <DD>Home of Red Hat, sponsor of the Fedora Project.
+            <DT><A HREF="http://www.jboss.org/" ADD_DATE="1176674189" LAST_MODIFIED="1176674200" LAST_CHARSET="UTF-8">JBoss</A>
+            <DD>Home of the JBoss community, sponsored by Red Hat.
+            <DT><A HREF="http://opensource.com/" ADD_DATE="1269287471" LAST_MODIFIED="1176674200">OpenSource.com</A>
+            <DD>Open Source applied to the world.
+            <DT><A HREF="http://www.theopensourceway.org/" ADD_DATE="1269287471" LAST_MODIFIED="1429199851">The Open Source Way</A>
+            <DD>Community authored open source best practices.
+        </DL><p>
+        <DT><H3 ADD_DATE="1176674388" LAST_MODIFIED="1241209425">Free Content</H3>
+        <DL><p>
+            <DT><A HREF="http://www.wikipedia.org/" ADD_DATE="1176674401" LAST_MODIFIED="1176675382" LAST_CHARSET="UTF-8">Wikipedia</A>
+            <DD>Collaborative encycolpedia.
+            <DT><A HREF="http://librivox.org/" ADD_DATE="1241209006" LAST_MODIFIED="1241209033">LibriVox</A>
+            <DD>Freely licensed audio books.
+            <DT><A HREF="http://www.openclipart.org/" ADD_DATE="1269287471" LAST_MODIFIED="1241209033">Open Clip Art</A>
+            <DD>Freely licensed clip art.
+            <DT><A HREF="http://www.freesound.org/" ADD_DATE="1269287471" LAST_MODIFIED="1241209033">Free Sound</A>
+            <DD>Freely licensed sound.
+            <DT><A HREF="http://creativecommons.org/" ADD_DATE="1176674776" LAST_MODIFIED="1176675626" LAST_CHARSET="UTF-8">Creative Commons</A>
+            <DD>Free licenses for creative work.
+        </DL><p>
+    </DL><p>
+</DL>

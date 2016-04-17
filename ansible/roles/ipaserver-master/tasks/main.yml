@@ -174,15 +174,24 @@
     - ipa-install
   template: src=firefox_prefs dest=/etc/ipa/prefs.js
 
-- name: Fetch Firefox prefs
+- name: Create Firefox bookmarks
+  tags:
+    - ipaserver-master
+    - ipa-install
+  template: src=bookmarks.html dest=/etc/ipa/bookmarks.html
+
+- name: Fetch Firefox files
   tags:
     - ipaserver-master
     - ipa-install
     - fetch
   fetch:
-    src=/etc/ipa/prefs.js
-    dest={{ vagrant_root }}/inventory/prefs.js
+    src=/etc/ipa/{{ item }}
+    dest={{ vagrant_root }}/inventory/{{ item }}
     flat=yes
+  with_items:
+    - prefs.js
+    - bookmarks.html
 
 - name: Write custom krb5.conf
   tags:
