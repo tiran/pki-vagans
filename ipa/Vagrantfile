@@ -84,6 +84,7 @@ Vagrant.configure(2) do |config|
                 "ipa_ipsilon_idp" => ["ipaidpserver"],
                 "ipa_sp_example" => ["ipafileserver"],
                 "ipa_nfsclient" => ["ipamaster", "ipareplica1", "ipaclient1"],
+                "ipa_all" => ["ipamaster", "ipareplica1", "ipaclient1", "ipavpnserver", "ipafileserver", "ipaidpserver"],
             }
             ansible.verbose = 'vv'
             # package-install: don't download and install packages from the internet
