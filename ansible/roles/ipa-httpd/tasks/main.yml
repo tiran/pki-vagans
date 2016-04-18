@@ -88,7 +88,7 @@
   tags:
     - ipa-httpd
     - ipa-install
-  set_fact: has_server_cert="{{'location=\'/etc/httpd/alias\',nickname=\'Server-Cert\'' in ipa_getcert.stdout}}"
+  set_fact: has_server_cert="""{{ "location='/etc/httpd/alias',nickname='Server-Cert'" in ipa_getcert.stdout }}"""
   changed_when: false
 
 - name: Restart certmonger when in state CA_UNREACHABLE
