@@ -3,11 +3,7 @@
 
 # (c) 2016, Christian Heimes <cheimes@redhat.com>
 
-import sys
-try:
-    import json
-except ImportError:
-    import simplejson as json
+from ansible.module_utils.basic import *
 
 DOCUMENTATION = """
 ---
@@ -46,8 +42,8 @@ def get_reversezone(module, ipaddress):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            ipaddress = dict(required=True),
+        argument_spec=dict(
+            ipaddress=dict(required=True),
         )
     )
 
@@ -60,7 +56,5 @@ def main():
         module.exit_json(changed=True, reversezone=reversezone)
 
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-
-main()
+if __name__ == '__main__':
+    main()

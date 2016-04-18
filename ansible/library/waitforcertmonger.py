@@ -7,6 +7,8 @@
 import subprocess
 import time
 
+from ansible.module_utils.basic import *
+
 DOCUMENTATION = """
 ---
 module: waitforcertmonger
@@ -52,9 +54,9 @@ def get_status():
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            max_retries = dict(default=10, type='int'),
-            sleep = dict(default=3, type='int'),
+        argument_spec=dict(
+            max_retries=dict(default=10, type='int'),
+            sleep=dict(default=3, type='int'),
         )
     )
 
@@ -83,7 +85,5 @@ def main():
     module.fail_json(msg='certmonger failed to retrieve cert', **kwargs)
 
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-
-main()
+if __name__ == '__main__':
+    main()

@@ -20,12 +20,9 @@
 #
 #
 
-import sys
-try:
-    import json
-except ImportError:
-    import simplejson as json
 import re
+
+from ansible.module_utils.basic import *
 
 DOCUMENTATION = '''
 ---
@@ -44,19 +41,20 @@ options:
 author: Jan-Piet Mens
 '''
 
-EXAMPLES='''
+EXAMPLES = '''
 # Get nameserver entries from /etc/resolv.conf and print first one
 - resolver:
   register: res
 - debug: msg={{ res.nameservers[0] }}
 '''
 
+
 # ===========================================
 # Support methods
 
 def get_nameservers(module, resolvconf=None):
-    nameservers=[]
-    searchlist=None
+    nameservers = []
+    searchlist = None
 
     if resolvconf is None:
         resolvconf = '/etc/resolv.conf'
@@ -81,14 +79,14 @@ def get_nameservers(module, resolvconf=None):
     r.close()
     return dict(nameservers=nameservers, searchlist=searchlist)
 
+
 # ==============================================================
 # main
 
 def main():
-
     module = AnsibleModule(
-        argument_spec = dict(
-            resolvconf = dict(required=False),
+        argument_spec=dict(
+            resolvconf=dict(required=False),
         )
     )
 
@@ -97,10 +95,8 @@ def main():
     data = get_nameservers(module, resolvconf=resolvconf)
 
     # Mission complete
-    print json.dumps(data, indent=4)
+    module.exit_json(**data)
 
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-
-main()
+if __name__ == '__main__':
+    main()

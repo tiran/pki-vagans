@@ -1,13 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+"""Run ipa commands with Kerberos credentials
 
-# (c) 2016, Christian Heimes <cheimes@redhat.com>
-
+(c) 2016, Christian Heimes <cheimes@redhat.com>
+"""
 from ConfigParser import SafeConfigParser
 import re
 import subprocess
 import shlex
 
+from ansible.module_utils.basic import *
 
 DOCUMENTATION = """
 ---
@@ -52,6 +54,7 @@ author: Christian Heimes
 
 EXAMPLES = """
 """
+
 
 class IPA(object):
     KINIT = 'kinit'
@@ -98,14 +101,14 @@ class IPA(object):
 
 def main():
     module = AnsibleModule(
-        argument_spec = dict(
-            cmd = dict(default='ipa'),
-            args = dict(required=True),
-            principal = dict(default='admin'),
-            password = dict(required=True),
-            result_regex = dict(default=None),
-            ignore_no_modifications = dict(default=False, type='bool'),
-            ignore_already_exists = dict(default=False, type='bool'),
+        argument_spec=dict(
+            cmd=dict(default='ipa'),
+            args=dict(required=True),
+            principal=dict(default='admin'),
+            password=dict(required=True),
+            result_regex=dict(default=None),
+            ignore_no_modifications=dict(default=False, type='bool'),
+            ignore_already_exists=dict(default=False, type='bool'),
         )
     )
     cmd = module.params.get('cmd', 'ipa')
@@ -157,7 +160,5 @@ def main():
         module.exit_json(**kwargs)
 
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-
-main()
+if __name__ == '__main__':
+    main()
