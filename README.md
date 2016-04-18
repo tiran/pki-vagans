@@ -143,3 +143,102 @@ When something fails
 $ sudo systemctl restart libvirtd.service
 $ vagrant provision
 ```
+
+Ansible roles
+=============
+
+bootstrap
+---------
+
+General bootstrapping tasks to set up networking and Ansible dependecies (Python 2).
+
+common
+------
+
+Common tasks for FreeIPA and Dogtag:
+
+ * firewalld
+ * SELinux
+ * rngd
+ * time zones
+ * hosts
+
+ipa
+---
+
+FreeIPA base package and common facts
+
+ipa-client
+----------
+
+Configure host as FreeIPA client
+
+ipa-httpd
+---------
+
+Prepare Apache HTTPD for Ipsilon IdP, GSSAPI and SAML2 service point example
+
+ipa-httpexample
+---------------
+
+GSSAPI + mod_lookup_identity example
+
+ipa-ipsilon-idp
+---------------
+
+Set up Ipsilon IdP with SAML2, Persona and OpenID
+
+ipa-nfsserver
+-------------
+
+Kerberized NFS server and auto.fs for home directories
+
+ipaserver
+---------
+
+Install FreeIPA server packages
+
+ipaserver-master
+----------------
+
+Set up FreeIPA master
+
+ipaserver-replica
+-----------------
+
+Set up FreeIPA replica
+
+ipa-smbserver
+-------------
+
+Kerberized Samba/CIFS server
+
+ipa-sp-example
+--------------
+
+SAML2 service point example with mod_auth_mellon
+
+ipa-vpnserver
+-------------
+
+Kerberized occserv (OpenConnect) VPN server with MS-KKDCP support.
+
+pki
+---
+
+Install Dogtag PKI base packages for stand-alone CA
+
+pki-389ds
+---------
+
+Configure 389-DS LDAP server for Dogtag
+
+pki-ca
+------
+
+Configure Dogtag CA instance
+
+pki-kra
+-------
+
+Configure Dogtag KRA instance
