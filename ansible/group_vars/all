@@ -6,3 +6,5 @@ ipa_dm_password: "{{ default_password }}"
 ipa_admin_password: "{{ default_password }}"
 use_kkdcp: false
 http_keytab: /etc/httpd/conf/http.keytab
+# all hosts except localhost
+ipa_hosts: "{{ groups['all'] | difference(['localhost']) }}"

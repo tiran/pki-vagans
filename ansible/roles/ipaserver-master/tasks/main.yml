@@ -63,7 +63,7 @@
     nmcli conn modify {{ hostvars[item].nm_conn }} ipv4.dns
     "{{ hostvars[groups['ipaserver_master'][0]].ansible_default_ipv4.address }} {{ hostvars[groups['ipaserver_replica'][0]].ansible_default_ipv4.address }}"
   delegate_to: "{{item}}"
-  with_items: "{{ groups['all'] }}"
+  with_items: "{{ ipa_hosts }}"
   changed_when: false
 
 - name: Use FreeIPA DNS, nmcli conn modify ipv4.dns-search
@@ -73,7 +73,7 @@
   command: >
     nmcli conn modify {{ hostvars[item].nm_conn }} ipv4.dns-search {{ ansible_domain }}
   delegate_to: "{{item}}"
-  with_items: "{{ groups['all'] }}"
+  with_items: "{{ ipa_hosts }}"
   changed_when: false
 
 - name: Use FreeIPA DNS, nmcli conn modify ipv4.ignore-auto-dns
@@ -83,7 +83,7 @@
   command: >
     nmcli conn modify {{ hostvars[item].nm_conn }} ipv4.ignore-auto-dns yes
   delegate_to: "{{item}}"
-  with_items: "{{ groups['all'] }}"
+  with_items: "{{ ipa_hosts }}"
   changed_when: false
 
 - name: Restart NetworkManager to make DNS changes effective
@@ -92,7 +92,7 @@
     - ipa-install
   service: name=NetworkManager state=restarted
   delegate_to: "{{item}}"
-  with_items: "{{ groups['all'] }}"
+  with_items: "{{ ipa_hosts }}"
   changed_when: false
 
 - name: Set sensible defaults

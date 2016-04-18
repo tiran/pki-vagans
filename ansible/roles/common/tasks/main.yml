@@ -2,6 +2,7 @@
 - include: extravars.yml
 
 # - debug: var=hostvars[inventory_hostname] verbosity=4
+# - debug: var=groups verbosity=4
 
 # DNS / hosts
 - name: fix /etc/hosts
