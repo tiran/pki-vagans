@@ -14,6 +14,7 @@
     - ipsilon-infosssd
     - ipsilon-tools-ipa
     - ipsilon-authgssapi
+  when: package_install
 
 - name: Disable mod_ssl configuration
   tags:
@@ -48,7 +49,7 @@
       --gssapi yes
       --gssapi-httpd-keytab /etc/httpd/conf/http.keytab
       --info-sssd yes
-      --info-sssd-domain {{ ansible_domain }}
+      --info-sssd-domain {{ ipa_domain }}
       --ipa yes
   args:
     creates: /etc/ipsilon/idp/idp.conf

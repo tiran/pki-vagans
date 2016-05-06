@@ -5,6 +5,7 @@
     - package-install
     - network
   yum: name=pki-kra state=present
+  when: package_install
 
 - name: Write KRA config template
   tags:

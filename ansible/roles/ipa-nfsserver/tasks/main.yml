@@ -5,6 +5,7 @@
     - package-install
     - network
   yum: name=nfs-utils state=present
+  when: package_install
 
 - name: Open Firewall for NFS
   tags:
@@ -84,6 +85,23 @@
     - nfs-secure
     - nfs-server
 
+- name: look for auto.home in default location
+  tags:
+    - ipa-nfsserver
+    - ipa-install
+  ipa:
+    args="automountkey-find default auto.home"
+    password="{{ ipa_admin_password }}"
+  register: automountkey
+  failed_when: false
+  changed_when: false
+
+- name: Set has_auto_home fact
+  tags:
+    - ipa-nfsserver
+    - ipa-install
+  set_fact: has_auto_home="{{ '/export/home' in automountkey.stdout }}"
+
 - name: add automount default location
   tags:
     - ipa-nfsserver
@@ -92,6 +110,7 @@
     args="automountlocation-add default"
     password="{{ ipa_admin_password }}"
     ignore_already_exists=true
+  when: not has_auto_home
 
 - name: add auto.home map
   tags:
@@ -101,6 +120,7 @@
     args="automountmap-add default auto.home"
     password="{{ ipa_admin_password }}"
     ignore_already_exists=true
+  when: not has_auto_home
 
 - name: add auto.home to auto.master
   tags:
@@ -110,6 +130,7 @@
     args="automountkey-add default --key '/export/home' --info auto.home auto.master"
     password="{{ ipa_admin_password }}"
     ignore_already_exists=true
+  when: not has_auto_home
 
 - name: automountkey-add default auto.home
   tags:
@@ -119,6 +140,7 @@
     args="automountkey-add default auto.home --key='*' --info='-fstype=nfs4,rw,sec=krb5,soft {{ ansible_fqdn }}:/export/home/&'"
     password="{{ ipa_admin_password }}"
     ignore_already_exists=true
+  when: not has_auto_home
 
 - name: Get FreeIPA users
   tags:

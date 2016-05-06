@@ -21,6 +21,12 @@
   register: reversezone
   changed_when: false
 
+- name: Remove chrony (FreeIPA uses ntpd)
+  tags:
+    - ipa
+    - package-install
+  yum: name=chrony state=absent
+
 - name: install FreeIPA client package (Fedora)
   tags:
     - ipa
@@ -30,7 +36,7 @@
   with_items:
    - freeipa-client
    - freeipa-admintools
-  when: ansible_distribution == "Fedora"
+  when: ansible_distribution == "Fedora" and package_install
 
 - name: install FreeIPA client package (RHEL / CentOS)
   tags:
@@ -41,7 +47,14 @@
   with_items:
    - ipa-client
    - ipa-admintools
-  when: ansible_distribution == "RedHat" or ansible_distribution == "CentOS"
+  when: "{{ ansible_distribution in ['RedHat', 'CentOS'] and package_install }}"
+
+- name: Check for mod_ssl configuration
+  tags:
+    - ipa
+    - ipa-install
+  stat: path=/etc/httpd/conf.d/ssl.conf
+  register: ssl_conf
 
 - name: Disable mod_ssl configuration
   tags:
@@ -57,6 +70,7 @@
   with_items:
     - /etc/httpd/conf.d/ssl.conf
     - /etc/httpd/conf.modules.d/00-ssl.conf
+  when: ssl_conf.stat.exists
   notify:
     - stop httpd
 

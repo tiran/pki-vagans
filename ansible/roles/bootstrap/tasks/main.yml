@@ -46,7 +46,7 @@
     - bootstrap
   raw: "which dnf 2>/dev/null"
   register: which_dnf
-  failed_when: "which_dnf.rc not in (0, 1)"
+  failed_when: "{{ which_dnf.rc > 1 }}"
   changed_when: false
 
 - name: Auto select fastest DNF mirror
@@ -58,7 +58,7 @@
             option=fastestmirror
             value=1
             backup=yes
-  when: which_dnf.rc == 0
+  when: which_dnf.rc == 0  and package_install
 
 # Fedora 23 doesn't have Python 2 installed.
 - name: Refresh dnf cache
@@ -70,7 +70,7 @@
   register: result
   # ignore disabled repos
   failed_when: "result.rc != 0 and 'Error: There are no enabled repos.' not in result.stdout_lines"
-  when: which_dnf.rc == 0
+  when: which_dnf.rc == 0  and package_install
 
 - name: Install python2 and deps for ansible modules
   tags:
@@ -83,19 +83,32 @@
   register: result
   # ignore disabled repos
   failed_when: "result.rc != 0 and 'Error: There are no enabled repos.' not in result.stdout_lines"
-  when: which_dnf.rc == 0
+  when: which_dnf.rc == 0  and package_install
 
 - name: Gather facts
   tags:
     - bootstrap
   setup:
 
+- name: Create directories in ipa_data_dir
+  tags:
+    - bootstrap
+  become: no
+  local_action:
+    file path={{ item }} state=directory
+  with_items:
+    - "{{ ipa_data_dir }}"
+    - "{{ ipa_data_dir }}/rpms"
+  run_once: true
+  changed_when: false
+
 - name: Dump ssh-config
   tags:
     - bootstrap
   become: no
   local_action:
-      shell vagrant ssh-config > {{ vagrant_root }}/inventory/ssh-config
+      shell vagrant ssh-config > {{ ipa_data_dir }}/ssh-config
+  run_once: true
   changed_when: false
   failed_when: false
 

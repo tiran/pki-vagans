@@ -20,7 +20,7 @@
     - fetch
   fetch:
     src=/var/lib/ipa/replica-info-{{ ansible_fqdn }}.gpg
-    dest={{ vagrant_root }}/inventory/replica-info-{{ ansible_fqdn }}.gpg
+    dest={{ ipa_data_dir }}/replica-info-{{ ansible_fqdn }}.gpg
     flat=yes
   delegate_to: "{{item}}"
   with_items: "{{ groups['ipaserver_master'] }}"
@@ -30,7 +30,7 @@
     - ipaserver-replica
     - ipa-install
   synchronize:
-    src={{ vagrant_root }}/inventory/replica-info-{{ ansible_fqdn }}.gpg
+    src={{ ipa_data_dir }}/replica-info-{{ ansible_fqdn }}.gpg
     dest=/var/lib/ipa/replica-info-{{ ansible_fqdn }}.gpg
 
 - name: install replica
@@ -44,6 +44,7 @@
     --mkhomedir
     --setup-dns
     --ip-address {{ ansible_default_ipv4.address }}
+    --allow-zone-overlap
     {{ '--forwarder=%s' % dns_forwarder['nameservers'][0] if enable_network else '--no-forwarders' }}
     /var/lib/ipa/replica-info-{{ ansible_fqdn }}.gpg
   args:

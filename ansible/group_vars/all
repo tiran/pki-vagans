@@ -1,10 +1,29 @@
 ---
+ansible_ssh_port: 22
+
 # password for admin, PKI and DS
 default_password: Secret123
 
+ipa_domain: "{{ ansible_domain }}"
+ipa_realm: "{{ ipa_domain | upper }}"
 ipa_dm_password: "{{ default_password }}"
 ipa_admin_password: "{{ default_password }}"
 use_kkdcp: false
 http_keytab: /etc/httpd/conf/http.keytab
 # all hosts except localhost
 ipa_hosts: "{{ groups['all'] | difference(['localhost']) }}"
+# NFS server?
+install_ipa_nfsserver: "{{ 'ipa_nfsserver' in groups and groups['ipa_nfsserver'] }}"
+install_ipa_replica: "{{ 'ipaserver_replica' in groups and groups['ipaserver_replica'] }}"
+
+ipa_data_dir: "{{ inventory_dir }}/ipadata"
+
+#
+# User options
+# ------------
+#
+#coprs_enabled:
+# - "@freeipa/freeipa-4-3"
+# package_upgrade: false
+# custom_rpms: false
+package_install: true

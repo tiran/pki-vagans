@@ -25,3 +25,4 @@
     - package-install
     - network
   yum: name=yum-plugin-fastestmirror state=present
+  when: package_install

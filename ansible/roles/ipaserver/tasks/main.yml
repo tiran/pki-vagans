@@ -11,7 +11,7 @@
     - bind-dyndb-ldap
     - freeipa-server
     - freeipa-server-dns
-  when: ansible_distribution == "Fedora"
+  when: ansible_distribution == "Fedora" and package_install
 
 - name: install FreeIPA server package (RHEL / CentOS)
   tags:
@@ -25,7 +25,7 @@
     - bind-dyndb-ldap
     - ipa-server
     - ipa-server-dns
-  when: ansible_distribution == "RedHat" or ansible_distribution == "CentOS"
+  when: "{{ ansible_distribution in ['RedHat', 'CentOS'] and package_install }}"
 
 - name: Open Firewall for services
   tags:

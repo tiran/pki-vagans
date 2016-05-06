@@ -13,6 +13,7 @@
     --mkhomedir
     --ip-address {{ ansible_default_ipv4.address }}
     --setup-dns
+    --allow-zone-overlap
     {{ '--forwarder=%s' % dns_forwarder['nameservers'][0] if enable_network else '--no-forwarders' }}
   args:
     creates:

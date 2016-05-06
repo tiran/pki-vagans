@@ -18,6 +18,7 @@
     - updates
   when: enable_network
   changed_when: false
+  failed_when: false
 
 - name: Auto select fastest DNF mirror
   tags:
@@ -37,3 +38,4 @@
   command: dnf install yum-utils -y
   args:
     creates: /usr/bin/yumdownloader
+  when: package_install

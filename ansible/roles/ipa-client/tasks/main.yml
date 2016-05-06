@@ -13,6 +13,7 @@
     serole=object_r
     setype=home_root_t
     selevel=s0
+  when: install_ipa_nfsserver
 
 - name: join FreeIPA
   tags:
@@ -20,11 +21,11 @@
     - ipa-install
   command: >
     ipa-client-install -U
-    --realm {{ ansible_domain | upper }}
-    --domain {{ ansible_domain | lower }}
+    --realm {{ ipa_realm }}
+    --domain {{ ipa_domain }}
     --principal admin
     --password {{ ipa_admin_password }}
-    --request-cert
+    --ca-cert-file /etc/pki/ipa-ca.crt
     --force-join
     --mkhomedir
     --ssh-trust-dns

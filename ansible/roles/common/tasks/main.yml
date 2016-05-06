@@ -47,14 +47,17 @@
   with_items:
    - gnupg
    - gnupg2
+  when: package_install
 
-- name: Add GPG for FreeIPA 4.3 COPR
+- name: Add GPG RPM keys for copr
   tags:
     - common
     - package-install
     - package-copr
     - network
-  rpm_key: key=https://copr-be.cloud.fedoraproject.org/results/@freeipa/freeipa-4-3/pubkey.gpg state=present
+  rpm_key: "key=https://copr-be.cloud.fedoraproject.org/results/{{ item }}/pubkey.gpg state=present"
+  with_items: "{{ coprs_enabled }}"
+  when: "{{ coprs_enabled and package_install }}"
 
 - name: Enable FreeIPA 4.3 COPR
   tags:
@@ -62,7 +65,9 @@
     - package-install
     - package-copr
     - network
-  command: dnf copr enable -y @freeipa/freeipa-4-3
+  command: dnf copr enable -y {{ item }}
+  with_items: "{{ coprs_enabled }}"
+  when: "{{ coprs_enabled and package_install }}"
 
 - name: upgrade all packages
   tags:
@@ -71,6 +76,7 @@
     - package-upgrade
     - network
   yum: name=* state=latest
+  when: package_upgrade and package_install
 
 # custom RPMs
 - name: Create directory for custom RPMS
@@ -79,34 +85,46 @@
     - custom-rpms
   file: path=/vagrant/rpms state=directory mode=0755
   changed_when: false
+  when: custom_rpms
+
+- name: Install rsync
+  tags:
+    - common
+    - custom-rpms
+    - package-install
+    - network
+  yum: name=rsync state=present
+  when: package_install
 
 - name: Synchronize RPMs
   tags:
     - common
     - custom-rpms
   synchronize:
-    src={{vagrant_root}}/rpms/
+    src={{ipa_data_dir}}/rpms/
     dest=/vagrant/rpms/
     delete=true
     recursive=true
     copy_links=true
     rsync_opts="--exclude=README"
   changed_when: false
+  when: custom_rpms
 
 - name: find custom RPMs
   tags:
     - common
     - custom-rpms
   command: find -L /vagrant/rpms \( -type f -and -name '*.rpm' \) -printf '%p '
-  register: custom_rpms
+  register: custom_rpm_files
   changed_when: false
+  when: custom_rpms
 
 - name: install custom RPMs
   tags:
     - common
     - custom-rpms
   command: dnf install --allowerasing --best -y {{ custom_rpms.stdout }}
-  when: custom_rpms.stdout
+  when: custom_rpms and custom_rpm_filess.stdout
 
 - name: install selinux tools
   tags:
@@ -117,6 +135,7 @@
   with_items:
    - libselinux-python
    - selinux-policy
+  when: package_install
 
 - name: disable selinux for 389-DS installation
   # for LXC, 389-DS installation hangs with:
@@ -138,6 +157,7 @@
   with_items:
     - firewalld
     - python-firewall
+  when: package_install
 
 - name: check for firewalld
   tags:
@@ -173,6 +193,7 @@
     - package-install
     - network
   yum: name=rng-tools state=present
+  when: package_install
 
 - name: Start the rngd service
   tags:

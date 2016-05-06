@@ -9,6 +9,7 @@
     - pki-server
     - dogtag-pki-server-theme
     - openssl
+  when: package_install
 
 - name: Open Firewall for services
   tags:

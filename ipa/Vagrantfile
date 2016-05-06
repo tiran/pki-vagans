@@ -86,23 +86,19 @@ Vagrant.configure(2) do |config|
                 "ipa_nfsclient" => ["ipamaster", "ipareplica1", "ipaclient1"],
             }
             ansible.verbose = 'vv'
-            # package-install: don't download and install packages from the internet
-            # package-upgrade: don't upgrade all packages
-            # package-copr: don't install and use COPR with latest FreeIPA
             # network: Don't use network (no DNS forwarder, no package installations)
             # ipa-install: skip installation (ipa-server-install, ipa-client-install)
             ansible.skip_tags = [
-                'package-install',
-                'package-upgrade',
-                'package-copr',
                 #'network',
                 #'ipa-install',
                 'dummy',
             ]
             # ansible.tags = ['bootstrap', 'common']
             ansible.extra_vars = {
-                vagrant_root: HERE,
-                #ipa_master_fqdn: "master.#{DOMAIN}"
+                "ipa_data_dir" => HERE + '/inventory',
+                "package_install" => false,
+                "package_upgrade" => false,
+                "coprs_enabled" => [],
             }
         end
     end

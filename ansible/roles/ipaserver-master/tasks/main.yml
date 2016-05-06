@@ -5,8 +5,8 @@
     - ipa-install
   command: >
     ipa-server-install -U
-    --realm {{ ansible_domain | upper }}
-    --domain {{ ansible_domain | lower }}
+    --realm {{ ipa_realm }}
+    --domain {{ ipa_domain }}
     --hostname {{ ansible_fqdn }}
     --ds-password {{ ipa_dm_password }}
     --admin-password {{ ipa_admin_password }}
@@ -14,6 +14,7 @@
     --setup-dns
     --mkhomedir
     --ssh-trust-dns
+    --allow-zone-overlap
     --reverse-zone={{ reversezone.reversezone }}
     {{ '--forwarder=%s' % dns_forwarder['nameservers'][0] if enable_network else '--no-forwarders' }}
   when: not ipa_installed
@@ -55,13 +56,25 @@
     - 8080
     - 8443
 
+- name: Set ipv4_dns fact
+  tags:
+    - ipaserver-master
+    - ipa-install
+  set_fact: ipv4_dns="{{ hostvars[groups['ipaserver_master'][0]].ansible_default_ipv4.address }}"
+
+- name: Add replica to ipv4_dns fact
+  tags:
+    - ipaserver-master
+    - ipa-install
+  set_fact: ipv4_dns="{{ ipv4_dns }} {{ hostvars[groups['ipaserver_replica'][0]].ansible_default_ipv4.address }}"
+  when: install_ipa_replica
+
 - name: Use FreeIPA DNS, nmcli conn modify ipv4.dns
   tags:
     - ipaserver-master
     - ipa-install
   command: >
-    nmcli conn modify {{ hostvars[item].nm_conn }} ipv4.dns
-    "{{ hostvars[groups['ipaserver_master'][0]].ansible_default_ipv4.address }} {{ hostvars[groups['ipaserver_replica'][0]].ansible_default_ipv4.address }}"
+    nmcli conn modify {{ hostvars[item].nm_conn }} ipv4.dns "{{ ipv4_dns }}"
   delegate_to: "{{item}}"
   with_items: "{{ ipa_hosts }}"
   changed_when: false
@@ -71,7 +84,7 @@
     - ipaserver-master
     - ipa-install
   command: >
-    nmcli conn modify {{ hostvars[item].nm_conn }} ipv4.dns-search {{ ansible_domain }}
+    nmcli conn modify {{ hostvars[item].nm_conn }} ipv4.dns-search {{ ipa_domain }}
   delegate_to: "{{item}}"
   with_items: "{{ ipa_hosts }}"
   changed_when: false
@@ -112,6 +125,7 @@
     args="config-mod --homedirectory=/export/home"
     password="{{ ipa_admin_password }}"
     ignore_no_modifications=true
+  when: install_ipa_nfsserver
 
 - name: Set admin's home directory to /export/home/admin
   tags:
@@ -121,6 +135,7 @@
     args="user-mod admin --homedir=/export/home/admin"
     password="{{ ipa_admin_password }}"
     ignore_no_modifications=true
+  when: install_ipa_nfsserver
 
 - name: Enable password and OTP loging
   tags:
@@ -145,7 +160,7 @@
     - ipaserver-master
     - ipa-install
   ipa:
-    args="dnszone-mod {{ ansible_domain }}. --allow-sync-ptr=TRUE"
+    args="dnszone-mod {{ ipa_domain }}. --allow-sync-ptr=TRUE"
     password="{{ ipa_admin_password }}"
     ignore_no_modifications=true
 
@@ -187,7 +202,7 @@
     - fetch
   fetch:
     src=/etc/ipa/{{ item }}
-    dest={{ vagrant_root }}/inventory/{{ item }}
+    dest={{ ipa_data_dir }}/{{ item }}
     flat=yes
   with_items:
     - prefs.js
@@ -208,7 +223,7 @@
     - fetch
   fetch:
     src=/tmp/krb5.conf
-    dest={{ vagrant_root }}/inventory/krb5.conf
+    dest={{ ipa_data_dir }}/krb5.conf
     flat=yes
 
 - name: Fetch resolv.conf
@@ -218,18 +233,28 @@
     - fetch
   fetch:
     src=/etc/resolv.conf
-    dest={{ vagrant_root }}/inventory/resolv.conf
+    dest={{ ipa_data_dir }}/resolv.conf
     flat=yes
 
-- name: Fetch cacert
+- name: Fetch IPA ca.crt
   tags:
     - ipaserver-master
     - ipa-install
     - fetch
   fetch:
     src=/etc/ipa/ca.crt
-    dest={{ vagrant_root }}/inventory/ca.crt
+    dest={{ ipa_data_dir }}/ca.crt
     flat=yes
+
+- name: Copy IPA ca.crt to all machines
+  tags:
+    - ipaserver-master
+    - ipa-install
+  copy:
+    src={{ ipa_data_dir }}/ca.crt
+    dest=/etc/pki/ipa-ca.crt
+  delegate_to: "{{item}}"
+  with_items: "{{ ipa_hosts }}"
 
 - name: Fetch ipa default.conf
   tags:
@@ -238,7 +263,7 @@
     - fetch
   fetch:
     src=/etc/ipa/default.conf
-    dest={{ vagrant_root }}/inventory/default.conf
+    dest={{ ipa_data_dir }}/default.conf
     flat=yes
 
 - name: Fetch kra agent pem file
@@ -248,5 +273,5 @@
     - fetch
   fetch:
     src=/etc/httpd/alias/kra-agent.pem
-    dest={{ vagrant_root }}/inventory/kra-agent.pem
+    dest={{ ipa_data_dir }}/kra-agent.pem
     flat=yes

@@ -38,3 +38,4 @@
     - common
   set_fact: nm_conn="'{{ result.stdout_lines[0] }}'"
   changed_when: false
+

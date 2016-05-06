@@ -5,6 +5,7 @@
     - package-install
     - network
   yum: name=ocserv state=present
+  when: package_install
 
 - name: Open Firewall services for ocserv VPN server
   tags:
@@ -92,7 +93,7 @@
     - ipa-install
   ipa:
     cmd=ipa-getcert
-    args="request -k /etc/pki/ocserv/private/server.key -f /etc/pki/ocserv/public/server.crt -T caIPAserviceCert -C 'systemctl reload-or-restart ocserv.service'"
+    args="request -w -k /etc/pki/ocserv/private/server.key -f /etc/pki/ocserv/public/server.crt -T caIPAserviceCert -C 'systemctl reload-or-restart ocserv.service'"
     password="{{ ipa_admin_password }}"
   when: not vpn_server_cert.stat.exists
   notify:
@@ -150,5 +151,5 @@
     - fetch
   fetch:
     src=/tmp/krb5.conf
-    dest={{ vagrant_root }}/inventory/krb5_kkdcp.conf
+    dest={{ ipa_data_dir }}/krb5_kkdcp.conf
     flat=yes

@@ -9,6 +9,7 @@
     - samba
     - samba-client
     - sssd-libwbclient
+  when: package_install
   notify:
     - restart sssd
     - restart samba

@@ -9,6 +9,7 @@
     - ipsilon-client
     - mod_nss
     - mod_wsgi
+  when: package_install
 
 - name: Set IdP url fact
   tags:
