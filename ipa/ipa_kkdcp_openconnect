@@ -1,7 +1,0 @@
-#!/bin/bash
-set -e
-
-. inventory/ipaenv_kkdcp
-
-openconnect --cafile inventory/ca.crt vpn.ipa.example $@
-

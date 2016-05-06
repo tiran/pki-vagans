@@ -1,0 +1,6 @@
+#!/bin/bash
+set -e
+
+. "{{ ipa_data_dir }}/ipaenv_kkdcp"
+
+openconnect --cafile ${IPA_INVENTORY}/ca.crt vpn.ipa.example $@

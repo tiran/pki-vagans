@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-. inventory/ipaenv
+. "{{ ipa_data_dir }}/ipaenv"
 
 kinit $@
 klist

@@ -96,9 +96,13 @@ Vagrant.configure(2) do |config|
             # ansible.tags = ['bootstrap', 'common']
             ansible.extra_vars = {
                 "ipa_data_dir" => HERE + '/inventory',
+                "ipa_script_dir" => HERE + '/bin',
+                "ipa_rpm_dir" => HERE + '/rpms',
                 "package_install" => false,
                 "package_upgrade" => false,
-                "coprs_enabled" => [],
+                "coprs_enabled" => [
+                    # "@freeipa/freeipa-4-3",
+                ],
             }
         end
     end

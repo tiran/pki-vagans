@@ -65,9 +65,9 @@ When the machines are up, you can acquire a Kerberos ticket and start a local
 instance of Firefox to explore the WebUI. The admin password is **Secret123**.
 
 ```shell
-$ ./ipa_kinit admin
-$ ./ipa_firefox
-$ ./ipa_ssh admin@client1.ipa.example
+$ bin/ipa_kinit admin
+$ bin/ipa_firefox
+$ bin/ipa_ssh admin@client1.ipa.example
 ```
 
 Dogtag PKI
@@ -182,6 +182,11 @@ ipa-httpexample
 ---------------
 
 GSSAPI + mod_lookup_identity example
+
+ipa-inventory
+-------------
+
+Create local configuration files and scripts for kinit, ssh and Firefox
 
 ipa-ipsilon-idp
 ---------------

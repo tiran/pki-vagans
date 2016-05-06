@@ -98,7 +98,9 @@
     file path={{ item }} state=directory
   with_items:
     - "{{ ipa_data_dir }}"
-    - "{{ ipa_data_dir }}/rpms"
+    - "{{ ipa_script_dir }}"
+    - "{{ ipa_rpm_dir }}"
+    - "{{ ipa_firefox_dir }}"
   run_once: true
   changed_when: false
 

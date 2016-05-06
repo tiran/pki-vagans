@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
 
-. inventory/ipaenv
+. "{{ ipa_data_dir }}/ipaenv"
 
 ssh -F "${IPA_INVENTORY}/ipa_ssh_config" $@

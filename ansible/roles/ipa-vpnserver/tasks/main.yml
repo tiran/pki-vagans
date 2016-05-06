@@ -141,7 +141,7 @@
     - ipa-vpnserver
     - ipa-install
   template:
-    src=../../ipa/templates/krb5.conf
+    src=../../ipa-inventory/templates/krb5.conf
     dest=/tmp/krb5.conf
 
 - name: Fetch krb5config

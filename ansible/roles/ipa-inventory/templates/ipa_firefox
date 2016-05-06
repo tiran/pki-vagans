@@ -1,0 +1,21 @@
+#!/bin/bash
+set -e
+
+. "{{ ipa_data_dir }}/ipaenv"
+
+if [ -z "${IPA_FIREFOX}" ]; then
+    echo "empty IPA_FIREFOX var"
+    exit 1
+fi
+
+rm -rf "${IPA_FIREFOX}"
+mkdir "${IPA_FIREFOX}"
+
+cp "${IPA_INVENTORY}/prefs.js" "${IPA_FIREFOX}/"
+cp "${IPA_INVENTORY}/bookmarks.html" "${IPA_FIREFOX}/"
+cp "${IPA_INVENTORY}/xulstore.json" "${IPA_FIREFOX}/"
+
+certutil -N -d "${IPA_FIREFOX}" --empty-password
+certutil -A -d "${IPA_FIREFOX}" -n 'IPA CA' -i "${IPA_INVENTORY}/ca.crt" -t "TC,C,T"
+
+firefox -no-remote -profile "${IPA_FIREFOX}" $@

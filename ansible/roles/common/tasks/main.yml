@@ -101,7 +101,7 @@
     - common
     - custom-rpms
   synchronize:
-    src={{ipa_data_dir}}/rpms/
+    src={{ipa_rpm_dir}}/
     dest=/vagrant/rpms/
     delete=true
     recursive=true

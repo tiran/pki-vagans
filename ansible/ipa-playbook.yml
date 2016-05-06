@@ -31,6 +31,12 @@
   roles:
     - ipaserver-master
 
+- name: create local inventory files
+  hosts:
+    - ipaserver_master
+  roles:
+    - ipa-inventory
+
 - name: install FreeIPA server replica
   hosts:
     - ipaserver_replica
