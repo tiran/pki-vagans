@@ -131,8 +131,8 @@
   copy:
     src=example/
     dest=/srv/www/example/
-    mode=644
-    directory_mode=755
+    mode=0644
+    directory_mode=0755
     owner=root
     group=root
     seuser=system_u
@@ -149,8 +149,8 @@
   template:
     src=wsgi.py
     dest=/srv/www/example/wsgi.py
-    mode=644
-    directory_mode=755
+    mode=0644
+    directory_mode=0755
     owner=root
     group=root
     seuser=system_u

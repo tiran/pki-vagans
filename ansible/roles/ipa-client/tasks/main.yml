@@ -8,7 +8,7 @@
     state=directory
     owner=root
     group=root
-    mode=755
+    mode=0755
     seuser=system_u
     serole=object_r
     setype=home_root_t

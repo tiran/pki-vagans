@@ -63,7 +63,7 @@
     - ipa-install
   file:
     path=/srv/www/sp_example
-    mode=755
+    mode=0755
     state=directory
     owner=root
     group=root
@@ -79,8 +79,8 @@
   template:
     src=../../ipa-httpexample/templates/wsgi.py
     dest=/srv/www/sp_example/wsgi.py
-    mode=644
-    directory_mode=755
+    mode=0644
+    directory_mode=0755
     owner=root
     group=root
     seuser=system_u

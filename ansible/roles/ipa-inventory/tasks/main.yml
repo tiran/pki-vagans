@@ -108,7 +108,7 @@
     template
     src={{ item }}
     dest={{ ipa_script_dir }}/{{ item }}
-    mode=755
+    mode=0755
   with_items:
     - ipa_firefox
     - ipa_kinit
@@ -126,7 +126,7 @@
     template
     src={{ item }}
     dest={{ ipa_data_dir }}/{{ item }}
-    mode=644
+    mode=0644
   with_items:
     - ipa_ssh_config
     - ipaenv

@@ -12,7 +12,7 @@
   tags:
     - bootstrap
   raw: sudo ip route add default via $(ip route | tail -n1 | awk -F. '{printf "%u.%u.%u.1\n", $1, $2, $3}')
-  when: "default_route.rc != 0"
+  when: default_route.rc != 0
 
 - name: Check NM_CONTROLLED in /etc/sysconfig/network-scripts/ifcfg-eth0
   tags:
@@ -25,7 +25,7 @@
   tags:
     - bootstrap
   raw: sed -i 's/NM_CONTROLLED.*//g' /etc/sysconfig/network-scripts/ifcfg-eth0
-  when: "has_nm_controlled.rc == 0"
+  when: has_nm_controlled.rc == 0
 
 - name: Check nameserver in /etc/resolv.conf
   tags:
@@ -38,7 +38,7 @@
   tags:
     - bootstrap
   raw: "systemctl restart NetworkManager"
-  when: "has_nm_controlled.rc == 0 or has_nameserver.rc != 0"
+  when: has_nm_controlled.rc == 0 or has_nameserver.rc != 0
 
 - name: Check for dnf command
   tags:

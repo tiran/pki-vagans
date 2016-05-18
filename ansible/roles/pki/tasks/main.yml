@@ -15,7 +15,7 @@
   tags:
     - pki
     - firewall
-  firewalld: 
+  firewalld:
     service={{ item }}
     permanent=true
     state=enabled
