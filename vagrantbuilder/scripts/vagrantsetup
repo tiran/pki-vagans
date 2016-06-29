@@ -5,10 +5,22 @@
 #
 set -e
 
-# Don't keep rescue kernel images
+# On some systems cleanup seems to remove this directory. This causes
+# package install to fail with dangling symlink /var/lock.
+mkdir -p -m 0755 /run/lock
+
+# don't keep rescue kernel images
 cat > /etc/dracut.conf.d/norescue.conf << EOF
 dracut_rescue_image="no"
 EOF
+
+# limit installed kernel
+if [ -f /etc/yum.conf ]; then
+    sed -i 's/^installonly_limit=.*/installonly_limit=2/' /etc/yum.conf
+fi
+if [ -f /etc/dnf/dnf.conf ]; then
+    sed -i 's/^installonly_limit=.*/installonly_limit=2/' /etc/dnf/dnf.conf
+fi
 
 # harden sshd
 sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' \
@@ -19,6 +31,7 @@ cat > /etc/sysconfig/network-scripts/ifcfg-eth0 << EOF
 DEVICE="eth0"
 BOOTPROTO="dhcp"
 ONBOOT="yes"
+NM_CONTROLLED="yes"
 TYPE="Ethernet"
 PERSISTENT_DHCLIENT="yes"
 EOF
@@ -35,13 +48,15 @@ getent passwd vagrant >/dev/null || useradd \
     vagrant
 
 # ssh login for Vagrant user
-mkdir -p -m 0700 ~vagrant/.ssh
-cat > ~vagrant/.ssh/authorized_keys << EOF
+if [ ! -f ~vagrant/.ssh/authorized_keys ]; then
+    mkdir -p -m 0700 ~vagrant/.ssh
+    cat > ~vagrant/.ssh/authorized_keys << EOF
 ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key
 EOF
-chmod 0600 ~vagrant/.ssh/authorized_keys
-chown -R vagrant:vagrant ~vagrant/
-restorecon -Rv ~vagrant/.ssh || true
+    chmod 0600 ~vagrant/.ssh/authorized_keys
+    chown -R vagrant:vagrant ~vagrant/
+    restorecon -Rv ~vagrant/.ssh || true
+fi
 
 # sudoers for Vagrant user
 cat > /etc/sudoers.d/vagrant-nopasswd << EOF
@@ -52,4 +67,3 @@ chmod 600 /etc/sudoers.d/vagrant-nopasswd
 restorecon -Rv /etc/sudoers.d || true
 
 exit 0
-

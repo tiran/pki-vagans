@@ -1,3 +1,4 @@
-*.img
-*.box
 .atlas_token
+tmp/
+basebox/
+output/

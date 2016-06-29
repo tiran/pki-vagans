@@ -1,124 +1,252 @@
-#!/bin/sh
-# Create, update and customize Vagrant box
-#
-# Christian Heimes <cheimes@redhat.com>
-#
-set -e
+#!/usr/bin/python2
+import argparse
+import json
+import os
+import re
+import shutil
+import subprocess
 
-VAGRANT_PKG="curl,rsync,yum-utils,which"
-ANSIBLE_PKG="python2,python2-dnf,libselinux-python,python-firewall,gnupg"
-ADDITIONAL_PGK="rng-tools,openssl"
-DOGTAG_PKG="pki-ca,pki-kra,pki-ocsp,pki-server,dogtag-pki-server-theme,389-ds-base"
 
-OCSERV_PKG="ocserv,openconnect,bridge-utils"
-SAMBA_PKG="samba,samba-client,sssd-libwbclient"
-HTTPD_PKG="httpd,mod_auth_gssapi,mod_authnz_pam,mod_intercept_form_submit,mod_lookup_identity,libsss_simpleifp,sssd-dbus,mod_nss,mod_session"
-IPSILON_PKG="ipsilon,ipsilon-client,ipsilon-saml2,ipsilon-openid,ipsilon-persona,ipsilon-authform,ipsilon-infosssd,ipsilon-tools-ipa,ipsilon-authgssapi,ipsilon-authfas,ipsilon-authpam"
+HERE = os.path.dirname(os.path.abspath(__file__))
 
-EXTRA_COMMANDS=""
+BASE_PACKAGES = [
+    # Vagrant dependencies
+    'curl', 'rsync', 'yum-utils', 'which',
+    # Ansible dependencies
+    'python2', 'python2-dnf', 'libselinux-python', 'python-firewall', 'gnupg',
+    # extras
+    'rng-tools', 'openssl', 'java-headless',
+]
 
-case $2 in
-  centos)
-    OS_VERSION="centos-7.2"
-    SUFFIX="centos72"
-    PKGUPGRADE="yum -y upgrade"
-    FREEIPA_PKG="ipa-client,ipa-server,ipa-server-dns"
-    ;;
-  fedora)
-    OS_VERSION="fedora-23"
-    SUFFIX="f23"
-    PKGUPGRADE="dnf -y --best upgrade"
-    FREEIPA_PKG="freeipa-client,freeipa-server,freeipa-server-dns"
-    ;;
-  rhel)
-    OS_VERSION="rhel-7.2"
-    SUFFIX="rhel72"
-    PKGUPGRADE="yum -y upgrade"
-    FREEIPA_PKG="ipa-client,ipa-server,ipa-server-dns"
-    ;;
-  *)
-    echo "$0 [dogtag|freeipa] [centos|fedora]"
-    exit 1
-    ;;
-esac
+DOGTAG_PACKAGES = [
+    '389-ds-base',
+    'pki-ca', 'pki-kra', 'pki-ocsp', 'pki-server', 'dogtag-pki-server-theme',
+]
 
-case $1 in
-  freeipa)
-    NAME=freeipa
-    EXTRA_PKG=$DOGTAG_PKG,$FREEIPA_PKG,$OCSERV_PKG,$SAMBA_PKG,$HTTPD_PKG,$IPSILON_PKG
-    ;;
-  freeipa43-copr)
-    NAME=freeipa43
-    EXTRA_PKG=$DOGTAG_PKG,$FREEIPA_PKG,$OCSERV_PKG,$SAMBA_PKG,$HTTPD_PKG,$IPSILON_PKG
-    EXTRA_COMMANDS="${EXTRA_COMMANDS} --run freeipa43_copr"
-    ;;
-  dogtag)
-    NAME=dogtag
-    EXTRA_PKG=$DOGTAG_PKG
-    ;;
-  *)
-    echo "$0 [dogtag|freeipa] [centos|fedora]"
-    exit 1
-    ;;
-esac
+# remove old kernels
+REMOVE_KERNELS = "package-cleanup -y --oldkernels --count=1"
 
-BOXNAME=${NAME}-${SUFFIX}
+# We run the update manually because it sometimes fails to write to /dev/log
+PKGUPGRADE = "dnf -y --best upgrade || yum -y --best upgrade || true"
 
-function trimbox {
-    echo "Cleaning up"
-    virt-sysprep \
-        --operations defaults,-ssh-userdir \
-        -a $1
-    echo "Trimming"
-    virt-sparsify --in-place $1
+# common args for virt-builder and customize
+IMG_FORMAT = 'qcow2'
+VIRT_ARGS = [
+    '--format', IMG_FORMAT,
+    '--timezone', 'UTC',
+    '--run', 'scripts/vagrantsetup',
+    '--root-password', 'password:vagrant',
+    '--password', 'vagrant:password:vagrant',
+    '--run-command', PKGUPGRADE,
+    '--install', ','.join(BASE_PACKAGES),
+]
+
+VAGRANT_FILE = """\
+Vagrant.configure('2') do |config|
+        config.vm.synced_folder ".", "/vagrant", type: "rsync"
+        config.vm.provider :libvirt do |libvirt|
+                libvirt.driver = 'kvm'
+                libvirt.connect_via_ssh = false
+                libvirt.username = 'root'
+                libvirt.storage_pool_name = 'default'
+        end
+end
+"""
+
+FLAVORS = {
+    'freeipa': ['--install', ','.join(DOGTAG_PACKAGES),
+                '--run', 'scripts/ipa-package-install'],
+    'freeipa43-copr': ['--run', 'scripts/freeipa43-copr',
+                       '--install', ','.join(DOGTAG_PACKAGES),
+                       '--run', 'scripts/ipa-package-install'],
+    'dogtag': ['--install', ','.join(DOGTAG_PACKAGES)],
 }
 
-echo "Building ${OS_VERSION} X86_64 Vagrant box for ${NAME}"
-echo "Extra packages: $EXTRA_PKG"
-echo "This takes about 5 to 12 minutes"
+# os_version, suffix
+PLATFORMS = {
+    'fedora23': ('fedora-23', 'f23'),
+    'fedora24': ('fedora-24', 'f24'),
+    'centos72': ('centos-7.2', 'centos72'),
+    'rhel72': ('rhel-7.2', 'rhel72'),
+}
 
-if [ ! -f basebox-${OS_VERSION}.img ]; then
-    echo "Create Vagrant basebox"
-    # I'm using 'dnf upgrade' instead of update to work around an issue with /dev/log
-    virt-builder \
-        --format qcow2 \
-        --run vagrantsetup \
-        --root-password password:vagrant \
-        --password vagrant:password:vagrant \
-        --run-command "${PKGUPGRADE} || true" \
-        --update \
-        --install $VAGRANT_PKG,$ANSIBLE_PKG,$ADDITIONAL_PGK \
-        --selinux-relabel \
-        ${OS_VERSION} -o basebox-${OS_VERSION}.img
-    trimbox basebox-${OS_VERSION}.img
-fi
 
-echo "cp basebox-${OS_VERSION}.img box.img"
-cp basebox-${OS_VERSION}.img box.img
+def trimbox(filename):
+    """Remove temporary files, logs and sparsify image
+    """
+    # keep ~vagrant/.ssh
+    subprocess.check_call(
+        ['virt-sysprep', '--operations', 'defaults,-ssh-userdir', '-a', filename]
+    )
+    # print('Trimming')
+    subprocess.check_call(
+        ['virt-sparsify', '--in-place', filename]
+    )
 
-echo "Customize with extra packages and update"
-virt-customize \
-    --format qcow2 \
-    --timezone UTC \
-    --run-command "mkdir -p /run/lock" \
-    $EXTRA_COMMANDS \
-    --run-command "${PKGUPGRADE} || true" \
-    --update \
-    --install $VAGRANT_PKG,$ANSIBLE_PKG,$ADDITIONAL_PGK \
-    --install $EXTRA_PKG \
-    --selinux-relabel \
-    -a box.img
+def remove_kernels(filename):
+    """Remove old kernels
 
-trimbox box.img
+    dnf/yum doesn't remove the currently running Kernel. Boot the image a
+    second time to remove the previous Kernel.
+    """
+    subprocess.check_call(
+        ['virt-customize',
+         '--format', IMG_FORMAT,
+         '--run-command', REMOVE_KERNELS,
+         '-a', filename]
+    )
 
-echo "Creating box archive"
-rm -f ${BOXNAME}.box
-tar cv ./metadata.json ./Vagrantfile ./box.img | xz -4 -T0 > ${BOXNAME}.box
+def selinux_relabel(args):
+    """boot machine once to run the selinux relabelling
 
-rm box.img
+    Taken from purpleidea's virt-builder
+    https://www.redhat.com/archives/libguestfs/2014-January/msg00183.html
+    https://github.com/libguestfs/libguestfs/commit/20a4bfde9628cfeb8bea441cab7dcc94843b34e3
 
-echo "Done. To use the new box, run:"
-echo "    vagrant box add ${BOXNAME} ${BOXNAME}.box"
-echo
-echo "You may remove ${BOXNAME}.box afterwards."
+    """
+    print("qemu boot for SELinux relabelling")
+    cmd = [
+        'qemu-system-x86_64',
+        '-machine', 'accel=kvm:tcg',
+        '-cpu', 'host',
+        '-m', '512',
+        '-drive', 'file={0.boxworkfile},format=qcow2,if=virtio'.format(args),
+        '-serial', 'stdio',
+        '-nographic', '-nodefaults', '-no-reboot',
+    ]
+    subprocess.check_call(cmd)
+    print("Put SELinux in enforcing mode")
+    cmd = [
+        'virt-edit',
+        '-a', args.boxworkfile,
+        '/etc/selinux/config',
+        '-e', 's/^SELINUX=permissive/SELINUX=enforcing/'
+    ]
+    subprocess.check_call(cmd)
 
+
+def virt_builder(args):
+    """
+    """
+    cmd = ['virt-builder']
+    cmd.extend(VIRT_ARGS)
+    cmd.extend([args.os_version, '--output', args.baseboximage])
+    subprocess.check_call(cmd)
+    trimbox(args.baseboximage)
+
+
+def virt_customize(args):
+    cmd = ['virt-customize']
+    cmd.extend(VIRT_ARGS)
+    cmd.extend(args.extra_commands)
+    cmd.extend([
+        # enforce auto-relabelling
+        '--run-command', 'touch /.autorelabel',
+        # put SELinux in permissive module for auto-relabelling to work around
+        # issue with Fedora 24. selinux_relabel() sets it to enforcing later.
+        '--edit', '/etc/selinux/config:s/^SELINUX=enforcing/SELINUX=permissive/',
+        '-a', args.boxworkfile
+    ])
+    subprocess.check_call(cmd)
+
+
+def get_metadata(args):
+    xml = subprocess.check_output(
+        ['virt-inspector', '-a', args.boxworkfile]
+    )
+    with open(args.boxxml, 'w') as f:
+        f.write(xml)
+
+    info = subprocess.check_output(
+        ['qemu-img', 'info', args.boxworkfile]
+    )
+    with open(args.boxinfo, 'w') as f:
+        f.write(info)
+
+    mo = re.search('virtual\ size:.* \((\d+)\ bytes\)', info)
+    args.boxsize = int(mo.group(1))
+
+
+def compress_boxfile(args):
+    try:
+        os.unlink(args.boxarchive)
+    except OSError:
+        pass
+    # use shell here to use parallel xz
+    with open(os.path.join(args.tmpdir, 'metadata.json'), 'w') as f:
+        d = {
+            "provider": "libvirt",
+            "format": IMG_FORMAT,
+            "virtual_size": int(round(args.boxsize / 1024.**3))
+        }
+        json.dump(d, f)
+    with open(os.path.join(args.tmpdir, 'Vagrantfile'), 'w') as f:
+        f.write(VAGRANT_FILE)
+    cmd = "tar cv ./metadata.json ./Vagrantfile ./box.img | xz -4 -T0 > {0.boxarchive}".format(args)
+    subprocess.check_call(cmd, shell=True, cwd=args.tmpdir)
+    os.unlink(args.boxworkfile)
+    os.unlink(os.path.join(args.tmpdir, 'metadata.json'))
+    os.unlink(os.path.join(args.tmpdir, 'Vagrantfile'))
+
+
+def parseargs():
+    parser = argparse.ArgumentParser(description='vagrant boxbuilder.')
+    parser.add_argument('flavor', choices=sorted(FLAVORS))
+    parser.add_argument('platform', choices=sorted(PLATFORMS))
+
+    args = parser.parse_args()
+
+    args.extra_commands = FLAVORS[args.flavor]
+    args.os_version, args.suffix = PLATFORMS[args.platform]
+
+    args.tmpdir = os.path.join(HERE, 'tmp')
+    args.baseboxdir = os.path.join(HERE, 'basebox')
+    args.outputdir = os.path.join(HERE, 'output')
+
+    args.boxname = '{0.flavor}-{0.suffix}'.format(args)
+    args.boxarchive = '{0.outputdir}/{0.boxname}.box'.format(args)
+
+    args.boxxml = '{0.outputdir}/{0.boxname}.xml'.format(args)
+    args.boxinfo = '{0.outputdir}/{0.boxname}.info'.format(args)
+    args.boxsize = None  # in bytes
+
+    args.boxworkfile = '{0.tmpdir}/box.img'.format(args)
+
+    args.baseboximage = '{0.baseboxdir}/basebox-{0.os_version}.img'.format(args)
+
+    return parser, args
+
+
+def main():
+    parser, args = parseargs()
+
+    for directory in args.tmpdir, args.baseboxdir, args.outputdir:
+        if not os.path.isdir(directory):
+            os.makedirs(directory)
+
+    if not os.path.isfile(args.baseboximage):
+        print("Create Vagrant basebox {0.baseboximage}".format(args))
+        virt_builder(args)
+
+    print("Copy {0.baseboximage} to {0.boxworkfile}".format(args))
+    shutil.copyfile(args.baseboximage, args.boxworkfile)
+
+    print("Customize with extra packages and updates")
+    virt_customize(args)
+    print("SELinux relabel")
+    selinux_relabel(args)
+    print("Remove old kernels")
+    remove_kernels(args.boxworkfile)
+    print("Trim box")
+    trimbox(args.boxworkfile)
+    print("Get box metadata")
+    get_metadata(args)
+    print("Creating box archive")
+    compress_boxfile(args)
+    print("Done. To use the new box, run:")
+    print("    vagrant box add {0.boxname} {0.boxarchive}".format(args))
+    print("You may remove {0.boxarchive} afterwards.".format(args))
+
+
+if __name__ == '__main__':
+    main()
