@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# bind-dyndb-ldap package sets named_write_master_zones=1 in its postin
+# script. Since virt-customize disables SELinux, the operation fails with
+# setsebool:  SELinux is disabled.
+
+if [ -x /usr/sbin/setsebool ] && $(rpm -q bind-dyndb-ldap >/dev/null); then
+    echo "setsebool named_write_master_zones=1 for bind-dyndb-ldap"
+    /usr/sbin/setsebool -P named_write_master_zones=1
+fi

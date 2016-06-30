@@ -32,6 +32,7 @@ PKGUPGRADE = "dnf -y --best upgrade || yum -y --best upgrade || true"
 # common args for virt-builder and customize
 IMG_FORMAT = 'qcow2'
 VIRT_ARGS = [
+    '--verbose',
     '--format', IMG_FORMAT,
     '--timezone', 'UTC',
     '--run', 'scripts/vagrantsetup',
@@ -55,10 +56,12 @@ end
 
 FLAVORS = {
     'freeipa': ['--install', ','.join(DOGTAG_PACKAGES),
-                '--run', 'scripts/ipa-package-install'],
+                '--run', 'scripts/ipa-package-install',
+                '--firstboot', 'scripts/ipa-firstboot'],
     'freeipa43-copr': ['--run', 'scripts/freeipa43-copr',
                        '--install', ','.join(DOGTAG_PACKAGES),
-                       '--run', 'scripts/ipa-package-install'],
+                       '--run', 'scripts/ipa-package-install',
+                       '--firstboot', 'scripts/ipa-firstboot'],
     'dogtag': ['--install', ','.join(DOGTAG_PACKAGES)],
 }
 
@@ -71,9 +74,10 @@ PLATFORMS = {
 }
 
 
-def trimbox(filename):
+def trimbox(args, baseimage=False):
     """Remove temporary files, logs and sparsify image
     """
+    filename = args.boxworkfile if not baseimage else args.baseimage
     # keep ~vagrant/.ssh
     subprocess.check_call(
         ['virt-sysprep', '--operations', 'defaults,-ssh-userdir', '-a', filename]
@@ -83,12 +87,13 @@ def trimbox(filename):
         ['virt-sparsify', '--in-place', filename]
     )
 
-def remove_kernels(filename):
+def remove_kernels(args, baseimage=False):
     """Remove old kernels
 
     dnf/yum doesn't remove the currently running Kernel. Boot the image a
     second time to remove the previous Kernel.
     """
+    filename = args.boxworkfile if not baseimage else args.baseimage
     subprocess.check_call(
         ['virt-customize',
          '--format', IMG_FORMAT,
@@ -96,29 +101,43 @@ def remove_kernels(filename):
          '-a', filename]
     )
 
-def selinux_relabel(args):
+
+def selinux_relabel(args, baseimage=False):
     """boot machine once to run the selinux relabelling
 
     Taken from purpleidea's virt-builder
     https://www.redhat.com/archives/libguestfs/2014-January/msg00183.html
     https://github.com/libguestfs/libguestfs/commit/20a4bfde9628cfeb8bea441cab7dcc94843b34e3
-
     """
+    filename = args.boxworkfile if not baseimage else args.baseimage
+    print("Put SELinux in permissive mode and touch /.autorelabel")
+    cmd = [
+        'virt-customize',
+        '-a', filename,
+        # enforce auto-relabelling
+        '--run-command', 'touch /.autorelabel',
+        # put SELinux in permissive module for auto-relabelling to work around
+        # issue with Fedora 24. selinux_relabel() sets it to enforcing later.
+        '--edit', '/etc/selinux/config:s/^SELINUX=enforcing/SELINUX=permissive/',
+    ]
+    subprocess.check_call(cmd)
+
     print("qemu boot for SELinux relabelling")
     cmd = [
         'qemu-system-x86_64',
         '-machine', 'accel=kvm:tcg',
         '-cpu', 'host',
         '-m', '512',
-        '-drive', 'file={0.boxworkfile},format=qcow2,if=virtio'.format(args),
+        '-drive', 'file={},format=qcow2,if=virtio'.format(filename),
         '-serial', 'stdio',
         '-nographic', '-nodefaults', '-no-reboot',
     ]
     subprocess.check_call(cmd)
+
     print("Put SELinux in enforcing mode")
     cmd = [
         'virt-edit',
-        '-a', args.boxworkfile,
+        '-a', filename,
         '/etc/selinux/config',
         '-e', 's/^SELINUX=permissive/SELINUX=enforcing/'
     ]
@@ -130,23 +149,16 @@ def virt_builder(args):
     """
     cmd = ['virt-builder']
     cmd.extend(VIRT_ARGS)
-    cmd.extend([args.os_version, '--output', args.baseboximage])
+    cmd.extend([args.os_version, '--output', args.baseimage])
     subprocess.check_call(cmd)
-    trimbox(args.baseboximage)
+    trimbox(args, baseimage=True)
 
 
 def virt_customize(args):
     cmd = ['virt-customize']
     cmd.extend(VIRT_ARGS)
     cmd.extend(args.extra_commands)
-    cmd.extend([
-        # enforce auto-relabelling
-        '--run-command', 'touch /.autorelabel',
-        # put SELinux in permissive module for auto-relabelling to work around
-        # issue with Fedora 24. selinux_relabel() sets it to enforcing later.
-        '--edit', '/etc/selinux/config:s/^SELINUX=enforcing/SELINUX=permissive/',
-        '-a', args.boxworkfile
-    ])
+    cmd.extend(['-a', args.boxworkfile])
     subprocess.check_call(cmd)
 
 
@@ -212,7 +224,7 @@ def parseargs():
 
     args.boxworkfile = '{0.tmpdir}/box.img'.format(args)
 
-    args.baseboximage = '{0.baseboxdir}/basebox-{0.os_version}.img'.format(args)
+    args.baseimage = '{0.baseboxdir}/basebox-{0.os_version}.img'.format(args)
 
     return parser, args
 
@@ -224,21 +236,23 @@ def main():
         if not os.path.isdir(directory):
             os.makedirs(directory)
 
-    if not os.path.isfile(args.baseboximage):
-        print("Create Vagrant basebox {0.baseboximage}".format(args))
+    if not os.path.isfile(args.baseimage):
+        print("Create Vagrant basebox {0.baseimage}".format(args))
         virt_builder(args)
+        # print("SELinux relabel basebox")
+        # selinux_relabel(args, baseimage=True)
 
-    print("Copy {0.baseboximage} to {0.boxworkfile}".format(args))
-    shutil.copyfile(args.baseboximage, args.boxworkfile)
+    print("Copy {0.baseimage} to {0.boxworkfile}".format(args))
+    shutil.copyfile(args.baseimage, args.boxworkfile)
 
     print("Customize with extra packages and updates")
     virt_customize(args)
+    print("Remove old kernels")
+    remove_kernels(args)
     print("SELinux relabel")
     selinux_relabel(args)
-    print("Remove old kernels")
-    remove_kernels(args.boxworkfile)
     print("Trim box")
-    trimbox(args.boxworkfile)
+    trimbox(args)
     print("Get box metadata")
     get_metadata(args)
     print("Creating box archive")

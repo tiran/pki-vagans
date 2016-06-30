@@ -57,22 +57,23 @@ EXAMPLES = """
 
 
 class IPA(object):
-    KINIT = 'kinit'
-    KLIST = 'klist'
-
-    def __init__(self, module, cmd, args, principal, password):
+    def __init__(self, module, principal, password):
         self.module = module
-        self.cmd = cmd
-        self.args = args
         self.principal = principal
         self.password = password
 
     def kinit(self):
-        rc = subprocess.call([self.KLIST, '-s'])
-        if rc == 0:
+        try:
+            stdout = subprocess.check_output(['klist', '-s'])
+        except subprocess.CalledProcessError:
+            pass
+        else:
+            dp = "Default principal: {}@".format(self.principal)
             # we have a non-expired TGT
-            return
-        cmd = [self.KINIT, self.principal]
+            if dp in stdout:
+                return
+
+        cmd = ['kinit', self.principal]
         popen = subprocess.Popen(
             cmd,
             stdin=subprocess.PIPE,
@@ -83,9 +84,11 @@ class IPA(object):
         if popen.returncode != 0:
             raise subprocess.CalledProcessError(popen.returncode, cmd, stdout)
 
-    def ipa_cmd(self):
-        cmd = [self.cmd]
-        cmd.extend(shlex.split(self.args))
+    def command(self, cmd, args):
+        cmd = [cmd]
+        if not isinstance(args, list):
+            args = shlex.split(args)
+        cmd.extend(args)
         popen = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
@@ -93,10 +96,6 @@ class IPA(object):
         )
         stdout, stderr = popen.communicate()
         return popen.returncode, stdout, stderr
-
-    def __call__(self):
-        self.kinit()
-        return self.ipa_cmd()
 
 
 def main():
@@ -126,14 +125,17 @@ def main():
         server = cfg.get('global', 'server')
         args = args.replace('$IPA_SERVER', server)
 
-    ipa = IPA(module, cmd, args, principal, password)
+    kwargs = dict(cmd=cmd, args=args, principal=principal)
+
+    ipa = IPA(module, principal, password)
     try:
-        rc, stdout, stderr = ipa()
+        ipa.kinit()
+        rc, stdout, stderr = ipa.command(cmd, args)
     except Exception as e:
         msg = ": ".join((type(e).__name__, str(e)))
         if hasattr(e, 'output'):
             msg = '\n'.join((msg, e.output))
-        module.fail_json(msg=msg)
+        module.fail_json(msg=msg, **kwargs)
 
     changed = True
     if rc != 0:
@@ -153,7 +155,7 @@ def main():
                 continue
             results.append(mo.group(1))
 
-    kwargs = dict(rc=rc, stdout=stdout, stderr=stderr, changed=changed, results=results)
+    kwargs.update(rc=rc, stdout=stdout, stderr=stderr, changed=changed, results=results)
     if rc != 0:
         module.fail_json(msg='command failed', **kwargs)
     else:
