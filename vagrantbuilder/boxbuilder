@@ -1,21 +1,28 @@
 #!/usr/bin/python2
+from ConfigParser import ConfigParser
 import argparse
+import datetime
+import hashlib
 import json
+import glob
 import os
 import re
 import shutil
 import subprocess
+from xml.etree import ElementTree
 
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 BASE_PACKAGES = [
     # Vagrant dependencies
-    'curl', 'rsync', 'yum-utils', 'which',
+    'curl', 'openssh-server', 'rsync', 'which', 'yum-utils',
     # Ansible dependencies
-    'python2', 'python2-dnf', 'libselinux-python', 'python-firewall', 'gnupg',
+    'gnupg', 'libselinux-python', 'python-firewall', 'python2', 'python2-dnf',
+    'sudo',
     # extras
-    'rng-tools', 'openssl', 'java-headless',
+    'java-headless', 'openssh-clients', 'openssl', 'psmisc', 'rng-tools',
+    'screen', 'tar', 'tmux', 'vim-enhanced',
 ]
 
 DOGTAG_PACKAGES = [
@@ -27,12 +34,12 @@ DOGTAG_PACKAGES = [
 REMOVE_KERNELS = "package-cleanup -y --oldkernels --count=1"
 
 # We run the update manually because it sometimes fails to write to /dev/log
-PKGUPGRADE = "dnf -y --best upgrade || yum -y --best upgrade || true"
+PKGUPGRADE = "dnf -y upgrade || yum -y upgrade"
 
 # common args for virt-builder and customize
 IMG_FORMAT = 'qcow2'
 VIRT_ARGS = [
-    '--verbose',
+    # '--verbose',
     '--format', IMG_FORMAT,
     '--timezone', 'UTC',
     '--run', 'scripts/vagrantsetup',
@@ -172,11 +179,55 @@ def get_metadata(args):
     info = subprocess.check_output(
         ['qemu-img', 'info', args.boxworkfile]
     )
-    with open(args.boxinfo, 'w') as f:
-        f.write(info)
+    mo = re.search('virtual\ size:.*\((\d+)\ bytes\)', info)
+    boxsize = int(mo.group(1))
+    mo = re.search('disk\ size:\s*(.*)', info)
+    disksize = mo.group(1)
 
-    mo = re.search('virtual\ size:.* \((\d+)\ bytes\)', info)
-    args.boxsize = int(mo.group(1))
+    et = ElementTree.parse(args.boxxml)
+    args.metadata.update({
+        "provider": "libvirt",
+        "format": IMG_FORMAT,
+        "virtual_size": int(round(boxsize / 1024.**3)),
+        # extra stuff
+        "name": args.boxname,
+        "file": os.path.basename(args.boxarchive),
+        "expand": et.find('./operatingsystem[0]/root[0]').text,
+        "arch": et.find('./operatingsystem[0]/arch[0]').text,
+        "osinfo": et.find('./operatingsystem[0]/product_name[0]').text,
+        "virtual_size_bytes": boxsize,
+        "disksize": disksize,
+        "checksum": {},
+        "packages": {},
+        "buildstamp": datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S'),
+    })
+
+    xpath = "./operatingsystem[0]/applications/application[name='{}']"
+    for name in ['pki-server', 'freeipa-server', 'ipa-server', '389-ds-base']:
+        node = et.find(xpath.format(name))
+        if node is None:
+            continue
+        version = node.find('version').text
+        release = node.find('release').text
+        args.metadata['packages'][name] = '-'.join((version, release))
+
+    with open(args.boxjson, 'w') as f:
+        json.dump(args.metadata, f, sort_keys=True, indent=4)
+
+
+def update_metadata(args):
+    h = hashlib.sha512()
+    with open(args.boxarchive, 'rb') as f:
+        while True:
+            data = f.read(1024**2)
+            if not data:
+                break
+            h.update(data)
+    args.metadata['checksum']['sha512'] = h.hexdigest()
+    args.metadata["compressed_size"] = os.path.getsize(args.boxarchive)
+
+    with open(args.boxjson, 'w') as f:
+        json.dump(args.metadata, f, sort_keys=True, indent=4)
 
 
 def compress_boxfile(args):
@@ -184,21 +235,52 @@ def compress_boxfile(args):
         os.unlink(args.boxarchive)
     except OSError:
         pass
-    # use shell here to use parallel xz
-    with open(os.path.join(args.tmpdir, 'metadata.json'), 'w') as f:
-        d = {
-            "provider": "libvirt",
-            "format": IMG_FORMAT,
-            "virtual_size": int(round(args.boxsize / 1024.**3))
-        }
-        json.dump(d, f)
+
     with open(os.path.join(args.tmpdir, 'Vagrantfile'), 'w') as f:
         f.write(VAGRANT_FILE)
+    shutil.copyfile(args.boxjson, os.path.join(args.tmpdir, 'metadata.json'))
+
+    # use shell here to use parallel xz
     cmd = "tar cv ./metadata.json ./Vagrantfile ./box.img | xz -4 -T0 > {0.boxarchive}".format(args)
     subprocess.check_call(cmd, shell=True, cwd=args.tmpdir)
     os.unlink(args.boxworkfile)
     os.unlink(os.path.join(args.tmpdir, 'metadata.json'))
     os.unlink(os.path.join(args.tmpdir, 'Vagrantfile'))
+
+
+def build_index():
+    outputdir = os.path.join(HERE, 'output')
+    jsons = glob.glob(os.path.join(outputdir, '*.json'))
+    if not jsons:
+        return
+
+    cfg = ConfigParser()
+    keys = ['name', 'osinfo', 'arch', 'file', 'format', 'compressed_size',
+            'expand']
+    checksums = {}
+
+    for filename in sorted(jsons):
+        with open(filename) as f:
+            metadata = json.load(f)
+        section = metadata['name']
+        cfg.add_section(section)
+        for key in keys:
+            cfg.set(section, key, metadata[key])
+        cfg.set(section, 'size', metadata['virtual_size_bytes'])
+        checksum = metadata['checksum']['sha512']
+        cfg.set(section, 'checksum[sha512]', checksum)
+        checksums[metadata['file']] = checksum
+        notes = ', '.join(
+            sorted(': '.join((k, v)) for k, v in metadata['packages'].items())
+        )
+        cfg.set(section, 'notes', notes)
+
+    with open(os.path.join(outputdir, 'index'), 'w') as f:
+        cfg.write(f)
+    with open(os.path.join(outputdir, 'SHA512SUM'), 'w') as f:
+        for filename, checksum in sorted(checksums.iteritems()):
+            f.write('{}  {}\n'.format(checksum, filename))
+    return cfg
 
 
 def parseargs():
@@ -219,8 +301,8 @@ def parseargs():
     args.boxarchive = '{0.outputdir}/{0.boxname}.box'.format(args)
 
     args.boxxml = '{0.outputdir}/{0.boxname}.xml'.format(args)
-    args.boxinfo = '{0.outputdir}/{0.boxname}.info'.format(args)
-    args.boxsize = None  # in bytes
+    args.boxjson = '{0.outputdir}/{0.boxname}.json'.format(args)
+    args.metadata = {}  # to be filled later
 
     args.boxworkfile = '{0.tmpdir}/box.img'.format(args)
 
@@ -230,6 +312,7 @@ def parseargs():
 
 
 def main():
+    build_index()
     parser, args = parseargs()
 
     for directory in args.tmpdir, args.baseboxdir, args.outputdir:
@@ -239,8 +322,6 @@ def main():
     if not os.path.isfile(args.baseimage):
         print("Create Vagrant basebox {0.baseimage}".format(args))
         virt_builder(args)
-        # print("SELinux relabel basebox")
-        # selinux_relabel(args, baseimage=True)
 
     print("Copy {0.baseimage} to {0.boxworkfile}".format(args))
     shutil.copyfile(args.baseimage, args.boxworkfile)
@@ -253,10 +334,16 @@ def main():
     selinux_relabel(args)
     print("Trim box")
     trimbox(args)
+
     print("Get box metadata")
     get_metadata(args)
     print("Creating box archive")
     compress_boxfile(args)
+    print("Update metadata")
+    update_metadata(args)
+    print("Rebuilding index")
+    build_index()
+
     print("Done. To use the new box, run:")
     print("    vagrant box add {0.boxname} {0.boxarchive}".format(args))
     print("You may remove {0.boxarchive} afterwards.".format(args))
