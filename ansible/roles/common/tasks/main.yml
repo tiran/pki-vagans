@@ -123,8 +123,8 @@
   tags:
     - common
     - custom-rpms
-  command: dnf install --allowerasing --best -y {{ custom_rpms.stdout }}
-  when: custom_rpms and custom_rpm_filess.stdout
+  command: dnf install --allowerasing --best -y {{ custom_rpm_files.stdout }}
+  when: custom_rpms and custom_rpm_files.stdout
 
 - name: install selinux tools
   tags:
