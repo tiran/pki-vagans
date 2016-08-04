@@ -5,8 +5,6 @@ Vagrant.require_version ">= 1.6.0"
 
 HERE = File.dirname(__FILE__)
 ENV['ANSIBLE_CONFIG'] = "#{HERE}/../ansible/ansible.cfg"
-# virtual env for Ansible 2
-# ENV['PATH'] = "#{HERE}/../venv/bin:" + ENV['PATH']
 
 # Workaround for ssh problem with ED25519 curve
 # SSH not up: #<Vagrant::Errors::NetSSHException: An error occurred in the underlying SSH library that Vagrant uses.
@@ -19,11 +17,11 @@ DOMAIN="ipa.example"
 
 Vagrant.configure(2) do |config|
     #config.vm.box = "cheimes/freeipa-f23"
-    config.vm.box = "cheimes/freeipa43-f23"
     #config.vm.box = "cheimes/freeipa-centos72"
-    #config.vm.box = "freeipa-rhel72"
+    config.vm.box = "cheimes/freeipa-f24"
+    config.vm.box_url = "http://file.rdu.redhat.com/~cheimes/vagrant/cheimes/freeipa-f24.box"
 
-    # no rsync, Ansible playbook syncs required files manually
+    # no rsync, Ansible playbook syncs files manually
     config.vm.synced_folder ".", "/vagrant", disabled: true
 
     if Vagrant.has_plugin?("vagrant-hostmanager")
@@ -56,13 +54,13 @@ Vagrant.configure(2) do |config|
         host.vm.hostname = "fileserver.#{DOMAIN}"
     end
 
-    config.vm.define "ipavpnserver" do |host|
-        host.vm.hostname = "vpn.#{DOMAIN}"
-    end
+    #config.vm.define "ipavpnserver" do |host|
+    #    host.vm.hostname = "vpn.#{DOMAIN}"
+    #end
 
-    config.vm.define "ipaidpserver" do |host|
-        host.vm.hostname = "idp.#{DOMAIN}"
-    end
+    #config.vm.define "ipaidpserver" do |host|
+    #    host.vm.hostname = "idp.#{DOMAIN}"
+    #end
 
     config.vm.define "ipaclient1" do |host|
         host.vm.hostname = "client1.#{DOMAIN}"
@@ -77,12 +75,12 @@ Vagrant.configure(2) do |config|
                 "ipaserver_master" => ["ipamaster"],
                 "ipaserver_replica" => ["ipareplica1"],
                 "ipa_client" => ["ipaclient1"],
-                "ipa_vpnserver" => ["ipavpnserver"],
+                #"ipa_vpnserver" => ["ipavpnserver"],
                 "ipa_nfsserver" => ["ipafileserver"],
                 "ipa_smbserver" => ["ipafileserver"],
                 "ipa_httpexample" => ["ipafileserver"],
-                "ipa_ipsilon_idp" => ["ipaidpserver"],
-                "ipa_sp_example" => ["ipafileserver"],
+                #"ipa_ipsilon_idp" => ["ipaidpserver"],
+                #"ipa_sp_example" => ["ipafileserver"],
                 "ipa_nfsclient" => ["ipamaster", "ipareplica1", "ipaclient1"],
             }
             ansible.verbose = 'vv'
@@ -100,8 +98,9 @@ Vagrant.configure(2) do |config|
                 "ipa_rpm_dir" => HERE + '/rpms',
                 "package_install" => false,
                 "package_upgrade" => false,
+                "custom_rpms" => false,
                 "coprs_enabled" => [
-                    # "@freeipa/freeipa-4-3",
+                    # "@freeipa/freeipa-master",
                 ],
             }
         end
