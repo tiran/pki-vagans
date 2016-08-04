@@ -157,7 +157,6 @@
     serole=object_r
     setype=httpd_sys_content_t
     selevel=s0
-  when: groups['ipa_ipsilon_idp']
   notify:
     - restart httpd
 
