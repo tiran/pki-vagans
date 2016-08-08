@@ -1,0 +1,7 @@
+#!/bin/bash
+set -e
+
+. "{{ ipa_data_dir }}/ipaenv_kkdcp_openconnect"
+
+kinit $@
+klist

@@ -8,7 +8,6 @@
     - ipa-install
   command: >
     ipa-replica-install -U
-    --password {{ ipa_dm_password }}
     --admin-password {{ ipa_admin_password }}
     --mkhomedir
     --ip-address {{ ansible_default_ipv4.address }}

@@ -136,20 +136,42 @@
     - ipa-install
   service: name=ocserv enabled=yes state=started
 
+- name: Template local scripts
+  tags:
+    - ipa-vpnserver
+    - ipa-install
+  become: no
+  local_action:
+    template
+    src=../../ipa-inventory/templates/{{ item }}
+    dest={{ ipa_script_dir }}/{{ item }}
+    mode=0755
+  with_items:
+    - ipa_kkdcp_openconnect_kinit
+    - ipa_kkdcp_openconnect_vpn
+  run_once: true
+
+- name: Template local inventory files
+  tags:
+    - ipa-vpnserver
+    - ipa-install
+  become: no
+  local_action:
+    template
+    src=../../ipa-inventory/templates/{{ item }}
+    dest={{ ipa_data_dir }}/{{ item }}
+    mode=0644
+  with_items:
+    - ipaenv_kkdcp_openconnect
+  run_once: true
+
 - name: Write custom krb5.conf
   tags:
     - ipa-vpnserver
     - ipa-install
-  template:
-    src=../../ipa-inventory/templates/krb5.conf
-    dest=/tmp/krb5.conf
-
-- name: Fetch krb5config
-  tags:
-    - ipa-vpnserver
-    - ipa-install
     - fetch
-  fetch:
-    src=/tmp/krb5.conf
-    dest={{ ipa_data_dir }}/krb5_kkdcp.conf
-    flat=yes
+  become: no
+  local_action:
+    template
+    src=../../ipa-inventory/templates/krb5.conf
+    dest={{ ipa_data_dir }}/krb5_kkdcp_openconnect.conf

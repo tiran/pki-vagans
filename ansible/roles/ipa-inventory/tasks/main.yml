@@ -45,19 +45,23 @@
   tags:
     - ipa-inventory
     - ipa-install
-  template:
+  become: no
+  local_action:
+    template
     src=krb5.conf
-    dest=/tmp/krb5.conf
+    dest={{ ipa_data_dir }}/krb5.conf
 
-- name: Fetch krb5config
+- name: Write custom krb5.conf for MS-KKDCP
   tags:
     - ipa-inventory
     - ipa-install
-    - fetch
-  fetch:
-    src=/tmp/krb5.conf
-    dest={{ ipa_data_dir }}/krb5.conf
-    flat=yes
+  become: no
+  local_action:
+    template
+    src=krb5.conf
+    dest={{ ipa_data_dir }}/krb5_kkdcp.conf
+  vars:
+      use_kkdcp: True
 
 - name: Fetch resolv.conf
   tags:
@@ -113,8 +117,10 @@
     - ipa_firefox
     - ipa_kinit
     - ipa_kkdcp_kinit
-    - ipa_kkdcp_openconnect
     - ipa_ssh
+    # Handled by ipa-vpnserver
+    # - ipa_kkdcp_openconnect_kinit
+    # - ipa_kkdcp_openconnect_vpn
   run_once: true
 
 - name: Template local inventory files
@@ -131,4 +137,6 @@
     - ipa_ssh_config
     - ipaenv
     - ipaenv_kkdcp
+    # Handled by ipa-vpnserver
+    # - ipaenv_kkdcp_openconnect
   run_once: true
