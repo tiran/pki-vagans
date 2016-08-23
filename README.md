@@ -132,9 +132,9 @@ $ vagrant destroy
 Install custom RPMs
 -------------------
 
-Copy or symlink files or directories with RPMs into pki/rpms. The Ansible
-playbook will pick up all RPMs (even in symlinked and nested directory
-structures) and install them.
+Copy or symlink files or directories with RPMs into pki/rpms or
+ipa/rpms and set custom_rpms to True. The Ansible playbook will pick up all
+RPMs (even in symlinked and nested directory structures) and install them.
 
 When something fails
 --------------------

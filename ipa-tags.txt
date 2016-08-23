@@ -5,22 +5,22 @@ playbook: ansible/ipa-playbook.yml
       TASK TAGS: [bootstrap]
 
   play #2 (all): install IPA base system	TAGS: []
-      TASK TAGS: [bootstrap, common, custom-rpms, dummy, firewall, ipa, ipa-install, lxc, network, package-copr, package-install, package-upgrade, pki]
+      TASK TAGS: [bootstrap, common, custom-rpms, dummy, firewall, ipa, lxc, network, package-copr, package-install, package-upgrade, pki]
 
   play #3 (ipaserver_master,ipaserver_replica): install IPA server system	TAGS: []
       TASK TAGS: [firewall, ipaserver, network, package-install]
 
   play #4 (ipaserver_master): install FreeIPA server master	TAGS: []
-      TASK TAGS: [fetch, ipa-install, ipaserver-master]
+      TASK TAGS: [fetch, ipa, ipa-install, ipaserver-master]
 
   play #5 (ipaserver_master): create local inventory files	TAGS: []
       TASK TAGS: [fetch, ipa-install, ipa-inventory]
 
   play #6 (ipaserver_replica): install FreeIPA server replica	TAGS: []
-      TASK TAGS: [ipa-install, ipaserver-replica]
+      TASK TAGS: [fetch, ipa, ipa-client, ipa-install, ipaserver-replica]
 
   play #7 (ipa_client,ipa_nfsserver,ipa_smbserver,ipa_vpnserver,ipa_httpexample,ipa_ipsilon_idp): install FreeIPA client	TAGS: []
-      TASK TAGS: [ipa-client, ipa-install]
+      TASK TAGS: [ipa, ipa-client, ipa-install]
 
   play #8 (ipa_vpnserver): install OpenConnect VPN server for FreeIPA	TAGS: []
       TASK TAGS: [fetch, firewall, ipa-install, ipa-vpnserver, network, package-install]

@@ -27,8 +27,6 @@ ipa_firefox_dir: "{{ ipa_data_dir }}/firefox"
 #
 #coprs_enabled:
 # - "@freeipa/freeipa-4-3"
-# package_upgrade: false
-# custom_rpms: false
+custom_rpms: false
 package_install: true
 package_upgrade: false
-

@@ -52,14 +52,12 @@
 - name: Check for mod_ssl configuration
   tags:
     - ipa
-    - ipa-install
   stat: path=/etc/httpd/conf.d/ssl.conf
   register: ssl_conf
 
 - name: Disable mod_ssl configuration
   tags:
     - ipa
-    - ipa-install
   copy:
     src=replaced
     dest={{ item }}
