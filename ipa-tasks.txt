@@ -1,3 +1,9 @@
+statically included: /home/heimes/redhat/pki-vagans/ansible/roles/common/tasks/extravars.yml
+statically included: /home/heimes/redhat/pki-vagans/ansible/roles/common/tasks/dnf.yml
+statically included: /home/heimes/redhat/pki-vagans/ansible/roles/common/tasks/yum.yml
+statically included: /home/heimes/redhat/pki-vagans/ansible/roles/ipaserver-replica/tasks/replica43.yml
+statically included: /home/heimes/redhat/pki-vagans/ansible/roles/ipa-client/tasks/main.yml
+statically included: /home/heimes/redhat/pki-vagans/ansible/roles/ipaserver-replica/tasks/replica42.yml
 
 playbook: ansible/ipa-playbook.yml
 
@@ -56,6 +62,7 @@ playbook: ansible/ipa-playbook.yml
       common : Install rng tools	TAGS: [common, network, package-install]
       common : Start the rngd service	TAGS: [common]
       common : tty-less sudo	TAGS: [common]
+      ipa : Gather IPA facts	TAGS: [ipa]
       ipa : make a copy of original resolv.conf	TAGS: [ipa]
       ipa : Get default DNS	TAGS: [ipa]
       ipa : Get reverse zone	TAGS: [ipa]
@@ -64,10 +71,6 @@ playbook: ansible/ipa-playbook.yml
       ipa : install FreeIPA client package (RHEL / CentOS)	TAGS: [ipa, network, package-install]
       ipa : Check for mod_ssl configuration	TAGS: [ipa]
       ipa : Disable mod_ssl configuration	TAGS: [ipa]
-      ipa : get IPA version	TAGS: [ipa]
-      ipa : Check for /etc/ipa/ca.crt	TAGS: [ipa]
-      ipa : Check for /etc/ipa/default.conf	TAGS: [ipa]
-      ipa : Set ipa_installed fact	TAGS: [ipa]
 
   play #3 (ipaserver_master,ipaserver_replica): install IPA server system	TAGS: []
     tasks:
@@ -79,6 +82,7 @@ playbook: ansible/ipa-playbook.yml
     tasks:
       ipaserver-master : Install FreeIPA master (5-7 minutes)	TAGS: [ipa-install, ipaserver-master]
       ipaserver-master : Install KRA on FreeIPA master (2-3 minutes)	TAGS: [ipa-install, ipaserver-master]
+      ipaserver-master : Update IPA facts	TAGS: [ipaserver-master]
       ipaserver-master : Make sure named-pkcs11 DNS is restarted	TAGS: [ipa-install, ipaserver-master]
       ipaserver-master : wait for services to come up	TAGS: [ipa-install, ipaserver-master]
       ipaserver-master : Set ipv4_dns fact	TAGS: [ipa-install, ipaserver-master]
@@ -95,7 +99,6 @@ playbook: ansible/ipa-playbook.yml
       ipaserver-master : Enable DNS sync ptr	TAGS: [ipa-install, ipaserver-master]
       ipaserver-master : Enable reverse DNS sync ptr	TAGS: [ipa-install, ipaserver-master]
       ipaserver-master : signal FreeIPA master has been deployed	TAGS: [ipa-install, ipaserver-master]
-      ipaserver-master : signal FreeIPA client has been configured	TAGS: [ipa, ipa-install]
       ipaserver-master : Fetch IPA ca.crt	TAGS: [fetch, ipa-install, ipaserver-master]
       ipaserver-master : Copy IPA ca.crt to all machines	TAGS: [ipa-install, ipaserver-master]
 
@@ -118,20 +121,19 @@ playbook: ansible/ipa-playbook.yml
     tasks:
       ipaserver-replica : Create /export home directory with correct context	TAGS: [ipa-client, ipa-install]
       ipaserver-replica : join FreeIPA	TAGS: [ipa-client, ipa-install]
-      ipaserver-replica : signal FreeIPA client has been configured	TAGS: [ipa, ipa-install]
+      ipaserver-replica : Update IPA facts	TAGS: [ipa-client]
       ipaserver-replica : install replica	TAGS: [ipa-install, ipaserver-replica]
       ipaserver-replica : Prepare replication	TAGS: [ipa-install, ipaserver-replica]
       ipaserver-replica : Fetch replication file	TAGS: [fetch, ipa-install, ipaserver-replica]
       ipaserver-replica : Copy replication file	TAGS: [ipa-install, ipaserver-replica]
       ipaserver-replica : install replica	TAGS: [ipa-install, ipaserver-replica]
-      ipaserver-replica : flag replication installation	TAGS: [ipa-install, ipaserver-replica]
-      ipaserver-replica : signal FreeIPA client has been configured	TAGS: [ipa, ipa-install]
+      ipaserver-replica : Update IPA facts	TAGS: [ipaserver-replica]
 
   play #7 (ipa_client,ipa_nfsserver,ipa_smbserver,ipa_vpnserver,ipa_httpexample,ipa_ipsilon_idp): install FreeIPA client	TAGS: []
     tasks:
       ipa-client : Create /export home directory with correct context	TAGS: [ipa-client, ipa-install]
       ipa-client : join FreeIPA	TAGS: [ipa-client, ipa-install]
-      ipa-client : signal FreeIPA client has been configured	TAGS: [ipa, ipa-install]
+      ipa-client : Update IPA facts	TAGS: [ipa-client]
 
   play #8 (ipa_vpnserver): install OpenConnect VPN server for FreeIPA	TAGS: []
     tasks:

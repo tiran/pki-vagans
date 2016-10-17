@@ -5,7 +5,6 @@ ansible_ssh_port: 22
 default_password: Secret123
 
 ipa_domain: "{{ ansible_domain }}"
-ipa_realm: "{{ ipa_domain | upper }}"
 ipa_dm_password: "{{ default_password }}"
 ipa_admin_password: "{{ default_password }}"
 use_kkdcp: false

@@ -21,14 +21,17 @@
     - ipa-install
   command: >
     ipa-client-install -U
-    --realm {{ ipa_realm }}
-    --domain {{ ipa_domain }}
+    --realm {{ ipa.realm }}
+    --domain {{ ipa.domain }}
     --principal admin
     --password {{ ipa_admin_password }}
     --ca-cert-file /etc/pki/ipa-ca.crt
     --force-join
     --mkhomedir
     --ssh-trust-dns
-  when: not ipa_installed
+  when: not ipa.configured.client
 
-- include: ipaclientinstalled.yml
+- name: Update IPA facts
+  tags:
+    - ipa-client
+  ipa_facts: domain={{ ipa_domain }}

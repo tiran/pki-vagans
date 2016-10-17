@@ -1,0 +1,33 @@
+#!/bin/sh
+set -e
+
+# https://copr-be.cloud.fedoraproject.org/results/@freeipa/freeipa-master/pubkey.gpg
+cat > /tmp/freeipa-pubkey.gpg << EOF
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: GnuPG v2
+
+mQENBFbZSVgBCADewfDhWaWvY83UzKSSaz/vLcIpYcXP6nm2D1m193YHSW30KQI5
+ENASwBw4xX5SUc13qzxswnwuCWXZk5hyaBOVHCk8M3Pl+MkfLwaDynoAljuF2W+I
+uaTjwp2yX0tjiupY/eR/o4jQTikaK29eEklrI9ZP4p5+ak2+k7mDm7C4RVoDF4Qx
+/8RtR8D6bRqqlDkYMtmU4VHe5KKxuMcAj2fDRGUpYoXFvjuqywLZ3xwLxqy4wdQV
+qviwUqvZ5he6VnvtPz1cJ4uoU9j/AEd30UZFjWk5IIPgKzCTtdffdhT4p1i228f0
+4yhDYfm5kcBHCGEc3742npdjOPqexWozbkvNABEBAAG0TkBmcmVlaXBhX2ZyZWVp
+cGEtbWFzdGVyIChOb25lKSA8QGZyZWVpcGEjZnJlZWlwYS1tYXN0ZXJAY29wci5m
+ZWRvcmFob3N0ZWQub3JnPokBPwQTAQgAKQUCVtlJWAIbLwUJCWYBgAcLCQgHAwIB
+BhUIAgkKCwQWAgMBAh4BAheAAAoJEJOYVTD4yOoMBa0IAK8tGKcvGP5o8ykyH3nT
+wGF2/7/3w+2uMdPXhA3B9PKiPpRPoIUrK7h/5xn+uRE94rKXVDSFSvclpEAFGr6x
+/GcmcQpAPXr3hfrXbBi2Yu9kwQKtMmltVhAy6HJA7cJ0rFttEKbguAUOUNbR2pzS
+86L4UsUg5idv4xL27+OH3LnI1RTfJf9lB/DInpIfaIumaPifngBvf1myVdgkiJov
+Lzf6vDd2ykdOFy4MqpzsNwatgVhse37ShbBdQBVhuddPxhi2VG39G3uGUPju5vi0
+3oHMKUucQ6EFGel154tNbY5ztZbXempvINGc8re5nJMaI2uoLLunNl+oYoFK/9gb
+8uo=
+=c8DX
+-----END PGP PUBLIC KEY BLOCK-----
+EOF
+
+rpm --import /tmp/freeipa-pubkey.gpg
+
+dnf copr enable -y @freeipa/freeipa-4-4
+
+# COPR needs latest bind-dyndb-ldap from updates-testing
+# dnf install --enablerepo=updates-testing --best --allowerasing -y bind-dyndb-ldap

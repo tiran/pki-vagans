@@ -66,7 +66,7 @@
     - ipa-install
   ini_file:
     dest=/etc/sssd/sssd.conf
-    section="domain/{{ ipa_domain }}"
+    section="domain/{{ ipa.domain }}"
     option=ldap_user_extra_attrs
     value="mail, givenname, sn"
   notify:

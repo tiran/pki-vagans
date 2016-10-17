@@ -14,6 +14,4 @@
     --setup-dns
     --allow-zone-overlap
     {{ '--forwarder=%s' % dns_forwarder['nameservers'][0] if enable_network else '--no-forwarders' }}
-  args:
-    creates:
-      /etc/ipa/REPLICA_INSTALLED
+  when: not ipa.configured.server

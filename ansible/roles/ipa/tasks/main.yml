@@ -1,4 +1,9 @@
 ---
+- name: Gather IPA facts
+  tags:
+    - ipa
+  ipa_facts: domain={{ ipa_domain }}
+
 # we modify the file later but need the original DNS forwarder
 - name: make a copy of original resolv.conf
   tags:
@@ -71,30 +76,3 @@
   when: ssl_conf.stat.exists
   notify:
     - stop httpd
-
-- name: get IPA version
-  tags:
-    - ipa
-  command: ipa --version
-  register: ipa_version
-  changed_when: false
-
-- name: Check for /etc/ipa/ca.crt
-  tags:
-    - ipa
-  stat: path=/etc/ipa/ca.crt
-  register: stat_ipa_cacrt
-  changed_when: false
-
-- name: Check for /etc/ipa/default.conf
-  tags:
-    - ipa
-  stat: path=/etc/ipa/default.conf
-  register: stat_ipa_defaultconf
-  changed_when: false
-
-- name: Set ipa_installed fact
-  tags:
-    - ipa
-  set_fact: ipa_installed="{{ stat_ipa_cacrt.stat.exists and stat_ipa_defaultconf.stat.exists }}"
-  changed_when: false

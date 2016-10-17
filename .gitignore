@@ -1,5 +1,9 @@
 .vagrant/
-*.rpm
+/ipa/rpms/*
+/pki/rpms/*
+!/ipa/rpms/README
+!/pki/rpms/README
 *.pyc
+__pycache__
 venv/
 playbook.retry

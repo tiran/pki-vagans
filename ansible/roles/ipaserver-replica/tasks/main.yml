@@ -1,17 +1,11 @@
 ---
 - include: replica43.yml
-  when: "'4.3.' in ipa_version.stdout"
+  when: "ipa.version.version_info >= [4, 3, 0]"
 
 - include: replica42.yml
-  when: "'4.2.' in ipa_version.stdout"
+  when: "ipa.version.version_info < [4, 3, 0]"
 
-- name: flag replication installation
+- name: Update IPA facts
   tags:
     - ipaserver-replica
-    - ipa-install
-  copy:
-    content="PKI playbook"
-    dest=/etc/ipa/REPLICA_INSTALLED
-  changed_when: false
-
-- include: ../../ipa-client/tasks/ipaclientinstalled.yml
+  ipa_facts: domain={{ ipa_domain }}

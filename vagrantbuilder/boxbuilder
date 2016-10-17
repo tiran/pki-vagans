@@ -69,6 +69,10 @@ FLAVORS = {
                        '--install', ','.join(DOGTAG_PACKAGES),
                        '--run', 'scripts/ipa-package-install',
                        '--firstboot', 'scripts/ipa-firstboot'],
+    'freeipa44-copr': ['--run', 'scripts/freeipa44-copr',
+                       '--install', ','.join(DOGTAG_PACKAGES),
+                       '--run', 'scripts/ipa-package-install',
+                       '--firstboot', 'scripts/ipa-firstboot'],
     'dogtag': ['--install', ','.join(DOGTAG_PACKAGES)],
 }
 
@@ -345,7 +349,7 @@ def main():
     build_index()
 
     print("Done. To use the new box, run:")
-    print("    vagrant box add {0.boxname} {0.boxarchive}".format(args))
+    print("    vagrant box add cheimes/{0.boxname} {0.boxarchive}".format(args))
     print("You may remove {0.boxarchive} afterwards.".format(args))
 
 

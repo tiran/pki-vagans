@@ -173,8 +173,10 @@
   tags:
     - ipa-nfsserver
     - ipa-install
+  # workaround for FreeIPA 4.4: ipalib.api.finalize() needs Kerberos
+  # credentials to load LDAP schema cache.
   command:
-    ipa-client-automount --unattended
+    env KRB5_CLIENT_KTNAME=/etc/krb5.keytab ipa-client-automount --unattended
   register: result
   failed_when: "result.rc != 0 and 'automount is already configured' not in result.stderr"
   changed_when: "result.rc == 0"

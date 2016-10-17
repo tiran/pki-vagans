@@ -1,3 +1,9 @@
+statically included: /home/heimes/redhat/pki-vagans/ansible/roles/common/tasks/extravars.yml
+statically included: /home/heimes/redhat/pki-vagans/ansible/roles/common/tasks/dnf.yml
+statically included: /home/heimes/redhat/pki-vagans/ansible/roles/common/tasks/yum.yml
+statically included: /home/heimes/redhat/pki-vagans/ansible/roles/ipaserver-replica/tasks/replica43.yml
+statically included: /home/heimes/redhat/pki-vagans/ansible/roles/ipa-client/tasks/main.yml
+statically included: /home/heimes/redhat/pki-vagans/ansible/roles/ipaserver-replica/tasks/replica42.yml
 
 playbook: ansible/ipa-playbook.yml
 
@@ -11,16 +17,16 @@ playbook: ansible/ipa-playbook.yml
       TASK TAGS: [firewall, ipaserver, network, package-install]
 
   play #4 (ipaserver_master): install FreeIPA server master	TAGS: []
-      TASK TAGS: [fetch, ipa, ipa-install, ipaserver-master]
+      TASK TAGS: [fetch, ipa-install, ipaserver-master]
 
   play #5 (ipaserver_master): create local inventory files	TAGS: []
       TASK TAGS: [fetch, ipa-install, ipa-inventory]
 
   play #6 (ipaserver_replica): install FreeIPA server replica	TAGS: []
-      TASK TAGS: [fetch, ipa, ipa-client, ipa-install, ipaserver-replica]
+      TASK TAGS: [fetch, ipa-client, ipa-install, ipaserver-replica]
 
   play #7 (ipa_client,ipa_nfsserver,ipa_smbserver,ipa_vpnserver,ipa_httpexample,ipa_ipsilon_idp): install FreeIPA client	TAGS: []
-      TASK TAGS: [ipa, ipa-client, ipa-install]
+      TASK TAGS: [ipa-client, ipa-install]
 
   play #8 (ipa_vpnserver): install OpenConnect VPN server for FreeIPA	TAGS: []
       TASK TAGS: [fetch, firewall, ipa-install, ipa-vpnserver, network, package-install]

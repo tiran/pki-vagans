@@ -5,8 +5,8 @@
     - ipa-install
   command: >
     ipa-server-install -U
-    --realm {{ ipa_realm }}
-    --domain {{ ipa_domain }}
+    --realm {{ ipa.realm }}
+    --domain {{ ipa.domain }}
     --hostname {{ ansible_fqdn }}
     --ds-password {{ ipa_dm_password }}
     --admin-password {{ ipa_admin_password }}
@@ -17,7 +17,7 @@
     --allow-zone-overlap
     --reverse-zone={{ reversezone.reversezone }}
     {{ '--forwarder=%s' % dns_forwarder['nameservers'][0] if enable_network else '--no-forwarders' }}
-  when: not ipa_installed
+  when: not ipa.configured.server
 
 - name: Install KRA on FreeIPA master (2-3 minutes)
   tags:
@@ -26,8 +26,12 @@
   command: >
     ipa-kra-install -U
     -p {{ ipa_dm_password }}
-  args:
-    creates: /etc/pki/pki-tomcat/kra/CS.cfg
+  when: not ipa.configured.kra
+
+- name: Update IPA facts
+  tags:
+    - ipaserver-master
+  ipa_facts: domain={{ ipa_domain }}
 
 # XXX workaround for race condition
 # KRA restarts LDAP, which disconnects bind-ldap plugin. The reconnect
@@ -84,7 +88,7 @@
     - ipaserver-master
     - ipa-install
   command: >
-    nmcli conn modify {{ hostvars[item].nm_conn }} ipv4.dns-search {{ ipa_domain }}
+    nmcli conn modify {{ hostvars[item].nm_conn }} ipv4.dns-search {{ ipa.domain }}
   delegate_to: "{{item}}"
   with_items: "{{ ipa_hosts }}"
   changed_when: false
@@ -160,7 +164,7 @@
     - ipaserver-master
     - ipa-install
   ipa:
-    args="dnszone-mod {{ ipa_domain }}. --allow-sync-ptr=TRUE"
+    args="dnszone-mod {{ ipa.domain }}. --allow-sync-ptr=TRUE"
     password="{{ ipa_admin_password }}"
     ignore_no_modifications=true
 
@@ -180,8 +184,6 @@
   copy:
     content="PKI playbook"
     dest=/etc/ipa/MASTER_DEPLOYED
-
-- include: ../../ipa-client/tasks/ipaclientinstalled.yml
 
 - name: Fetch IPA ca.crt
   tags:
