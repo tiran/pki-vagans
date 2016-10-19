@@ -89,6 +89,14 @@ def main():
     if '.' not in domain or domain != domain.lower():
         raise ValueError(domain)
 
+    version_info = []
+    for part in version.VERSION.split('.'):
+        # DEV versions look like 4.4.90.201610191151GITd852c00
+        if 'GIT' in part:
+            version_info.append(part)
+        else:
+            version_info.append(int(part))
+
     ipa = dict(
         domain=domain,
         realm=None,
@@ -107,7 +115,7 @@ def main():
             num_version=version.NUM_VERSION,
             vendor_version=version.VENDOR_VERSION,
             version=version.VERSION,
-            version_info=list(int(p) for p in version.VERSION.split('.'))
+            version_info=version_info,
         ),
         paths={name: getattr(paths, name)
                for name in dir(paths) if name[0].isupper()},
