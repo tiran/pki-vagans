@@ -30,11 +30,52 @@ DOGTAG_PACKAGES = [
     'pki-ca', 'pki-kra', 'pki-ocsp', 'pki-server', 'dogtag-pki-server-theme',
 ]
 
+HTTPD_PACKAGES = [
+    'httpd', 'mod_auth_gssapi', 'mod_authnz_pam',
+    'mod_intercept_form_submit', 'mod_lookup_identity', 'libsss_simpleifp',
+    'sssd-dbus', 'mod_nss', 'mod_session', 'mod_wsgi'
+]
+
+IPSILON_PACKAGES = [
+    'ipsilon', 'ipsilon-client', 'ipsilon-saml2', 'ipsilon-openid',
+    'ipsilon-persona', 'ipsilon-authform', 'ipsilon-infosssd',
+    'ipsilon-tools-ipa', 'ipsilon-authgssapi', 'ipsilon-authfas',
+    'ipsilon-authpam'
+]
+
+SAMBA_PACKAGES = [
+    'samba', 'samba-client', 'sssd-libwbclient'
+]
+
+OCSERV_PACKAGES = [
+    'ocserv', 'openconnect', 'bridge-utils'
+]
+
+NFS_PACKAGES = [
+    'nfs-utils'
+]
+
+# On Fedora the canonical package names start with freeipa but have an
+# alternative name, too.
+IPA_PACKAGES = [
+    'ipa-client', 'ipa-server', 'ipa-server-dns', 'ipa-server-trust-ad'
+]
+
+# package names
+BASE_PKG_NAMES = ','.join(sorted(BASE_PACKAGES))
+DOGTAG_PKG_NAMES = ','.join(sorted(BASE_PACKAGES + DOGTAG_PACKAGES))
+FREEIPA_PGK_NAMES = ','.join(sorted(
+    BASE_PACKAGES + DOGTAG_PACKAGES + HTTPD_PACKAGES + IPSILON_PACKAGES +
+    SAMBA_PACKAGES + OCSERV_PACKAGES + NFS_PACKAGES + IPA_PACKAGES))
+
 # remove old kernels
 REMOVE_KERNELS = "package-cleanup -y --oldkernels --count=1"
 
+# enable a copr
+COPR_ENABLE = "dnf copr enable -y {}"
+
 # We run the update manually because it sometimes fails to write to /dev/log
-PKGUPGRADE = "dnf -y upgrade || yum -y upgrade"
+PKGUPGRADE = "[ -x /usr/bin/dnf ] && dnf -y update || yum -y update"
 
 # common args for virt-builder and customize
 IMG_FORMAT = 'qcow2'
@@ -43,10 +84,10 @@ VIRT_ARGS = [
     '--format', IMG_FORMAT,
     '--timezone', 'UTC',
     '--run', 'scripts/vagrantsetup',
-    '--root-password', 'password:vagrant',
+    '--root-password', 'password:Secret123',
     '--password', 'vagrant:password:vagrant',
-    '--run-command', PKGUPGRADE,
-    '--install', ','.join(BASE_PACKAGES),
+    # '--run-command', PKGUPGRADE,
+    '--update',
 ]
 
 VAGRANT_FILE = """\
@@ -62,18 +103,19 @@ end
 """
 
 FLAVORS = {
-    'freeipa': ['--install', ','.join(DOGTAG_PACKAGES),
-                '--run', 'scripts/ipa-package-install',
-                '--firstboot', 'scripts/ipa-firstboot'],
-    'freeipa43-copr': ['--run', 'scripts/freeipa43-copr',
-                       '--install', ','.join(DOGTAG_PACKAGES),
-                       '--run', 'scripts/ipa-package-install',
-                       '--firstboot', 'scripts/ipa-firstboot'],
-    'freeipa44-copr': ['--run', 'scripts/freeipa44-copr',
-                       '--install', ','.join(DOGTAG_PACKAGES),
-                       '--run', 'scripts/ipa-package-install',
-                       '--firstboot', 'scripts/ipa-firstboot'],
-    'dogtag': ['--install', ','.join(DOGTAG_PACKAGES)],
+    'freeipa': [
+        '--install', FREEIPA_PGK_NAMES,
+        '--firstboot', 'scripts/ipa-firstboot',
+    ],
+    'freeipa44-copr': [
+        '--run-command', COPR_ENABLE.format('@freeipa/freeipa-4-4'),
+        '--update',
+        '--install', FREEIPA_PGK_NAMES,
+        '--firstboot', 'scripts/ipa-firstboot',
+    ],
+    'dogtag': [
+        '--install', DOGTAG_PACKAGES
+    ],
 }
 
 # os_version, suffix
@@ -91,12 +133,15 @@ def trimbox(args, baseimage=False):
     filename = args.boxworkfile if not baseimage else args.baseimage
     # keep ~vagrant/.ssh
     subprocess.check_call(
-        ['virt-sysprep', '--operations', 'defaults,-ssh-userdir', '-a', filename]
+        ['virt-sysprep',
+         '--operations', 'defaults,-ssh-userdir',
+         '-a', filename]
     )
     # print('Trimming')
     subprocess.check_call(
         ['virt-sparsify', '--in-place', filename]
     )
+
 
 def remove_kernels(args, baseimage=False):
     """Remove old kernels
@@ -156,10 +201,11 @@ def selinux_relabel(args, baseimage=False):
 
 
 def virt_builder(args):
-    """
+    """Base base image with base packages
     """
     cmd = ['virt-builder']
     cmd.extend(VIRT_ARGS)
+    cmd.extend(['--install', BASE_PKG_NAMES])
     cmd.extend([args.os_version, '--output', args.baseimage])
     subprocess.check_call(cmd)
     trimbox(args, baseimage=True)
