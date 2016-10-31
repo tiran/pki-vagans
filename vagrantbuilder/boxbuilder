@@ -68,6 +68,12 @@ FREEIPA_PGK_NAMES = ','.join(sorted(
     BASE_PACKAGES + DOGTAG_PACKAGES + HTTPD_PACKAGES + IPSILON_PACKAGES +
     SAMBA_PACKAGES + OCSERV_PACKAGES + NFS_PACKAGES + IPA_PACKAGES))
 
+# add package infos to json metadata
+PACKAGE_METADATA = [
+    '389-ds-base', 'pki-server', 'freeipa-server', 'ipa-server',
+    'ipsilon'
+]
+
 # remove old kernels
 REMOVE_KERNELS = "package-cleanup -y --oldkernels --count=1"
 
@@ -108,7 +114,10 @@ FLAVORS = {
         '--firstboot', 'scripts/ipa-firstboot',
     ],
     'freeipa44-copr': [
+        # FreeIPA 4.4 for Fedora 24
         '--run-command', COPR_ENABLE.format('@freeipa/freeipa-4-4'),
+        # Ipsilon 2.0 for Feodra 24
+        '--run-command', COPR_ENABLE.format('puiterwijk/ipsilon-fedora'),
         '--update',
         '--install', FREEIPA_PGK_NAMES,
         '--firstboot', 'scripts/ipa-firstboot',
@@ -253,7 +262,7 @@ def get_metadata(args):
     })
 
     xpath = "./operatingsystem[0]/applications/application[name='{}']"
-    for name in ['pki-server', 'freeipa-server', 'ipa-server', '389-ds-base']:
+    for name in PACKAGE_METADATA:
         node = et.find(xpath.format(name))
         if node is None:
             continue

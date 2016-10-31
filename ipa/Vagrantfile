@@ -55,9 +55,9 @@ Vagrant.configure(2) do |config|
     #    host.vm.hostname = "vpn.#{DOMAIN}"
     #end
 
-    #config.vm.define "ipaidpserver" do |host|
-    #    host.vm.hostname = "idp.#{DOMAIN}"
-    #end
+    config.vm.define "ipaidpserver" do |host|
+        host.vm.hostname = "idp.#{DOMAIN}"
+    end
 
     config.vm.define "ipaclient1" do |host|
         host.vm.hostname = "client1.#{DOMAIN}"
@@ -76,8 +76,8 @@ Vagrant.configure(2) do |config|
                 "ipa_nfsserver" => ["ipafileserver"],
                 "ipa_smbserver" => ["ipafileserver"],
                 "ipa_httpexample" => ["ipafileserver"],
-                #"ipa_ipsilon_idp" => ["ipaidpserver"],
-                #"ipa_sp_example" => ["ipafileserver"],
+                "ipa_ipsilon_idp" => ["ipaidpserver"],
+                "ipa_sp_example" => ["ipafileserver"],
                 "ipa_nfsclient" => ["ipamaster", "ipareplica1", "ipaclient1"],
             }
             ansible.verbose = 'vv'
