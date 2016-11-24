@@ -42,8 +42,7 @@ FreeIPA
 
 ```shell
 $ cd ipa
-$ vagrant up --no-provision
-$ vagrant provision
+$ ./setup.sh
 ```
 
 Vagrant's multi-machine setup can run into a race condition and starts
@@ -69,6 +68,20 @@ $ bin/ipa_kinit admin
 $ bin/ipa_firefox
 $ bin/ipa_ssh admin@client1.ipa.example
 ```
+
+
+FreeIPA test server
+===================
+
+```shell
+$ cd ipatests
+$ ./setup.sh
+```
+
+One test machine:
+
+  * ipatestmaster (master.ipatests.local) with CA and KRA
+
 
 Dogtag PKI
 ==========

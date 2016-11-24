@@ -1,9 +1,3 @@
-statically included: /home/heimes/redhat/pki-vagans/ansible/roles/common/tasks/extravars.yml
-statically included: /home/heimes/redhat/pki-vagans/ansible/roles/common/tasks/dnf.yml
-statically included: /home/heimes/redhat/pki-vagans/ansible/roles/common/tasks/yum.yml
-statically included: /home/heimes/redhat/pki-vagans/ansible/roles/ipaserver-replica/tasks/replica43.yml
-statically included: /home/heimes/redhat/pki-vagans/ansible/roles/ipa-client/tasks/main.yml
-statically included: /home/heimes/redhat/pki-vagans/ansible/roles/ipaserver-replica/tasks/replica42.yml
 
 playbook: ansible/ipa-playbook.yml
 
@@ -265,3 +259,14 @@ playbook: ansible/ipa-playbook.yml
       ipa-sp-example : Create /srv/www/sp_example	TAGS: [ipa-install, ipa-sp-example]
       ipa-sp-example : Create Apache SP example app	TAGS: [ipa-install, ipa-sp-example]
       ipa-sp-example : Overwrite ipsilon-saml.conf with custom config	TAGS: [ipa-install, ipa-sp-example]
+
+  play #14 (ipa_tests): Create integration test files	TAGS: []
+    tasks:
+      ipa-tests : Create dot_ipa directories	TAGS: [ipa-tests]
+      ipa-tests : Create default.conf	TAGS: [ipa-tests]
+      ipa-tests : Create .dmpw	TAGS: [ipa-tests]
+      ipa-tests : copy alias /etc/httpd/alias databases	TAGS: [ipa-tests]
+      ipa-tests : copy /etc/httpd/alias/pwdfile.txt	TAGS: [ipa-tests]
+      ipa-tests : copy /etc/ipa/ca.crt	TAGS: [ipa-tests]
+      ipa-tests : create krb5.conf	TAGS: [ipa-tests]
+      ipa-tests : Fetch dot_ipa	TAGS: [ipa-tests]

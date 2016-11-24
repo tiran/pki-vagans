@@ -120,6 +120,7 @@
     args="config-mod --defaultshell=/bin/bash"
     password="{{ ipa_admin_password }}"
     ignore_no_modifications=true
+    ignore_already_exists=true
 
 - name: Set home directory to /export/home
   tags:
