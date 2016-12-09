@@ -157,6 +157,44 @@ $ sudo systemctl restart libvirtd.service
 $ vagrant provision
 ```
 
+Provision non Vagrant machines
+==============================
+
+Create an ```inventory.cfg```
+
+```
+[ipaserver_master]
+master.domain.example
+
+[ipaserver_replica]
+replica1.domain.example
+replica2.domain.example
+
+[ipa_client]
+client1.domain.example
+client2.domain.example
+client3.domain.example
+```
+
+and shell script
+
+```shell
+#!/bin/sh
+set -ex
+
+PKI_VAGANS="/path/to/pki-vagans"
+IPA_DOMAIN="domain.example"
+
+export ANSIBLE_CONFIG=${PKI_VAGANS}/ansible/ansible.cfg
+
+ansible-playbook \
+    -i inventory.cfg \
+    ${PKI_VAGANS}/ansible/ipa-playbook.yml \
+    -vv \
+    --extra-vars='{"package_install":true,"package_upgrade":true,"coprs_enabled":[],"ipa_replica_kra":false,"ipa_domain": "'${IPA_DOMAIN}'"}'
+```
+
+
 Ansible roles
 =============
 
