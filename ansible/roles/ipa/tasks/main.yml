@@ -1,9 +1,4 @@
 ---
-- name: Gather IPA facts
-  tags:
-    - ipa
-  ipa_facts: domain={{ ipa_domain }}
-
 # we modify the file later but need the original DNS forwarder
 - name: make a copy of original resolv.conf
   tags:
@@ -76,3 +71,8 @@
   when: ssl_conf.stat.exists
   notify:
     - stop httpd
+
+- name: Gather IPA facts
+  tags:
+    - ipa
+  ipa_facts: domain={{ ipa_domain }}
