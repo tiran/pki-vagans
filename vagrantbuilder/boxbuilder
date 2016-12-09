@@ -131,6 +131,7 @@ FLAVORS = {
 PLATFORMS = {
     'fedora23': ('fedora-23', 'f23'),
     'fedora24': ('fedora-24', 'f24'),
+    'fedora25': ('fedora-25', 'f25'),
     'centos72': ('centos-7.2', 'centos72'),
     'rhel72': ('rhel-7.2', 'rhel72'),
 }
