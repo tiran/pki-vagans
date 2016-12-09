@@ -9,3 +9,35 @@
   tags:
     - ipaserver-replica
   ipa_facts: domain={{ ipa_domain }}
+
+- name: Install CA on FreeIPA replica (3-4 minutes)
+  tags:
+    - ipaserver-replica
+    - ipa-install
+  command: >
+    ipa-ca-install -U
+    -p {{ ipa_dm_password }}
+  when: not ipa.configured.ca and (ipa_replica_ca or ipa_replica_kra)
+
+- name: Install KRA on FreeIPA replica (2-3 minutes)
+  tags:
+    - ipaserver-replica
+    - ipa-install
+  command: >
+    ipa-kra-install -U
+    -p {{ ipa_dm_password }}
+  when: not ipa.configured.kra and ipa_replica_kra
+
+- name: Make sure named-pkcs11 DNS is restarted
+  tags:
+    - ipaserver-replica
+    - ipa-install
+  service: name=named-pkcs11 state=restarted
+  changed_when: false
+  when: ipa_replica_ca or ipa_replica_kra
+
+- name: Update IPA facts
+  tags:
+    - ipaserver-replica
+  ipa_facts: domain={{ ipa_domain }}
+  when: ipa_replica_ca or ipa_replica_kra
