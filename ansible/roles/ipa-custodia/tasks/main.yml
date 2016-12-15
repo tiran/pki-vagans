@@ -1,0 +1,84 @@
+---
+- name: Gather facts
+  tags:
+    - ipa-custodia
+  setup:
+
+- name: install custodia dependencies
+  tags:
+    - ipa-custodia
+    - package-install
+    - network
+  yum: name={{ item }} state=present
+  with_items:
+   - python3-jwcrypto
+   - python3-cryptography
+   - python3-six
+   - python-jwcrypto
+   - python-cryptography
+   - python-six
+  when: package_install
+
+- name: Create custodia directory
+  tags:
+    - ipa-custodia
+  file:
+    path={{ custodia_confdir }}
+    state=directory
+    owner=root
+    group=root
+    mode=0755
+    seuser=system_u
+    serole=object_r
+    setype=etc_t
+    selevel=s0
+
+- name: Create custodia cert directory
+  tags:
+    - ipa-custodia
+  file:
+    path={{ custodia_confdir }}/certs
+    state=directory
+    owner=root
+    group=root
+    mode=0755
+    seuser=system_u
+    serole=object_r
+    setype=cert_t
+    selevel=s0
+
+- name: Create Custodia service
+  tags:
+    - ipa-custodia
+  ipa:
+    args="service-add custodia/{{ ansible_fqdn }}"
+    password="{{ ipa_admin_password }}"
+    ignore_already_exists=true
+
+- name: Look for /etc/custodia/certs/custodia.crt
+  tags:
+    - ipa-custodia
+  stat: path={{ custodia_confdir }}/certs/custodia.crt
+  register: custodia_cert
+
+- name: Request certificate with ipa-getcert
+  tags:
+    - ipa-custodia
+  ipa:
+    cmd=ipa-getcert
+    args="request -w -k {{ custodia_confdir }}/certs/custodia.key -f {{ custodia_confdir }}/certs/custodia.crt -T caIPAserviceCert -K custodia/{{ ansible_fqdn }}"
+    password="{{ ipa_admin_password }}"
+  when: not custodia_cert.stat.exists
+
+- name: Wait for certmonger
+  tags:
+    - ipa-custodia
+  waitforcertmonger:
+
+- name: copy ipa ca.crt
+  tags:
+    - ipa-custodia
+  copy:
+    src=/etc/ipa/ca.crt
+    dest={{ custodia_confdir }}/certs/ca.crt
+    remote_src=true

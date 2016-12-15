@@ -98,3 +98,17 @@
     - ipa_tests
   roles:
     - ipa-tests
+
+- name: IPA Docker registry
+  any_errors_fatal: true
+  hosts:
+    - ipa_docker_registry
+  roles:
+    - ipa-docker-registry
+
+- name: IPA Custodia service / cert
+  any_errors_fatal: true
+  hosts:
+    - ipa_custodia
+  roles:
+    - ipa-custodia

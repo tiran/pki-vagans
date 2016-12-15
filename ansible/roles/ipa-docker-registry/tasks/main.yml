@@ -1,0 +1,91 @@
+---
+- name: Gather facts
+  tags:
+    - ipa-docker-registry
+  setup:
+
+- name: install Docker package
+  tags:
+    - ipa-docker-registry
+    - package-install
+    - network
+  yum: name={{ item }} state=present
+  with_items:
+   - docker-distribution
+   - httpd-tools
+  when: package_install
+
+- name: Create /var/lib/registry
+  tags:
+    - ipa-docker-registry
+  file:
+    path={{ docker_registry_dir }}
+    state=directory
+    owner=root
+    group=root
+    mode=0755
+    seuser=system_u
+    serole=object_r
+    setype=var_lib_t
+    selevel=s0
+
+- name: write new /etc/docker-distribution/registry/config.yml
+  tags:
+    - ipa-docker-registry
+  template:
+    src=config.yml
+    dest={{ docker_registry_config }}
+    force=yes
+    backup=true
+  notify:
+    - restart docker-distribution
+
+- name: create htpasswd file
+  tags:
+    - ipa-docker-registry
+  command:
+    htpasswd -B -b -c {{ docker_registry_htpasswd }} admin {{ default_password }}
+  args:
+    creates: "{{ docker_registry_htpasswd }}"
+  when: docker_registry_htpasswd
+
+- name: Look for /etc/pki/tls/certs/docker-distribution.crt
+  tags:
+    - ipa-docker-registry
+  stat: path=/etc/pki/tls/certs/docker-distribution.crt
+  register: docker_registry_cert
+
+- name: Request certificate /etc/pki/tls/certs/docker-distribution.crt with ipa-getcert
+  tags:
+    - ipa-docker-registry
+    - ipa-install
+  ipa:
+    cmd=ipa-getcert
+    args="request -w -k /etc/pki/tls/private/docker-distribution.key -f /etc/pki/tls/certs/docker-distribution.crt -T caIPAserviceCert -C 'systemctl reload-or-restart docker-distribution.service'"
+    password="{{ ipa_admin_password }}"
+  when: not docker_registry_cert.stat.exists
+  notify:
+    - restart docker-distribution
+
+- name: Wait for certmonger
+  tags:
+    - ipa-docker-registry
+  waitforcertmonger:
+
+- name: Open firewall port for registry
+  tags:
+    - ipa-docker-registry
+    - firewall
+  firewalld:
+    port={{ item }}/tcp
+    permanent=true
+    state=enabled
+    immediate=yes
+  with_items:
+    - 5000
+  when: has_firewalld.stat.exists
+
+- name: Enable docker-distribution
+  tags:
+    - ipa-docker-registry
+  service: name=docker-distribution enabled=yes state=started

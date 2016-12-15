@@ -1,0 +1,5 @@
+---
+docker_registry_dir: /var/lib/registry
+docker_registry_config: /etc/docker-distribution/registry/config.yml
+# docker_registry_htpasswd: /etc/docker-distribution/htpasswd
+docker_registry_htpasswd:

@@ -1,0 +1,23 @@
+version: 0.1
+log:
+  fields:
+    service: registry
+storage:
+    cache:
+        layerinfo: inmemory
+    filesystem:
+        rootdirectory: {{ docker_registry_dir }}
+    delete:
+      enabled: true
+http:
+  addr: {{ ansible_fqdn }}:5000
+  host: https://{{ ansible_fqdn }}:5000
+  tls:
+      certificate: /etc/pki/tls/certs/docker-distribution.crt
+      key: /etc/pki/tls/private/docker-distribution.key
+{% if docker_registry_htpasswd %}
+auth:
+  htpasswd:
+    realm: basic-realm
+    path: {{ docker_registry_htpasswd }}
+{% endif %}
