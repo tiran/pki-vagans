@@ -12,6 +12,7 @@
 # GNU General Public License for more details.
 
 import os
+import numbers
 import sys
 
 from ansible.module_utils.basic import AnsibleModule
@@ -19,17 +20,17 @@ from ansible.module_utils.basic import AnsibleModule
 try:
     from ipalib import api
     from ipaplatform.paths import paths
-    from ipapython import ipautil, sysrestore, version
+    from ipapython import sysrestore
+    from ipapython import version
     from ipapython.dn import DN
 except ImportError:
     HAS_IPALIB = False
 else:
     HAS_IPALIB = True
 
-
 try:
     from ipaserver.install.installutils import is_ipa_configured
-    from ipaserver.install import certs
+    from ipaserver.install.bindinstance import BindInstance
     from ipaserver.install.cainstance import CAInstance
     from ipaserver.install.krainstance import KRAInstance
 except ImportError:
@@ -60,11 +61,11 @@ options:
     required: false
     default: domain.upper()
     aliases: []
-  fact_key:
+  context:
     description:
-      -
+      - FreeIPA API context
     required: false
-    default: "ipa"
+    default: "cli"
     aliases: []
 '''
 
@@ -82,7 +83,7 @@ ansible_facts:
   description:
     - "api_env" are ipalib.api.env attributes
     - "basedn": str
-    - "configured": ca, client, kra, server
+    - "configured": dns, ca, client, kra, server
     - "domain": str
     - "packages": ipalib, ipaserver
     - "paths" are ipaplatform.paths.paths attributes
@@ -98,46 +99,28 @@ else:
     text = unicode
 
 
-def get_api_env():
+def get_api_env(context):
     # get api.env
     if not api.isdone('bootstrap'):
-        api.bootstrap(context='cli')
+        # only call bootstrap, finalize() triggers a download that requires
+        # valid Kerberos credentials.
+        api.bootstrap(context=context)
 
     result = {}
     for name in dir(api.env):
         if name.startswith('_'):
             continue
         value = getattr(api.env, name)
-        if isinstance(value, (str, text, bool, int)):
+        if isinstance(value, (str, text, bool, numbers.Real)):
             result[name] = value
+        elif value is None:
+            result[name] = None
         elif isinstance(value, DN):
             result[name] = str(value)
     return result
 
 
-def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            domain=dict(required=True, type='str'),
-            realm=dict(required=False, type='str', default=None),
-            fact_key=dict(required=False, type='str', default='ipa'),
-        )
-    )
-
-    if not HAS_IPALIB:
-        module.fail_json(
-            msg='ipalib package is not available, install python2-ipaclient.'
-        )
-
-    # get / validate arguments
-    domain = module.params['domain']
-    realm = module.params['realm']
-    fact_key = module.params['fact_key']
-    if '.' not in domain or domain != domain.lower():
-        raise ValueError(domain)
-    if realm is None:
-        realm = domain.upper()
-
+def get_ipa_version():
     # parse version
     version_info = []
     for part in version.VERSION.split('.'):
@@ -149,10 +132,39 @@ def main():
         else:
             version_info.append(int(part))
 
-    ipa = dict(
+    return dict(
+        api_version=version.API_VERSION,
+        num_version=version.NUM_VERSION,
+        vendor_version=version.VENDOR_VERSION,
+        version=version.VERSION,
+        version_info=version_info,
+    )
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            domain=dict(required=True, type='str'),
+            realm=dict(required=False, type='str', default=None),
+            context=dict(required=False, type='str', default="cli"),
+        )
+    )
+
+    # get / validate arguments
+    domain = module.params['domain']
+    realm = module.params['realm']
+    if '.' not in domain or domain != domain.lower():
+        module.fail_json(
+            msg='Invalid domain {}, a lower case string '
+                'with at least one dot is expected.'.format(domain)
+        )
+    if realm is None:
+        realm = domain.upper()
+
+    ipa_fact = dict(
         domain=domain,
         realm=realm,
-        basedn=str(ipautil.realm_to_suffix(realm)),
+        basedn=','.join('dc=' + p for p in realm.lower().split('.')),
         packages=dict(
             ipalib=HAS_IPALIB,
             ipaserver=HAS_IPASERVER,
@@ -160,52 +172,59 @@ def main():
         configured=dict(
             client=False,
             server=False,
+            dns=False,
             ca=False,
             kra=False,
         ),
-        version=dict(
-            api_version=version.API_VERSION,
-            num_version=version.NUM_VERSION,
-            vendor_version=version.VENDOR_VERSION,
-            version=version.VERSION,
-            version_info=version_info,
-        ),
-        paths={name: getattr(paths, name)
-               for name in dir(paths) if name[0].isupper()},
-        api_env={},
+        version=None,
+        paths=None,
+        api_env=None,
     )
 
-    fstore = sysrestore.FileStore(paths.IPA_CLIENT_SYSRESTORE)
-    if os.path.isfile(paths.IPA_DEFAULT_CONF) and fstore.has_files():
-        ipa['configured']['client'] = True
+    if HAS_IPALIB:
+        ipa_fact['version'] = get_ipa_version()
+        ipa_fact['paths'] = {
+            name: getattr(paths, name)
+            for name in dir(paths) if name[0].isupper()
+        }
 
-    if ipa['configured']['client']:
-        ipa['api_env'].update(get_api_env())
-        ipa['basedn'] = ipa['api_env']['basedn']
+        fstore = sysrestore.FileStore(paths.IPA_CLIENT_SYSRESTORE)
+        if os.path.isfile(paths.IPA_DEFAULT_CONF) and fstore.has_files():
+            # ipalib package is present and client is configured.
+            ipa_fact['configured']['client'] = True
+            ipa_fact['api_env'] = get_api_env(module.params['context'])
+            ipa_fact['basedn'] = ipa_fact['api_env']['basedn']
 
-        if ipa['domain'] != ipa['api_env']['domain']:
-            raise ValueError('domain {} != {}'.format(
-                ipa['domain'], ipa['api_env']['domain']))
+            if ipa_fact['domain'] != ipa_fact['api_env']['domain']:
+                module.fail_json(
+                    msg='domain mismatch: {} != {}.'.format(
+                        ipa_fact['domain'], ipa_fact['api_env']['domain'])
+                )
 
-        if ipa['realm'] != ipa['api_env']['realm']:
-            raise ValueError('realm {} != {}'.format(
-                ipa['realm'], ipa['api_env']['realm']))
+            if ipa_fact['realm'] != ipa_fact['api_env']['realm']:
+                module.fail_json(
+                    msg='realm mismatch: {} != {}.'.format(
+                        ipa_fact['realm'], ipa_fact['api_env']['realm'])
+                )
 
-    if HAS_IPASERVER:
-        if is_ipa_configured():
-            ca = CAInstance(ipa['realm'], certs.NSS_DIR)
-            kra = KRAInstance(ipa['realm'])
-            ipa['configured'].update(
-                server=True,
-                ca=ca.is_installed() and ca.is_configured(),
-                kra=kra.is_installed() and kra.is_configured()
-            )
+        if HAS_IPASERVER:
+            if is_ipa_configured():
+                # ipaserver package is present and server is configured.
+                bind = BindInstance(ipa_fact['realm'])
+                ca = CAInstance(ipa_fact['realm'])
+                kra = KRAInstance(ipa_fact['realm'])
+                ipa_fact['configured'].update(
+                    server=True,
+                    dns=bind.is_configured(),
+                    ca=ca.is_installed() and ca.is_configured(),
+                    kra=kra.is_installed() and kra.is_configured()
+                )
 
     module.exit_json(
         changed=False,
-        ansible_facts={
-            fact_key: ipa,
-        },
+        ansible_facts=dict(
+            ipa=ipa_fact
+        )
     )
 
 
