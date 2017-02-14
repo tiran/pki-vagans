@@ -26,15 +26,10 @@ fi
 sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' \
     /etc/ssh/sshd_config
 
-# network interface
-cat > /etc/sysconfig/network-scripts/ifcfg-eth0 << EOF
-DEVICE="eth0"
-BOOTPROTO="dhcp"
-ONBOOT="yes"
-NM_CONTROLLED="yes"
-TYPE="Ethernet"
-PERSISTENT_DHCLIENT="yes"
-EOF
+# remove old network interface
+# Vagrant / libvirt DHCP will take care of network
+rm -f /etc/sysconfig/network-scripts/ifcfg-eth*
+rm -f /etc/sysconfig/network-scripts/ifcfg-en*
 
 # Vagrant user and group
 getent group vagrant >/dev/null || groupadd --gid 1001 vagrant
