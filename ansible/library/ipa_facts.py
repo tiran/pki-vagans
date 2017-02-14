@@ -19,24 +19,30 @@ from ansible.module_utils.basic import AnsibleModule
 
 try:
     from ipalib import api
-    from ipaplatform.paths import paths
-    from ipapython import sysrestore
-    from ipapython import version
-    from ipapython.dn import DN
 except ImportError:
     HAS_IPALIB = False
 else:
     HAS_IPALIB = True
+    from ipaplatform.paths import paths
+    from ipapython import version
+    from ipapython.dn import DN
+    try:
+        # FreeIPA >= 4.5
+        from ipalib.install import sysrestore
+    except ImportError:
+        # FreeIPA 4.4 and older
+        from ipapython import sysrestore
 
 try:
-    from ipaserver.install.installutils import is_ipa_configured
-    from ipaserver.install.bindinstance import BindInstance
-    from ipaserver.install.cainstance import CAInstance
-    from ipaserver.install.krainstance import KRAInstance
+    import ipaserver  # noqa: F401
 except ImportError:
     HAS_IPASERVER = False
 else:
     HAS_IPASERVER = True
+    from ipaserver.install.installutils import is_ipa_configured
+    from ipaserver.install.bindinstance import BindInstance
+    from ipaserver.install.cainstance import CAInstance
+    from ipaserver.install.krainstance import KRAInstance
 
 
 DOCUMENTATION = '''
