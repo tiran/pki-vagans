@@ -16,7 +16,7 @@ Install dependencies
 --------------------
 
 ```shell
-sudo dnf install ansible libvirt vagrant vagrant-libvirt vagrant-hostmanager libselinux-python
+sudo dnf install ansible libvirt vagrant vagrant-libvirt vagrant-hostmanager libselinux-python nss-tools
 sudo systemctl enable libvirtd
 sudo systemctl start libvirtd
 sudo usermod -G libvirt -a YOUR_USER
