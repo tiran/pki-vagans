@@ -6,6 +6,7 @@ vagrant provision
 
 echo
 echo "Rrun 'bin/ipa_kinit admin' to acquire a Kerberos ticket"
-echo "The password is 'Secret123'"
+echo "The admin password is 'Secret123'"
+echo "The DM password is 'DMSecret456'"
 echo
 
