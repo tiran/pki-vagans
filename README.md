@@ -34,7 +34,8 @@ passwords
 =========
 
 The default password for the users root and vagrant, FreeIPA's admin user,
-389-DS, PKI CA and PKI KRA is **Secret123**.
+389-DS, PKI CA and PKI KRA is **Secret123**. The Directory Manager password
+is **DMSecret456**.
 
 
 FreeIPA
