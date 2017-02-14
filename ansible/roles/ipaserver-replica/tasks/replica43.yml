@@ -13,5 +13,6 @@
     --ip-address {{ ansible_default_ipv4.address }}
     --setup-dns
     --allow-zone-overlap
+    --skip-conncheck
     {{ '--forwarder=%s' % dns_forwarder['nameservers'][0] if enable_network else '--no-forwarders' }}
   when: not ipa.configured.server
