@@ -5,12 +5,15 @@ http_port: 8080
 https_port: 8443
 pki_instance_name: pki-tomcat
 security_domain: pki-tests
-dm_password: "{{ default_password }}"
-pkcs12_password: "{{ default_password }}"
-client_db_password: "{{ default_password }}"
-backup_password: "{{ default_password }}"
-security_domain_password: "{{ default_password }}"
-token_password: "{{ default_password }}"
-ca_password: "{{ default_password }}"
-kra_password: "{{ default_password }}"
-ocsp_password: "{{ default_password }}"
+
+dm_password: "DMSecret456"
+
+pki_password: "Secret123"
+pkcs12_password: "{{ pki_password }}"
+client_db_password: "{{ pki_password }}"
+backup_password: "{{ pki_password }}"
+security_domain_password: "{{ pki_password }}"
+token_password: "{{ pki_password }}"
+ca_password: "{{ pki_password }}"
+kra_password: "{{ pki_password }}"
+ocsp_password: "{{ pki_password }}"

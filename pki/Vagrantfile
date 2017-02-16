@@ -18,7 +18,7 @@ end
 DOMAIN="pki.example"
 
 Vagrant.configure(2) do |config|
-    config.vm.box = "cheimes/dogtag-f23"
+    config.vm.box = "cheimes/dogtag-f25"
 
     config.vm.provider :libvirt do |domain|
         domain.memory = 1024
