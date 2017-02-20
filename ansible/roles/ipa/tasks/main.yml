@@ -72,6 +72,17 @@
   notify:
     - stop httpd
 
+- name: Workaround for ipa-otpd SELinux context
+  tags:
+    - ipa
+  file:
+    seuser=system_u
+    serole=object_r
+    setype=ipa_otpd_exec_t
+    selevel=s0
+    state=file
+    path=/usr/libexec/ipa/ipa-otpd
+
 - name: Gather IPA facts
   tags:
     - ipa
