@@ -72,6 +72,12 @@
   notify:
     - stop httpd
 
+- name: Check for ipa-otpd file for following workaround
+  tags:
+    - ipa
+  stat: path=/usr/libexec/ipa/ipa-otpd
+  register: ipa_otpd
+
 - name: Workaround for ipa-otpd SELinux context
   tags:
     - ipa
@@ -82,6 +88,7 @@
     selevel=s0
     state=file
     path=/usr/libexec/ipa/ipa-otpd
+  when: ipa_otpd.stat.exists
 
 - name: Gather IPA facts
   tags:
