@@ -3,6 +3,10 @@
 
 Vagrant.require_version ">= 1.6.0"
 
+DOMAIN="ipa.example"
+INSTALL_IDP = true
+INSTALL_VPN = false
+
 HERE = File.dirname(__FILE__)
 ENV['ANSIBLE_CONFIG'] = "#{HERE}/../ansible/ansible.cfg"
 
@@ -12,8 +16,6 @@ ENV['ANSIBLE_CONFIG'] = "#{HERE}/../ansible/ansible.cfg"
 if ENV.has_key?('SSH_AUTH_SOCK')
     ENV.delete('SSH_AUTH_SOCK')
 end
-
-DOMAIN="ipa.example"
 
 Vagrant.configure(2) do |config|
     config.vm.box = "cheimes/freeipa-f25"
@@ -28,16 +30,30 @@ Vagrant.configure(2) do |config|
         config.hostmanager.manage_guest = false
     end
 
-    # 256 MB is enough for VPN, NFS and client
+    # 386 MB is enough for VPN, NFS and client
     config.vm.provider :libvirt do |domain|
         domain.memory = 384
+	# see https://bugzilla.redhat.com/show_bug.cgi?id=1283989
+	domain.cpu_mode = 'host-passthrough'
     end
 
-    config.vm.define "ipamaster" do |host|
-        host.vm.hostname = "master.#{DOMAIN}"
-        host.vm.provider :libvirt do |domain|
-            domain.memory = 1536
-            domain.cpus = 2
+    config.vm.define "ipaclient1" do |host|
+        host.vm.hostname = "client1.#{DOMAIN}"
+    end
+
+    config.vm.define "ipafileserver" do |host|
+        host.vm.hostname = "fileserver.#{DOMAIN}"
+    end
+
+    if INSTALL_IDP
+        config.vm.define "ipaidpserver" do |host|
+            host.vm.hostname = "idp.#{DOMAIN}"
+        end
+    end
+
+    if INSTALL_VPN
+        config.vm.define "ipavpnserver" do |host|
+            host.vm.hostname = "vpn.#{DOMAIN}"
         end
     end
 
@@ -48,24 +64,16 @@ Vagrant.configure(2) do |config|
         end
     end
 
-    config.vm.define "ipafileserver" do |host|
-        host.vm.hostname = "fileserver.#{DOMAIN}"
-    end
+    # Vagrant's parallized Ansible is just too fragile. Use one instance
+    # of Ansible with limit=all and let Ansible take care of parallel
+    # execution. It makes the output more readable, too.
+    config.vm.define "ipamaster" do |host|
+        host.vm.hostname = "master.#{DOMAIN}"
+        host.vm.provider :libvirt do |domain|
+            domain.memory = 1536
+            domain.cpus = 2
+        end
 
-    #config.vm.define "ipavpnserver" do |host|
-    #    host.vm.hostname = "vpn.#{DOMAIN}"
-    #end
-
-    config.vm.define "ipaidpserver" do |host|
-        host.vm.hostname = "idp.#{DOMAIN}"
-    end
-
-    config.vm.define "ipaclient1" do |host|
-        host.vm.hostname = "client1.#{DOMAIN}"
-
-        # Vagrant's parallized Ansible is just too fragile. Use one instance
-        # of Ansible with limit=all and let Ansible take care of parallel
-        # execution. It makes the output more readable, too.
         host.vm.provision "ansible" do |ansible|
             ansible.limit = "all"
             ansible.playbook = "../ansible/ipa-playbook.yml"
@@ -73,14 +81,23 @@ Vagrant.configure(2) do |config|
                 "ipaserver_master" => ["ipamaster"],
                 "ipaserver_replica" => ["ipareplica1"],
                 "ipa_client" => ["ipaclient1"],
-                #"ipa_vpnserver" => ["ipavpnserver"],
                 "ipa_nfsserver" => ["ipafileserver"],
                 "ipa_smbserver" => ["ipafileserver"],
                 "ipa_httpexample" => ["ipafileserver"],
-                "ipa_ipsilon_idp" => ["ipaidpserver"],
-                "ipa_sp_example" => ["ipafileserver"],
                 "ipa_nfsclient" => ["ipamaster", "ipareplica1", "ipaclient1"],
             }
+            if INSTALL_IDP
+                ansible.groups.update({
+                    "ipa_ipsilon_idp" => ["ipaidpserver"],
+                    "ipa_sp_example" => ["ipafileserver"],
+                })
+            end
+            if INSTALL_VPN
+                ansible.groups.update({
+                    "ipa_vpnserver" => ["ipavpnserver"],
+                })
+            end
+
             ansible.verbose = 'vv'
             # network: Don't use network (no DNS forwarder, no package installations)
             # ipa-install: skip installation (ipa-server-install, ipa-client-install)
