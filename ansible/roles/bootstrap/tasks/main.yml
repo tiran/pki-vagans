@@ -23,6 +23,20 @@
   failed_when: "{{ which_dnf.rc > 1 }}"
   changed_when: false
 
+- name: Install python2 and deps for ansible modules
+  tags:
+    - package-install
+    - network
+    - bootstrap
+  raw: "dnf install -y python2 python2-dnf libselinux-python"
+  args:
+    creates: /usr/bin/python2
+  register: result
+  # ignore disabled repos
+  failed_when: "result.rc != 0 and 'Error: There are no enabled repos.' not in result.stdout_lines"
+  when: which_dnf.rc == 0  and package_install
+
+# ini_file depends on Python 2
 - name: Auto select fastest DNF mirror
   tags:
     - package-install
@@ -41,19 +55,6 @@
     - network
     - bootstrap
   raw: "dnf makecache"
-  register: result
-  # ignore disabled repos
-  failed_when: "result.rc != 0 and 'Error: There are no enabled repos.' not in result.stdout_lines"
-  when: which_dnf.rc == 0  and package_install
-
-- name: Install python2 and deps for ansible modules
-  tags:
-    - package-install
-    - network
-    - bootstrap
-  raw: "dnf install -y python2 python2-dnf libselinux-python"
-  args:
-    creates: /usr/bin/python2
   register: result
   # ignore disabled repos
   failed_when: "result.rc != 0 and 'Error: There are no enabled repos.' not in result.stdout_lines"
