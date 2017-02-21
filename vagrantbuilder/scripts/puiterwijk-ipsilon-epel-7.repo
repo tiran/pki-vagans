@@ -1,0 +1,10 @@
+[puiterwijk-ipsilon]
+name=Copr repo for ipsilon owned by puiterwijk
+baseurl=https://copr-be.cloud.fedoraproject.org/results/puiterwijk/ipsilon/epel-7-$basearch/
+type=rpm-md
+skip_if_unavailable=True
+gpgcheck=1
+gpgkey=https://copr-be.cloud.fedoraproject.org/results/puiterwijk/ipsilon/pubkey.gpg
+repo_gpgcheck=0
+enabled=1
+enabled_metadata=1

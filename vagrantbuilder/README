@@ -9,8 +9,8 @@ Atlas upload
 1) Create new version
 2) Create libvirt provider for the new version
 3) Request an upload token
-   $ curl "https://atlas.hashicorp.com/api/v1/box/cheimes/freeipa-f23/version/$VERSION/provider/libvirt/upload?access_token=$ATLAS_TOKEN"
+   $ curl "https://atlas.hashicorp.com/api/v1/box/cheimes/freeipa-f25/version/$VERSION/provider/libvirt/upload?access_token=$ATLAS_TOKEN"
 4) Upload the box file:
-   $ curl -o /dev/stdout -X PUT --upload-file freeipa-f23.box UPLOAD_PATH
+   $ curl -o /dev/stdout -X PUT --upload-file freeipa-f25.box UPLOAD_PATH
 5) Release the new version
 

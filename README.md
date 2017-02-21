@@ -16,7 +16,7 @@ Install dependencies
 --------------------
 
 ```shell
-sudo dnf install ansible libvirt vagrant vagrant-libvirt vagrant-hostmanager libselinux-python
+sudo dnf install ansible libvirt vagrant vagrant-libvirt vagrant-hostmanager libselinux-python nss-tools
 sudo systemctl enable libvirtd
 sudo systemctl start libvirtd
 sudo usermod -G libvirt -a YOUR_USER
@@ -34,7 +34,8 @@ passwords
 =========
 
 The default password for the users root and vagrant, FreeIPA's admin user,
-389-DS, PKI CA and PKI KRA is **Secret123**.
+389-DS, PKI CA and PKI KRA is **Secret123**. The Directory Manager password
+is **DMSecret456**.
 
 
 FreeIPA
@@ -42,8 +43,7 @@ FreeIPA
 
 ```shell
 $ cd ipa
-$ vagrant up --no-provision
-$ vagrant provision
+$ ./setup.sh
 ```
 
 Vagrant's multi-machine setup can run into a race condition and starts
@@ -69,6 +69,20 @@ $ bin/ipa_kinit admin
 $ bin/ipa_firefox
 $ bin/ipa_ssh admin@client1.ipa.example
 ```
+
+
+FreeIPA test server
+===================
+
+```shell
+$ cd ipatests
+$ ./setup.sh
+```
+
+One test machine:
+
+  * ipatestmaster (master.ipatests.local) with CA and KRA
+
 
 Dogtag PKI
 ==========
@@ -143,6 +157,44 @@ When something fails
 $ sudo systemctl restart libvirtd.service
 $ vagrant provision
 ```
+
+Provision non Vagrant machines
+==============================
+
+Create an ```inventory.cfg```
+
+```
+[ipaserver_master]
+master.domain.example
+
+[ipaserver_replica]
+replica1.domain.example
+replica2.domain.example
+
+[ipa_client]
+client1.domain.example
+client2.domain.example
+client3.domain.example
+```
+
+and shell script
+
+```shell
+#!/bin/sh
+set -ex
+
+PKI_VAGANS="/path/to/pki-vagans"
+IPA_DOMAIN="domain.example"
+
+export ANSIBLE_CONFIG=${PKI_VAGANS}/ansible/ansible.cfg
+
+ansible-playbook \
+    -i inventory.cfg \
+    ${PKI_VAGANS}/ansible/ipa-playbook.yml \
+    -vv \
+    --extra-vars='{"package_install":true,"package_upgrade":true,"coprs_enabled":[],"ipa_replica_kra":false,"ipa_domain": "'${IPA_DOMAIN}'"}'
+```
+
 
 Ansible roles
 =============

@@ -9,6 +9,7 @@
     - ipsilon
     - ipsilon-saml2
     - ipsilon-openid
+    - ipsilon-openidc
     - ipsilon-persona
     - ipsilon-authform
     - ipsilon-infosssd

@@ -59,7 +59,7 @@
   with_items: "{{ coprs_enabled }}"
   when: "{{ coprs_enabled and package_install }}"
 
-- name: Enable FreeIPA 4.3 COPR
+- name: Enable extra COPRs
   tags:
     - common
     - package-install

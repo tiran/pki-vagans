@@ -1,0 +1,5 @@
+---
+dot_ipa: /tmp/dotipa
+dot_ipa_nssdb: "{{ dot_ipa }}/nssdb"
+local_home: "{{ lookup('env','HOME') }}"
+local_dot_ipa: "{{ local_home }}/.ipa"

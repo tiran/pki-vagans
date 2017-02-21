@@ -38,9 +38,9 @@ HTTPD_PACKAGES = [
 
 IPSILON_PACKAGES = [
     'ipsilon', 'ipsilon-client', 'ipsilon-saml2', 'ipsilon-openid',
-    'ipsilon-persona', 'ipsilon-authform', 'ipsilon-infosssd',
-    'ipsilon-tools-ipa', 'ipsilon-authgssapi', 'ipsilon-authfas',
-    'ipsilon-authpam'
+    'ipsilon-openidc', 'ipsilon-persona', 'ipsilon-authform',
+    'ipsilon-infosssd', 'ipsilon-tools-ipa', 'ipsilon-authgssapi',
+    'ipsilon-authfas', 'ipsilon-authpam'
 ]
 
 SAMBA_PACKAGES = [
@@ -113,26 +113,25 @@ FLAVORS = {
         '--install', FREEIPA_PGK_NAMES,
         '--firstboot', 'scripts/ipa-firstboot',
     ],
-    'freeipa44-copr': [
-        # FreeIPA 4.4 for Fedora 24
-        '--run-command', COPR_ENABLE.format('@freeipa/freeipa-4-4'),
-        # Ipsilon 2.0 for Feodra 24
-        '--run-command', COPR_ENABLE.format('puiterwijk/ipsilon-fedora'),
-        '--update',
-        '--install', FREEIPA_PGK_NAMES,
-        '--firstboot', 'scripts/ipa-firstboot',
-    ],
+    # 'freeipa44-copr': [
+    #     # FreeIPA 4.4 for Fedora 24
+    #     '--run-command', COPR_ENABLE.format('@freeipa/freeipa-4-4'),
+    #     '--install', FREEIPA_PGK_NAMES,
+    #     '--firstboot', 'scripts/ipa-firstboot',
+    # ],
     'dogtag': [
-        '--install', DOGTAG_PACKAGES
+        '--install', DOGTAG_PKG_NAMES
     ],
 }
 
-# os_version, suffix
+# os_version, suffix, extras
 PLATFORMS = {
-    'fedora23': ('fedora-23', 'f23'),
-    'fedora24': ('fedora-24', 'f24'),
-    'centos72': ('centos-7.2', 'centos72'),
-    'rhel72': ('rhel-7.2', 'rhel72'),
+    'fedora25': ('fedora-25', 'f25', []),
+    'centos73': ('centos-7.3', 'centos73', [
+        '--install', 'epel-release',
+        '--copy-in', 'scripts/puiterwijk-ipsilon-epel-7.repo:/etc/yum.repos.d/',
+    ]),
+    # 'rhel73': ('rhel-7.3', 'rhel73', []),
 }
 
 
@@ -146,7 +145,6 @@ def trimbox(args, baseimage=False):
          '--operations', 'defaults,-ssh-userdir',
          '-a', filename]
     )
-    # print('Trimming')
     subprocess.check_call(
         ['virt-sparsify', '--in-place', filename]
     )
@@ -167,48 +165,6 @@ def remove_kernels(args, baseimage=False):
     )
 
 
-def selinux_relabel(args, baseimage=False):
-    """boot machine once to run the selinux relabelling
-
-    Taken from purpleidea's virt-builder
-    https://www.redhat.com/archives/libguestfs/2014-January/msg00183.html
-    https://github.com/libguestfs/libguestfs/commit/20a4bfde9628cfeb8bea441cab7dcc94843b34e3
-    """
-    filename = args.boxworkfile if not baseimage else args.baseimage
-    print("Put SELinux in permissive mode and touch /.autorelabel")
-    cmd = [
-        'virt-customize',
-        '-a', filename,
-        # enforce auto-relabelling
-        '--run-command', 'touch /.autorelabel',
-        # put SELinux in permissive module for auto-relabelling to work around
-        # issue with Fedora 24. selinux_relabel() sets it to enforcing later.
-        '--edit', '/etc/selinux/config:s/^SELINUX=enforcing/SELINUX=permissive/',
-    ]
-    subprocess.check_call(cmd)
-
-    print("qemu boot for SELinux relabelling")
-    cmd = [
-        'qemu-system-x86_64',
-        '-machine', 'accel=kvm:tcg',
-        '-cpu', 'host',
-        '-m', '512',
-        '-drive', 'file={},format=qcow2,if=virtio'.format(filename),
-        '-serial', 'stdio',
-        '-nographic', '-nodefaults', '-no-reboot',
-    ]
-    subprocess.check_call(cmd)
-
-    print("Put SELinux in enforcing mode")
-    cmd = [
-        'virt-edit',
-        '-a', filename,
-        '/etc/selinux/config',
-        '-e', 's/^SELINUX=permissive/SELINUX=enforcing/'
-    ]
-    subprocess.check_call(cmd)
-
-
 def virt_builder(args):
     """Base base image with base packages
     """
@@ -220,10 +176,22 @@ def virt_builder(args):
     trimbox(args, baseimage=True)
 
 
+def virt_update_base(args):
+    cmd = ['virt-customize']
+    cmd.extend(VIRT_ARGS)
+    cmd.extend(['-a', args.baseimage])
+    subprocess.check_call(cmd)
+    trimbox(args, baseimage=True)
+
+
 def virt_customize(args):
     cmd = ['virt-customize']
     cmd.extend(VIRT_ARGS)
     cmd.extend(args.extra_commands)
+    # another update in case extra_commands adds coprs
+    cmd.append('--update')
+    # enforce SELinux relabeling
+    cmd.append('--selinux-relabel')
     cmd.extend(['-a', args.boxworkfile])
     subprocess.check_call(cmd)
 
@@ -346,11 +314,16 @@ def parseargs():
     parser = argparse.ArgumentParser(description='vagrant boxbuilder.')
     parser.add_argument('flavor', choices=sorted(FLAVORS))
     parser.add_argument('platform', choices=sorted(PLATFORMS))
+    parser.add_argument('--update-base', action='store_true',
+                        help='Update base box')
 
     args = parser.parse_args()
 
-    args.extra_commands = FLAVORS[args.flavor]
-    args.os_version, args.suffix = PLATFORMS[args.platform]
+    args.os_version, args.suffix, extras = PLATFORMS[args.platform]
+    args.extra_commands = []
+    # platform extras first, e.g. for epel-release
+    args.extra_commands.extend(extras)
+    args.extra_commands.extend(FLAVORS[args.flavor])
 
     args.tmpdir = os.path.join(HERE, 'tmp')
     args.baseboxdir = os.path.join(HERE, 'basebox')
@@ -381,16 +354,17 @@ def main():
     if not os.path.isfile(args.baseimage):
         print("Create Vagrant basebox {0.baseimage}".format(args))
         virt_builder(args)
+    elif args.update_base:
+        print("Updating Vagrant basebox {0.baseimage}".format(args))
+        virt_update_base(args)
 
     print("Copy {0.baseimage} to {0.boxworkfile}".format(args))
-    shutil.copyfile(args.baseimage, args.boxworkfile)
+    # shutil.copyfile(args.baseimage, args.boxworkfile)
 
     print("Customize with extra packages and updates")
     virt_customize(args)
     print("Remove old kernels")
     remove_kernels(args)
-    print("SELinux relabel")
-    selinux_relabel(args)
     print("Trim box")
     trimbox(args)
 

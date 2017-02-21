@@ -140,3 +140,59 @@
     # Handled by ipa-vpnserver
     # - ipaenv_kkdcp_openconnect
   run_once: true
+
+- name: Check for NSSDB
+  tags:
+    - ipa-inventory
+    - ipa-install
+  become: no
+  local_action:
+    stat
+    path={{ ipa_data_dir }}/nssdb
+  register: nssdb
+  run_once: true
+
+- name: Create NSSDB directory
+  tags:
+    - ipa-inventory
+    - ipa-install
+  become: no
+  local_action:
+    file
+    dest={{ ipa_data_dir }}/nssdb
+    state=directory
+  run_once: true
+  when: not nssdb.stat.exists
+
+- name: Create NSSDB
+  tags:
+    - ipa-inventory
+    - ipa-install
+  become: no
+  local_action:
+    command
+    certutil -N -d '{{ ipa_data_dir }}/nssdb' --empty-password
+  run_once: true
+  when: not nssdb.stat.exists
+
+- name: Remove old CA.crt from NSSDB
+  tags:
+    - ipa-inventory
+    - ipa-install
+  become: no
+  local_action:
+    command
+    certutil -D -d '{{ ipa_data_dir }}/nssdb' -n 'IPA CA'
+  when: nssdb.stat.exists
+  failed_when: false
+
+- name: Populate NSSDB with CA.crt
+  tags:
+    - ipa-inventory
+    - ipa-install
+  become: no
+  local_action:
+    command
+    certutil -A -d '{{ ipa_data_dir }}/nssdb' -n 'IPA CA' -i '{{ ipa_data_dir }}/ca.crt' -t 'TC,C,T'
+  run_once: true
+  # no when, always add cert

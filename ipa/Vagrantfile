@@ -16,7 +16,8 @@ end
 DOMAIN="ipa.example"
 
 Vagrant.configure(2) do |config|
-    config.vm.box = "cheimes/freeipa44-f24"
+    config.vm.box = "cheimes/freeipa-f25"
+    # config.vm.box = "cheimes/freeipa-centos73"
 
     # no rsync, Ansible playbook syncs files manually
     config.vm.synced_folder ".", "/vagrant", disabled: true
@@ -29,7 +30,7 @@ Vagrant.configure(2) do |config|
 
     # 256 MB is enough for VPN, NFS and client
     config.vm.provider :libvirt do |domain|
-        domain.memory = 256
+        domain.memory = 384
         domain.cpu_mode = 'host-passthrough'
     end
 
@@ -44,7 +45,7 @@ Vagrant.configure(2) do |config|
     config.vm.define "ipareplica1" do |host|
         host.vm.hostname = "replica1.#{DOMAIN}"
         host.vm.provider :libvirt do |domain|
-            domain.memory = 1024
+            domain.memory = 1536
         end
     end
 

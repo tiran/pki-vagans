@@ -1,0 +1,71 @@
+---
+- name: Create dot_ipa directories
+  tags:
+    - ipa-tests
+  file:
+    path={{ item }}
+    mode=0755
+    state=directory
+    owner=root
+    group=root
+  with_items:
+    - "{{ dot_ipa }}"
+    - "{{ dot_ipa_nssdb }}"
+
+- name: Create default.conf
+  tags:
+    - ipa-tests
+  template:
+    src=default.conf
+    dest={{ dot_ipa }}/default.conf
+
+- name: Create .dmpw
+  tags:
+    - ipa-tests
+  template:
+    src=dot_dmpw
+    dest={{ dot_ipa }}/.dmpw
+
+- name: copy alias /etc/httpd/alias databases
+  tags:
+    - ipa-tests
+  copy:
+    src=/etc/httpd/alias/{{ item }}
+    dest={{ dot_ipa_nssdb }}/
+    remote_src=True
+  with_items:
+    - cert8.db
+    - key3.db
+    - secmod.db
+
+- name: copy /etc/httpd/alias/pwdfile.txt
+  tags:
+    - ipa-tests
+  copy:
+    src=/etc/httpd/alias/pwdfile.txt
+    dest={{ dot_ipa_nssdb }}/.pwd
+    remote_src=True
+
+- name: copy /etc/ipa/ca.crt
+  tags:
+    - ipa-tests
+  copy:
+    src=/etc/ipa/ca.crt
+    dest={{ dot_ipa }}
+    remote_src=True
+
+- name: create krb5.conf
+  tags:
+    - ipa-tests
+  template:
+    src=krb5.conf
+    dest={{ dot_ipa }}/krb5.conf
+
+- name: Fetch dot_ipa
+  tags:
+    - ipa-tests
+  synchronize:
+    src={{ dot_ipa }}/
+    dest={{ ipa_data_dir }}/dotipa/
+    mode=pull
+    delete=true

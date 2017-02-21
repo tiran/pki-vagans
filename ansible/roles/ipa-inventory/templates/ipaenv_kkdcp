@@ -1,3 +1,6 @@
 export IPA_INVENTORY="{{ ipa_data_dir }}"
 export IPA_FIREFOX="{{ ipa_firefox_dir }}"
+
+export IPA_CONFDIR="${IPA_INVENTORY}"
 export KRB5_CONFIG="${IPA_INVENTORY}/krb5_kkdcp.conf"
+export KRB5CCNAME="${IPA_INVENTORY}/ccache_kkdcp"

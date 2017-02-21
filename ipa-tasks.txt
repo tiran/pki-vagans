@@ -1,9 +1,3 @@
-statically included: /home/heimes/redhat/pki-vagans/ansible/roles/common/tasks/extravars.yml
-statically included: /home/heimes/redhat/pki-vagans/ansible/roles/common/tasks/dnf.yml
-statically included: /home/heimes/redhat/pki-vagans/ansible/roles/common/tasks/yum.yml
-statically included: /home/heimes/redhat/pki-vagans/ansible/roles/ipaserver-replica/tasks/replica43.yml
-statically included: /home/heimes/redhat/pki-vagans/ansible/roles/ipa-client/tasks/main.yml
-statically included: /home/heimes/redhat/pki-vagans/ansible/roles/ipaserver-replica/tasks/replica42.yml
 
 playbook: ansible/ipa-playbook.yml
 
@@ -15,17 +9,12 @@ playbook: ansible/ipa-playbook.yml
     tasks:
       bootstrap : Check default route	TAGS: [bootstrap]
       bootstrap : Create some default route	TAGS: [bootstrap]
-      bootstrap : Check NM_CONTROLLED in /etc/sysconfig/network-scripts/ifcfg-eth0	TAGS: [bootstrap]
-      raw	TAGS: [bootstrap]
-      bootstrap : Check nameserver in /etc/resolv.conf	TAGS: [bootstrap]
-      bootstrap : Restart NetworkManager	TAGS: [bootstrap]
       bootstrap : Check for dnf command	TAGS: [bootstrap, package-install]
       bootstrap : Auto select fastest DNF mirror	TAGS: [bootstrap, package-install]
       bootstrap : Refresh dnf cache	TAGS: [bootstrap, network, package-install]
       bootstrap : Install python2 and deps for ansible modules	TAGS: [bootstrap, network, package-install]
       bootstrap : Gather facts	TAGS: [bootstrap]
       bootstrap : Create directories in ipa_data_dir	TAGS: [bootstrap]
-      bootstrap : Dump ssh-config	TAGS: [bootstrap]
       bootstrap : Dummy (for ansible.skip_tags)	TAGS: [dummy]
       common : DNF or YUM?	TAGS: [common]
       common : Default facts (enable_packages, enable_network)	TAGS: [common]
@@ -46,7 +35,7 @@ playbook: ansible/ipa-playbook.yml
       common : Auto-select fastest yum mirror	TAGS: [common, network, package-install]
       common : Install gpg command for COPR / rpm_key	TAGS: [common, network, package-copr, package-install]
       common : Add GPG RPM keys for copr	TAGS: [common, network, package-copr, package-install]
-      common : Enable FreeIPA 4.3 COPR	TAGS: [common, network, package-copr, package-install]
+      common : Enable extra COPRs	TAGS: [common, network, package-copr, package-install]
       common : upgrade all packages	TAGS: [common, network, package-install, package-upgrade]
       common : Create directory for custom RPMS	TAGS: [common, custom-rpms]
       common : Install rsync	TAGS: [common, custom-rpms, network, package-install]
@@ -62,7 +51,6 @@ playbook: ansible/ipa-playbook.yml
       common : Install rng tools	TAGS: [common, network, package-install]
       common : Start the rngd service	TAGS: [common]
       common : tty-less sudo	TAGS: [common]
-      ipa : Gather IPA facts	TAGS: [ipa]
       ipa : make a copy of original resolv.conf	TAGS: [ipa]
       ipa : Get default DNS	TAGS: [ipa]
       ipa : Get reverse zone	TAGS: [ipa]
@@ -71,6 +59,7 @@ playbook: ansible/ipa-playbook.yml
       ipa : install FreeIPA client package (RHEL / CentOS)	TAGS: [ipa, network, package-install]
       ipa : Check for mod_ssl configuration	TAGS: [ipa]
       ipa : Disable mod_ssl configuration	TAGS: [ipa]
+      ipa : Gather IPA facts	TAGS: [ipa]
 
   play #3 (ipaserver_master,ipaserver_replica): install IPA server system	TAGS: []
     tasks:
@@ -116,6 +105,11 @@ playbook: ansible/ipa-playbook.yml
       ipa-inventory : Fetch kra agent pem file	TAGS: [fetch, ipa-install, ipa-inventory]
       ipa-inventory : Template local scripts	TAGS: [ipa-install, ipa-inventory]
       ipa-inventory : Template local inventory files	TAGS: [ipa-install, ipa-inventory]
+      ipa-inventory : Check for NSSDB	TAGS: [ipa-install, ipa-inventory]
+      ipa-inventory : Create NSSDB directory	TAGS: [ipa-install, ipa-inventory]
+      ipa-inventory : Create NSSDB	TAGS: [ipa-install, ipa-inventory]
+      ipa-inventory : Remove old CA.crt from NSSDB	TAGS: [ipa-install, ipa-inventory]
+      ipa-inventory : Populate NSSDB with CA.crt	TAGS: [ipa-install, ipa-inventory]
 
   play #6 (ipaserver_replica): install FreeIPA server replica	TAGS: []
     tasks:
@@ -127,6 +121,10 @@ playbook: ansible/ipa-playbook.yml
       ipaserver-replica : Fetch replication file	TAGS: [fetch, ipa-install, ipaserver-replica]
       ipaserver-replica : Copy replication file	TAGS: [ipa-install, ipaserver-replica]
       ipaserver-replica : install replica	TAGS: [ipa-install, ipaserver-replica]
+      ipaserver-replica : Update IPA facts	TAGS: [ipaserver-replica]
+      ipaserver-replica : Install CA on FreeIPA replica (3-4 minutes)	TAGS: [ipa-install, ipaserver-replica]
+      ipaserver-replica : Install KRA on FreeIPA replica (2-3 minutes)	TAGS: [ipa-install, ipaserver-replica]
+      ipaserver-replica : Make sure named-pkcs11 DNS is restarted	TAGS: [ipa-install, ipaserver-replica]
       ipaserver-replica : Update IPA facts	TAGS: [ipaserver-replica]
 
   play #7 (ipa_client,ipa_nfsserver,ipa_smbserver,ipa_vpnserver,ipa_httpexample,ipa_ipsilon_idp): install FreeIPA client	TAGS: []
@@ -265,3 +263,14 @@ playbook: ansible/ipa-playbook.yml
       ipa-sp-example : Create /srv/www/sp_example	TAGS: [ipa-install, ipa-sp-example]
       ipa-sp-example : Create Apache SP example app	TAGS: [ipa-install, ipa-sp-example]
       ipa-sp-example : Overwrite ipsilon-saml.conf with custom config	TAGS: [ipa-install, ipa-sp-example]
+
+  play #14 (ipa_tests): Create integration test files	TAGS: []
+    tasks:
+      ipa-tests : Create dot_ipa directories	TAGS: [ipa-tests]
+      ipa-tests : Create default.conf	TAGS: [ipa-tests]
+      ipa-tests : Create .dmpw	TAGS: [ipa-tests]
+      ipa-tests : copy alias /etc/httpd/alias databases	TAGS: [ipa-tests]
+      ipa-tests : copy /etc/httpd/alias/pwdfile.txt	TAGS: [ipa-tests]
+      ipa-tests : copy /etc/ipa/ca.crt	TAGS: [ipa-tests]
+      ipa-tests : create krb5.conf	TAGS: [ipa-tests]
+      ipa-tests : Fetch dot_ipa	TAGS: [ipa-tests]
