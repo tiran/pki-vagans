@@ -1,5 +1,4 @@
 ---
-disable_selinux: false
 coprs_enabled: false
 package_upgrade: false
 custom_rpms: false

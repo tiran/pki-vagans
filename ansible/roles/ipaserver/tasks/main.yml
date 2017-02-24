@@ -1,31 +1,17 @@
 ---
-- name: install FreeIPA server package (Fedora)
-  tags:
-    - ipaserver
-    - package-install
-    - network
-  yum: name={{ item }} state=present
-  with_items:
-    - bind-pkcs11
-    - bind-pkcs11-utils
-    - bind-dyndb-ldap
-    - freeipa-server
-    - freeipa-server-dns
-  when: ansible_distribution == "Fedora" and package_install
-
 - name: install FreeIPA server package (RHEL / CentOS)
   tags:
     - ipaserver
     - package-install
     - network
-  yum: name={{ item }} state=present
+  package: name={{ item }} state=present
   with_items:
     - bind-pkcs11
     - bind-pkcs11-utils
     - bind-dyndb-ldap
     - ipa-server
     - ipa-server-dns
-  when: "{{ ansible_distribution in ['RedHat', 'CentOS'] and package_install }}"
+  when: package_install
 
 - name: Open Firewall for services
   tags:

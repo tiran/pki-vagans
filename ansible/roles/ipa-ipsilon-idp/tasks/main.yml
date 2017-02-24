@@ -4,7 +4,7 @@
     - ipa-ipsilon-idp
     - package-install
     - network
-  yum: name={{ item }} state=present
+  package: name={{ item }} state=present
   with_items:
     - ipsilon
     - ipsilon-saml2

@@ -4,7 +4,7 @@
     - pki
     - package-install
     - network
-  yum: name={{ item }} state=present
+  package: name={{ item }} state=present
   with_items:
     - pki-server
     - dogtag-pki-server-theme

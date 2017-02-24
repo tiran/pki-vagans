@@ -4,7 +4,7 @@
     - 389ds
     - package-install
     - network
-  yum: name=389-ds-base state=present
+  package: name=389-ds-base state=present
 
 - name: create 389-DS instance
   tags:

@@ -50,7 +50,7 @@
     - package-install
     - package-copr
     - network
-  yum: name={{ item }} state=present
+  package: name={{ item }} state=present
   with_items:
    - gnupg
    - gnupg2
@@ -82,7 +82,7 @@
     - package-install
     - package-upgrade
     - network
-  yum: name=* state=latest
+  package: name=* state=latest
   when: package_upgrade and package_install
 
 # custom RPMs
@@ -100,7 +100,7 @@
     - custom-rpms
     - package-install
     - network
-  yum: name=rsync state=present
+  package: name=rsync state=present
   when: package_install
 
 - name: Synchronize RPMs
@@ -138,20 +138,11 @@
     - common
     - package-install
     - network
-  yum: name={{ item }} state=present
+  package: name={{ item }} state=present
   with_items:
    - libselinux-python
    - selinux-policy
   when: package_install
-
-- name: disable selinux for 389-DS installation
-  # for LXC, 389-DS installation hangs with:
-  # SELinux policy is not managed or store cannot be accessed
-  tags:
-    - common
-    - lxc
-  selinux: state=disabled
-  when: disable_selinux
 
 # Firewall
 - name: install firewalld
@@ -160,7 +151,7 @@
     - firewall
     - package-install
     - network
-  yum: name={{ item }} state=present
+  package: name={{ item }} state=present
   with_items:
     - firewalld
     - python-firewall
@@ -199,7 +190,7 @@
     - common
     - package-install
     - network
-  yum: name=rng-tools state=present
+  package: name=rng-tools state=present
   when: package_install
 
 - name: Start the rngd service

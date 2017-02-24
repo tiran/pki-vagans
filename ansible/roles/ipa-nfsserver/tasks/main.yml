@@ -4,7 +4,7 @@
     - ipa-nfsserver
     - package-install
     - network
-  yum: name=nfs-utils state=present
+  package: name=nfs-utils state=present
   when: package_install
 
 - name: Open Firewall for NFS
