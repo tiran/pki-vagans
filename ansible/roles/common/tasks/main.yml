@@ -114,6 +114,7 @@
     recursive=true
     copy_links=true
     rsync_opts="--exclude=README"
+    use_ssh_args=true
   changed_when: false
   when: custom_rpms
 
