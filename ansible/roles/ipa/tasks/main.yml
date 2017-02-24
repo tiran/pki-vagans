@@ -72,13 +72,18 @@
   notify:
     - stop httpd
 
+- name: Gather IPA facts
+  tags:
+    - ipa
+  ipa_facts: domain={{ ipa_domain }}
+
 - name: Check for ipa-otpd file for following workaround
   tags:
     - ipa
   stat: path=/usr/libexec/ipa/ipa-otpd
   register: ipa_otpd
 
-- name: Workaround for ipa-otpd SELinux context
+- name: Workaround for ipa-otpd SELinux context [4.5]
   tags:
     - ipa
   file:
@@ -88,9 +93,18 @@
     selevel=s0
     state=file
     path=/usr/libexec/ipa/ipa-otpd
-  when: ipa_otpd.stat.exists
+  when: "ipa.version.version_info >= [4, 4, 90] and ipa_otpd.stat.exists"
 
-- name: Gather IPA facts
+- name: Workaround for SELinux issue [4.5]
   tags:
     - ipa
-  ipa_facts: domain={{ ipa_domain }}
+  selinux_permissive:
+    domain={{ item }}
+    permissive=true
+  with_items:
+    - gssproxy_t
+    - httpd_t
+  when: "ipa.version.version_info >= [4, 4, 90]"
+  notify:
+    - restart httpd
+    - restart gssproxy
