@@ -26,3 +26,5 @@ ipa_firefox_dir: "{{ ipa_data_dir }}/firefox"
 custom_rpms: false
 package_install: true
 package_upgrade: false
+selinux_state: enforcing
+selinux_policy: targeted

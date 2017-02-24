@@ -4,6 +4,13 @@
 # - debug: var=hostvars[inventory_hostname] verbosity=4
 # - debug: var=groups verbosity=4
 
+- name: Set SELinux state (aka make Dan happy or sad)
+  tags:
+    - common
+  selinux:
+    policy={{ selinux_policy }}
+    state={{ selinux_state }}
+
 # DNS / hosts
 - name: fix /etc/hosts
   tags:
