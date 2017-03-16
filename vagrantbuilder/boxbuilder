@@ -110,15 +110,17 @@ end
 
 FLAVORS = {
     'freeipa': [
+        '--uninstall', 'chrony',
         '--install', FREEIPA_PGK_NAMES,
         '--firstboot', 'scripts/ipa-firstboot',
     ],
-    # 'freeipa44-copr': [
-    #     # FreeIPA 4.4 for Fedora 24
-    #     '--run-command', COPR_ENABLE.format('@freeipa/freeipa-4-4'),
-    #     '--install', FREEIPA_PGK_NAMES,
-    #     '--firstboot', 'scripts/ipa-firstboot',
-    # ],
+    'freeipa45-copr': [
+        # FreeIPA 4.5 for Fedora 25+
+        '--run-command', COPR_ENABLE.format('@freeipa/freeipa-4-5'),
+        '--uninstall', 'chrony',
+        '--install', FREEIPA_PGK_NAMES,
+        '--firstboot', 'scripts/ipa-firstboot',
+    ],
     'dogtag': [
         '--install', DOGTAG_PKG_NAMES
     ],
@@ -347,19 +349,31 @@ def main():
     build_index()
     parser, args = parseargs()
 
+    # be nicer
+    subprocess.check_call(['ionice', '-c2', '-n7', '-p', str(os.getpid())])
+    subprocess.check_call(['renice', '+5', str(os.getpid())])
+
     for directory in args.tmpdir, args.baseboxdir, args.outputdir:
         if not os.path.isdir(directory):
             os.makedirs(directory)
 
     if not os.path.isfile(args.baseimage):
         print("Create Vagrant basebox {0.baseimage}".format(args))
-        virt_builder(args)
+        try:
+            virt_builder(args)
+        except Exception:
+            os.unlink(args.baseimage)
+            raise
     elif args.update_base:
         print("Updating Vagrant basebox {0.baseimage}".format(args))
-        virt_update_base(args)
+        try:
+            virt_update_base(args)
+        except Exception:
+            os.unlink(args.baseimage)
+            raise
 
     print("Copy {0.baseimage} to {0.boxworkfile}".format(args))
-    # shutil.copyfile(args.baseimage, args.boxworkfile)
+    shutil.copyfile(args.baseimage, args.boxworkfile)
 
     print("Customize with extra packages and updates")
     virt_customize(args)
