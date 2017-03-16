@@ -27,3 +27,12 @@
     - freeipa-ldaps
     - dns
   when: has_firewalld.stat.exists
+
+# workaround for https://pagure.io/freeipa/issue/6704
+- name: Stop Apache HTTPD to free port 8443 for installation
+  tags:
+    - ipaserver
+  service:
+    name=httpd
+    state=stopped
+  when: not ipa.configured.server
