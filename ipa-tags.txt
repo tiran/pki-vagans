@@ -5,7 +5,7 @@ playbook: ansible/ipa-playbook.yml
       TASK TAGS: [bootstrap]
 
   play #2 (all): install IPA base system	TAGS: []
-      TASK TAGS: [bootstrap, common, custom-rpms, dummy, firewall, ipa, lxc, network, package-copr, package-install, package-upgrade, pki]
+      TASK TAGS: [bootstrap, common, custom-rpms, dummy, firewall, ipa, network, package-copr, package-install, package-upgrade, pki]
 
   play #3 (ipaserver_master,ipaserver_replica): install IPA server system	TAGS: []
       TASK TAGS: [firewall, ipaserver, network, package-install]
