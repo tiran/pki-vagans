@@ -19,6 +19,7 @@ end
 
 Vagrant.configure(2) do |config|
     config.vm.box = "cheimes/freeipa-f25"
+    # config.vm.box = "cheimes/freeipa45-f25"
     # config.vm.box = "cheimes/freeipa-centos73"
 
     # no rsync, Ansible playbook syncs files manually
@@ -111,6 +112,8 @@ Vagrant.configure(2) do |config|
                 "ipa_data_dir" => HERE + '/inventory',
                 "ipa_script_dir" => HERE + '/bin',
                 "ipa_rpm_dir" => HERE + '/rpms',
+                # XXX SELinux policies for FreeIPA 4.5.0 are missing.
+                # "selinux_state" => 'permissive',
                 "package_install" => false,
                 "package_upgrade" => false,
                 "custom_rpms" => false,
