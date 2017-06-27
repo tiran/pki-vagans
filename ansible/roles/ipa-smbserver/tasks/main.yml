@@ -42,6 +42,14 @@
   changed_when: false
   failed_when: "keytab.rc != 0 and 'not found' not in keytab.stderr"
 
+- name: Check for principal in keytab
+  tags:
+    - ipa-smbserver
+    - ipa-install
+  changed_when: false
+  set_fact:
+   keytab_cifs_principal: "{{ 'cifs/{{ ansible_fqdn }}' in keytab.stdout }}"
+
 - name: Create CIFS service
   tags:
     - ipa-smbserver
@@ -50,7 +58,7 @@
     args="service-add --force cifs/{{ ansible_fqdn }}"
     password="{{ ipa_admin_password }}"
     ignore_already_exists=true
-  when: "'cifs/{{ ansible_fqdn }}' not in keytab.stdout"
+  when: not keytab_cifs_principal
 
 - name: Add CIFS service to keytab
   tags:
@@ -60,7 +68,7 @@
     cmd=ipa-getkeytab
     args="-s $IPA_SERVER -p cifs/{{ ansible_fqdn }} -k /etc/samba/samba.keytab"
     password="{{ ipa_admin_password }}"
-  when: "'cifs/{{ ansible_fqdn }}' not in keytab.stdout"
+  when: not keytab_cifs_principal
   notify:
     - restart samba
 

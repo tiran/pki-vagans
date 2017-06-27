@@ -15,14 +15,14 @@
               line='JAVA_OPTS="\1 -Xmx256M -Xms256M"'
               backrefs=yes
               backup=yes
-  when: "'Xmx' not in tomcat_memorylimit.stdout"
+  when: "{{ 'Xmx' not in tomcat_memorylimit.stdout }}"
 
 - name: restart tomcat
   tags:
     - pki
     - pki-install
   service: name=pki-tomcatd@{{pki_instance_name}} state=restarted
-  when: "'Xmx' not in tomcat_memorylimit.stdout"
+  when: "{{ 'Xmx' not in tomcat_memorylimit.stdout }}"
 
 - name: wait for tomcat
   tags:

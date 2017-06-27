@@ -36,6 +36,14 @@
   changed_when: false
   failed_when: "keytab.rc != 0 and 'not found' not in keytab.stderr"
 
+- name: Check for principal in keytab
+  tags:
+    - ipa-httpd
+    - ipa-install
+  changed_when: false
+  set_fact:
+   keytab_http_principal: "{{ 'HTTP/{{ ansible_fqdn }}' in keytab.stdout }}"
+
 - name: Create HTTP service
   tags:
     - ipa-httpd
@@ -44,7 +52,7 @@
     args="service-add --force HTTP/{{ ansible_fqdn }}"
     password="{{ ipa_admin_password }}"
     ignore_already_exists=true
-  when: "'HTTP/{{ ansible_fqdn }}' not in keytab.stdout"
+  when: not keytab_http_principal
 
 - name: Add HTTP service to keytab
   tags:
@@ -54,7 +62,7 @@
     cmd=ipa-getkeytab
     args="-s $IPA_SERVER -p HTTP/{{ ansible_fqdn }} -k {{ http_keytab }}"
     password="{{ ipa_admin_password }}"
-  when: "'HTTP/{{ ansible_fqdn }}' not in keytab.stdout"
+  when: not keytab_http_principal
   notify:
     - restart httpd
 
@@ -85,11 +93,13 @@
     ipa_getcert
   changed_when: false
 
-- name: Set has_server_cert fact
+- name: Set has_server_cert and CA unreachable facts
   tags:
     - ipa-httpd
     - ipa-install
-  set_fact: has_server_cert="{{ server_cert_name in ipa_getcert.stdout }}"
+  set_fact:
+   has_server_cert: "{{ server_cert_name in ipa_getcert.stdout }}"
+   ca_unreachable: "{{ 'CA_UNREACHABLE' in ipa_getcert.stdout }}"
   changed_when: false
 
 - name: Restart certmonger when in state CA_UNREACHABLE
@@ -97,7 +107,7 @@
     - ipa-httpd
     - ipa-install
   service: name=certmonger.service enabled=yes state=restarted
-  when: "'CA_UNREACHABLE' in ipa_getcert.stdout"
+  when: ca_unreachable
 
 - name: Remove example certs from /etc/httpd/alias NSSDB
   tags:

@@ -20,7 +20,7 @@
     - bootstrap
   raw: "which dnf 2>/dev/null"
   register: which_dnf
-  failed_when: "{{ which_dnf.rc > 1 }}"
+  failed_when: which_dnf.rc > 1
   changed_when: false
 
 - name: Install python2 and deps for ansible modules
@@ -33,7 +33,7 @@
     creates: /usr/bin/python2
   register: result
   # ignore disabled repos
-  failed_when: "result.rc != 0 and 'Error: There are no enabled repos.' not in result.stdout_lines"
+  failed_when: "{{ result.rc != 0 and 'Error: There are no enabled repos.' not in result.stdout_lines }}"
   when: which_dnf.rc == 0  and package_install
 
 # ini_file depends on Python 2
@@ -57,7 +57,7 @@
   raw: "dnf makecache"
   register: result
   # ignore disabled repos
-  failed_when: "result.rc != 0 and 'Error: There are no enabled repos.' not in result.stdout_lines"
+  failed_when: "{{ result.rc != 0 and 'Error: There are no enabled repos.' not in result.stdout_lines }}"
   when: which_dnf.rc == 0  and package_install
 
 - name: Gather facts

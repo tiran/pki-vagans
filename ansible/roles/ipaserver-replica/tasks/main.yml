@@ -1,9 +1,9 @@
 ---
 - include: replica43.yml
-  when: "ipa.version.version_info >= [4, 3, 0]"
+  when: ipa.version.version_info >= [4, 3, 0]
 
 - include: replica42.yml
-  when: "ipa.version.version_info < [4, 3, 0]"
+  when: ipa.version.version_info < [4, 3, 0]
 
 - name: Update IPA facts
   tags:

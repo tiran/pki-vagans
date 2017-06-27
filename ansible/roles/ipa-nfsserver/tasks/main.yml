@@ -30,6 +30,14 @@
   register: keytab
   changed_when: false
 
+- name: Check for principal in keytab
+  tags:
+    - ipa-nfsserver
+    - ipa-install
+  changed_when: false
+  set_fact:
+   keytab_nfs_principal: "{{ 'nfs/{{ ansible_fqdn }}' in keytab.stdout }}"
+
 - name: Create NFS service
   tags:
     - ipa-nfsserver
@@ -38,7 +46,7 @@
     args="service-add --force nfs/{{ ansible_fqdn }}"
     password="{{ ipa_admin_password }}"
     ignore_already_exists=true
-  when: "'nfs/{{ ansible_fqdn }}' not in keytab.stdout"
+  when: not keytab_nfs_principal
 
 - name: Add NFS service to keytab
   tags:
@@ -48,7 +56,7 @@
     cmd=ipa-getkeytab
     args="-s $IPA_SERVER -p nfs/{{ ansible_fqdn }} -k /etc/krb5.keytab"
     password="{{ ipa_admin_password }}"
-  when: "'nfs/{{ ansible_fqdn }}' not in keytab.stdout"
+  when: not keytab_nfs_principal
 
 - name: Create /exports/home
   tags:
@@ -178,7 +186,7 @@
   command:
     env KRB5_CLIENT_KTNAME=/etc/krb5.keytab ipa-client-automount --unattended
   register: result
-  failed_when: "result.rc != 0 and 'automount is already configured' not in result.stderr"
-  changed_when: "result.rc == 0"
+  failed_when: "{{ result.rc != 0 and 'automount is already configured' not in result.stderr }}"
+  changed_when: "{{ result.rc == 0 }}"
   delegate_to: "{{item}}"
   with_items: "{{ groups['ipa_nfsclient'] }}"

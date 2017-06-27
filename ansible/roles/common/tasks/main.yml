@@ -30,11 +30,18 @@
   register: timedatectl
   changed_when: false
 
+- name: Get timedatectl information
+  tags:
+    - common
+  changed_when: false
+  set_fact:
+     tz_utc: "{{ 'Time zone: UTC' not in timedatectl.stdout }}"
+
 - name: Set timezone to UTC
   tags:
     - common
   command: timedatectl set-timezone UTC
-  when: "'Time zone: UTC' not in timedatectl.stdout"
+  when: not tz_utc
 
 # package manager
 - include: dnf.yml
