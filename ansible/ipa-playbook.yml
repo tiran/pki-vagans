@@ -52,6 +52,7 @@
    - ipa_vpnserver
    - ipa_httpexample
    - ipa_ipsilon_idp
+   - ipa_wwwdemo
   roles:
     - ipa-client
   # workaround for join race-condition in 4.3.0
@@ -92,6 +93,12 @@
     - ipa_sp_example
   roles:
     - ipa-sp-example
+
+- name: install WWW demo
+  hosts:
+    - ipa_wwwdemo
+  roles:
+    - ipa-wwwdemo
 
 - name: Create integration test files
   hosts:

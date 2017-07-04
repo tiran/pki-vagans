@@ -1,0 +1,134 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.require_version ">= 1.6.0"
+
+DOMAIN="ipa.example"
+INSTALL_IDP = false
+INSTALL_NFS = false
+INSTALL_VPN = false
+
+HERE = File.dirname(__FILE__)
+ENV['ANSIBLE_CONFIG'] = "#{HERE}/../ansible/ansible.cfg"
+
+# Workaround for ssh problem with ED25519 curve
+# SSH not up: #<Vagrant::Errors::NetSSHException: An error occurred in the underlying SSH library that Vagrant uses.
+# curve name mismatched
+if ENV.has_key?('SSH_AUTH_SOCK')
+    ENV.delete('SSH_AUTH_SOCK')
+end
+
+Vagrant.configure(2) do |config|
+    config.vm.box = "cheimes/freeipa45-f25"
+
+    # no rsync, Ansible playbook syncs files manually
+    config.vm.synced_folder ".", "/vagrant", disabled: true
+
+    if Vagrant.has_plugin?("vagrant-hostmanager")
+        config.hostmanager.enabled = true
+        config.hostmanager.manage_host = true
+        config.hostmanager.manage_guest = false
+    end
+
+    # 386 MB is enough for VPN, NFS and client
+    config.vm.provider :libvirt do |domain|
+        domain.memory = 384
+	# see https://bugzilla.redhat.com/show_bug.cgi?id=1283989
+	domain.cpu_mode = 'host-passthrough'
+    end
+
+    config.vm.define "ipaclient1" do |host|
+        host.vm.hostname = "client1.#{DOMAIN}"
+    end
+
+    config.vm.define "ipawwwdemo" do |host|
+        host.vm.hostname = "demo.#{DOMAIN}"
+    end
+
+    # config.vm.define "ipafileserver" do |host|
+    #     host.vm.hostname = "fileserver.#{DOMAIN}"
+    # end
+
+    if INSTALL_IDP
+        config.vm.define "ipaidpserver" do |host|
+            host.vm.hostname = "idp.#{DOMAIN}"
+        end
+    end
+
+    if INSTALL_VPN
+        config.vm.define "ipavpnserver" do |host|
+            host.vm.hostname = "vpn.#{DOMAIN}"
+        end
+    end
+
+    config.vm.define "ipareplica1" do |host|
+        host.vm.hostname = "replica1.#{DOMAIN}"
+        host.vm.provider :libvirt do |domain|
+            domain.memory = 1536
+        end
+    end
+
+    # Vagrant's parallized Ansible is just too fragile. Use one instance
+    # of Ansible with limit=all and let Ansible take care of parallel
+    # execution. It makes the output more readable, too.
+    config.vm.define "ipamaster" do |host|
+        host.vm.hostname = "master.#{DOMAIN}"
+        host.vm.provider :libvirt do |domain|
+            domain.memory = 1536
+            domain.cpus = 2
+        end
+
+        host.vm.provision "ansible" do |ansible|
+            ansible.limit = "all"
+            ansible.playbook = "../ansible/ipa-playbook.yml"
+            ansible.groups = {
+                "ipaserver_master" => ["ipamaster"],
+                "ipaserver_replica" => ["ipareplica1"],
+                "ipa_client" => ["ipaclient1"],
+                # "ipa_smbserver" => ["ipafileserver"],
+                # "ipa_httpexample" => ["ipafileserver"],
+                "ipa_wwwdemo" => ["ipawwwdemo"],
+            }
+	    if INSTALL_NFS
+               ansible.groups.update({
+                   "ipa_nfsserver" => ["ipafileserver"],
+                   "ipa_nfsclient" => ["ipamaster", "ipareplica1", "ipaclient1"],
+               })
+	    end
+            if INSTALL_IDP
+                ansible.groups.update({
+                    "ipa_ipsilon_idp" => ["ipaidpserver"],
+                    "ipa_sp_example" => ["ipafileserver"],
+                })
+            end
+            if INSTALL_VPN
+                ansible.groups.update({
+                    "ipa_vpnserver" => ["ipavpnserver"],
+                })
+            end
+
+            ansible.verbose = 'v'
+            # network: Don't use network (no DNS forwarder, no package installations)
+            # ipa-install: skip installation (ipa-server-install, ipa-client-install)
+            ansible.skip_tags = [
+                #'network',
+                #'ipa-install',
+                'dummy',
+            ]
+            # ansible.tags = ['bootstrap', 'common']
+            ansible.extra_vars = {
+                "ipa_data_dir" => HERE + '/inventory',
+                "ipa_script_dir" => HERE + '/bin',
+                "ipa_rpm_dir" => HERE + '/rpms',
+                # XXX SELinux policies for FreeIPA 4.5.0 are missing.
+                "selinux_state" => 'permissive',
+                "package_install" => true,
+                "package_upgrade" => false,
+                "custom_rpms" => false,
+                "coprs_enabled" => [
+                    # "@freeipa/freeipa-master",
+                ],
+            }
+        end
+    end
+end

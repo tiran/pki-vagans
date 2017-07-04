@@ -33,7 +33,7 @@
     creates: /usr/bin/python2
   register: result
   # ignore disabled repos
-  failed_when: "{{ result.rc != 0 and 'Error: There are no enabled repos.' not in result.stdout_lines }}"
+  failed_when: "result.rc != 0 and 'Error: There are no enabled repos.' not in result.stdout_lines"
   when: which_dnf.rc == 0  and package_install
 
 # ini_file depends on Python 2
@@ -57,8 +57,8 @@
   raw: "dnf makecache"
   register: result
   # ignore disabled repos
-  failed_when: "{{ result.rc != 0 and 'Error: There are no enabled repos.' not in result.stdout_lines }}"
-  when: which_dnf.rc == 0  and package_install
+  failed_when: "result.rc != 0 and 'Error: There are no enabled repos.' not in result.stdout_lines"
+  when: which_dnf.rc == 0 and package_install
 
 - name: Gather facts
   tags:

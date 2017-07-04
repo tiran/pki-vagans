@@ -117,6 +117,7 @@ FLAVORS = {
     'freeipa45-copr': [
         # FreeIPA 4.5 for Fedora 25+
         '--run-command', COPR_ENABLE.format('@freeipa/freeipa-4-5'),
+        '--run-command', COPR_ENABLE.format('@latchset/custodia'),
         '--uninstall', 'chrony',
         '--install', FREEIPA_PGK_NAMES,
         '--firstboot', 'scripts/ipa-firstboot',

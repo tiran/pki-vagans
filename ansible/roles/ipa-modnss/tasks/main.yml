@@ -1,0 +1,60 @@
+---
+- name: Install Apache HTTPD with mod_nss
+  tags:
+    - ipa-modnss
+    - package-install
+    - network
+  package: name={{ item }} state=present
+  with_items:
+   - httpd
+   - mod_nss
+  when: package_install
+
+- name: Open Firewall for Apache
+  tags:
+    - ipa-modnss
+    - firewall
+  firewalld:
+    service={{ item }}
+    permanent=true
+    state=enabled
+    immediate=yes
+  with_items:
+    - http
+    - https
+  when: has_firewalld.stat.exists
+
+- name: Check for mod_ssl configuration
+  tags:
+    - ipa-modnss
+  stat: path=/etc/httpd/conf.d/ssl.conf
+  register: ssl_conf
+
+- name: Disable mod_ssl configuration
+  tags:
+    - ipa-modnss
+  copy:
+    src=replaced
+    dest={{ item }}
+    backup=true
+    owner=root
+    group=root
+    mode=0644
+  with_items:
+    - /etc/httpd/conf.d/ssl.conf
+    - /etc/httpd/conf.modules.d/00-ssl.conf
+  when: ssl_conf.stat.exists
+  notify:
+    - restart httpd
+
+# Other roles use rewrite rules
+- name: Enable rewrite engine for nss.conf
+  tags:
+    - ipa-modnss
+  lineinfile:
+    dest=/etc/httpd/conf.d/nss.conf
+    regexp='^RewriteEngine'
+    line='RewriteEngine On'
+    insertafter='^NSSEngine'
+  notify:
+    - restart httpd

@@ -17,23 +17,6 @@
     - ipsilon-authgssapi
   when: package_install
 
-- name: Disable mod_ssl configuration
-  tags:
-    - ipa-ipsilon-idp
-    - ipa-install
-  copy:
-    src=../../ipa/files/replaced
-    dest={{ item }}
-    backup=true
-    owner=root
-    group=root
-    mode=0644
-  with_items:
-    - /etc/httpd/conf.d/ssl.conf
-    - /etc/httpd/conf.modules.d/00-ssl.conf
-  notify:
-    - restart httpd
-
 - name: Install Ipsilon IdP
   tags:
     - ipa-ipsilon-idp

@@ -1,0 +1,48 @@
+---
+- name: Install Apache HTTPD with mod_ssl
+  tags:
+    - ipa-modssl
+    - package-install
+    - network
+  package: name={{ item }} state=present
+  with_items:
+   - httpd
+   - mod_ssl
+  when: package_install
+
+- name: Open Firewall for Apache
+  tags:
+    - ipa-modssl
+    - firewall
+  firewalld:
+    service={{ item }}
+    permanent=true
+    state=enabled
+    immediate=yes
+  with_items:
+    - http
+    - https
+  when: has_firewalld.stat.exists
+
+- name: Check for mod_nss configuration
+  tags:
+    - ipa-modssl
+  stat: path=/etc/httpd/conf.d/nss.conf
+  register: nss_conf
+
+- name: Disable mod_nss configuration
+  tags:
+    - ipa-modssk
+  copy:
+    src=replaced
+    dest={{ item }}
+    backup=true
+    owner=root
+    group=root
+    mode=0644
+  with_items:
+    - /etc/httpd/conf.d/nss.conf
+    - /etc/httpd/conf.modules.d/10-nss.conf
+  when: nss_conf.stat.exists
+  notify:
+    - restart httpd

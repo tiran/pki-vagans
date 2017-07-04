@@ -8,7 +8,7 @@ playbook: ansible/ipa-playbook.yml
       TASK TAGS: [bootstrap, common, custom-rpms, dummy, firewall, ipa, network, package-copr, package-install, package-upgrade, pki]
 
   play #3 (ipaserver_master,ipaserver_replica): install IPA server system	TAGS: []
-      TASK TAGS: [firewall, ipaserver, network, package-install]
+      TASK TAGS: [firewall, ipa-modnss, ipaserver, network, package-install]
 
   play #4 (ipaserver_master): install FreeIPA server master	TAGS: []
       TASK TAGS: [fetch, ipa-install, ipaserver-master]
@@ -19,7 +19,7 @@ playbook: ansible/ipa-playbook.yml
   play #6 (ipaserver_replica): install FreeIPA server replica	TAGS: []
       TASK TAGS: [fetch, ipa-client, ipa-install, ipaserver-replica]
 
-  play #7 (ipa_client,ipa_nfsserver,ipa_smbserver,ipa_vpnserver,ipa_httpexample,ipa_ipsilon_idp): install FreeIPA client	TAGS: []
+  play #7 (ipa_client,ipa_nfsserver,ipa_smbserver,ipa_vpnserver,ipa_httpexample,ipa_ipsilon_idp,ipa_wwwdemo): install FreeIPA client	TAGS: []
       TASK TAGS: [ipa-client, ipa-install]
 
   play #8 (ipa_vpnserver): install OpenConnect VPN server for FreeIPA	TAGS: []
@@ -32,13 +32,16 @@ playbook: ansible/ipa-playbook.yml
       TASK TAGS: [firewall, ipa-install, ipa-smbserver, network, package-install]
 
   play #11 (ipa_httpexample): install FreeIPA HTTP example app	TAGS: []
-      TASK TAGS: [firewall, ipa-http, ipa-httpd, ipa-httpexample, ipa-install, network, package-install]
+      TASK TAGS: [firewall, ipa-http, ipa-httpd, ipa-httpexample, ipa-install, ipa-modnss, network, package-install]
 
   play #12 (ipa_ipsilon_idp): install Ipsilon Identity Provider	TAGS: []
-      TASK TAGS: [firewall, ipa-http, ipa-httpd, ipa-install, ipa-ipsilon-idp, network, package-install]
+      TASK TAGS: [firewall, ipa-http, ipa-httpd, ipa-install, ipa-ipsilon-idp, ipa-modnss, network, package-install]
 
   play #13 (ipa_sp_example): install Ipsilon SP example	TAGS: []
-      TASK TAGS: [firewall, ipa-http, ipa-httpd, ipa-install, ipa-sp-example, network, package-install]
+      TASK TAGS: [firewall, ipa-http, ipa-httpd, ipa-install, ipa-modnss, ipa-sp-example, network, package-install]
 
-  play #14 (ipa_tests): Create integration test files	TAGS: []
+  play #14 (ipa_wwwdemo): install WWW demo	TAGS: []
+      TASK TAGS: [firewall, ipa-install, ipa-modssk, ipa-modssl, ipa-wwwdemo, network, package-install]
+
+  play #15 (ipa_tests): Create integration test files	TAGS: []
       TASK TAGS: [ipa-tests]

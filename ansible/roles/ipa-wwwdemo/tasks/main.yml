@@ -1,56 +1,63 @@
 ---
-- name: install Apache modules
+- name: install Apache HTTPD and modules
   tags:
-    - ipa-httpexample
+    - ipa-wwwdemo
     - package-install
     - network
   package: name={{ item }} state=present
   with_items:
+    - httpd
+    - ipsilon-client
+    - mod_ssl
+    - mod_wsgi
     - mod_auth_gssapi
     - mod_authnz_pam
     - mod_intercept_form_submit
     - mod_lookup_identity
     - libsss_simpleifp
     - sssd-dbus
-    - mod_nss
     - mod_session
+    - mod_auth_mellon
   when: package_install
   notify:
     - restart httpd
     - restart sssd
 
+- name: Remove mod_nss
+  tags:
+    - ipa-wwwdemo
+    - package-install
+  package: name={{ item }} state=absent
+  with_items:
+    - mod_nss
+  notify:
+    - restart httpd
+
 - name: setsebool allow_httpd_mod_auth_pam on
   tags:
-    - ipa-httpexample
-    - ipa-install
+    - ipa-wwwdemo
   seboolean: name=httpd_mod_auth_pam state=yes persistent=yes
   notify:
     - restart httpd
 
 - name: setsebool httpd_dbus_sssd on
   tags:
-    - ipa-httpexample
-    - ipa-install
+    - ipa-wwwdemo
   seboolean: name=httpd_dbus_sssd state=yes persistent=yes
   notify:
     - restart httpd
 
-- name: Add rewrite rule for / to nss.conf
+- name: Remove welcome.conf
   tags:
-    - ipa-httpexample
-    - ipa-install
-  lineinfile:
-    dest=/etc/httpd/conf.d/nss.conf
-    regexp='^RewriteRule'
-    line='RewriteRule ^/$ https://{{ ansible_fqdn }}/example [L,NC,R=301]'
-    insertafter='^RewriteEngine'
+    - ipa-wwwdemo
+  file: dest=/etc/httpd/conf.d/welcome.conf state=absent
   notify:
     - restart httpd
 
 # SSSD
 - name: Add ldap_user_extra_attrs to sssd.conf
   tags:
-    - ipa-httpexample
+    - ipa-wwwdemo
     - ipa-install
   ini_file:
     dest=/etc/sssd/sssd.conf
@@ -63,7 +70,7 @@
 
 - name: Add [ifp]allowed_uids to sssd.conf
   tags:
-    - ipa-httpexample
+    - ipa-wwwdemo
     - ipa-install
   ini_file:
     dest=/etc/sssd/sssd.conf
@@ -76,7 +83,7 @@
 
 - name: Add [ifp]user_attributes to sssd.conf
   tags:
-    - ipa-httpexample
+    - ipa-wwwdemo
     - ipa-install
   ini_file:
     dest=/etc/sssd/sssd.conf
@@ -87,10 +94,9 @@
     - restart sssd
     - flush sssd
 
-# XXX may override additional values
 - name: Add [ifp]user_attributes to sssd.conf
   tags:
-    - ipa-httpexample
+    - ipa-wwwdemo
     - ipa-install
   ini_file:
     dest=/etc/sssd/sssd.conf
@@ -101,59 +107,17 @@
     - restart sssd
     - flush sssd
 
-# Example app
-- name: Create Apache config for example
+- name: Enable Apache HTTPD service
   tags:
-    - ipa-httpexample
     - ipa-install
-  template:
-    src=example.conf
-    dest=/etc/httpd/conf.d/example.conf
-  notify:
-    - restart httpd
-
-- name: Copy Apache example app files
-  tags:
-    - ipa-httpexample
-    - ipa-install
-  copy:
-    src=example/
-    dest=/srv/www/example/
-    mode=0644
-    directory_mode=0755
-    owner=root
-    group=root
-    seuser=system_u
-    serole=object_r
-    setype=httpd_sys_content_t
-    selevel=s0
-  notify:
-    - restart httpd
-
-- name: Create Apache example app
-  tags:
-    - ipa-httpexample
-    - ipa-install
-  template:
-    src=wsgi.py
-    dest=/srv/www/example/wsgi.py
-    mode=0644
-    directory_mode=0755
-    owner=root
-    group=root
-    seuser=system_u
-    serole=object_r
-    setype=httpd_sys_content_t
-    selevel=s0
-  notify:
-    - restart httpd
+  service: name=httpd.service enabled=yes
 
 - name: Create PAM service for Apache example app
   tags:
-    - ipa-httpexample
+    - ipa-wwwdemo
     - ipa-install
   template:
-    src=pam_http_example
-    dest=/etc/pam.d/http_example
+    src=pam_wwwdemo
+    dest=/etc/pam.d/wwwdemo
   notify:
     - restart httpd

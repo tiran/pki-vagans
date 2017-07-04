@@ -38,29 +38,6 @@
    - ipa-admintools
   when: package_install
 
-- name: Check for mod_ssl configuration
-  tags:
-    - ipa
-  stat: path=/etc/httpd/conf.d/ssl.conf
-  register: ssl_conf
-
-- name: Disable mod_ssl configuration
-  tags:
-    - ipa
-  copy:
-    src=replaced
-    dest={{ item }}
-    backup=true
-    owner=root
-    group=root
-    mode=0644
-  with_items:
-    - /etc/httpd/conf.d/ssl.conf
-    - /etc/httpd/conf.modules.d/00-ssl.conf
-  when: ssl_conf.stat.exists
-  notify:
-    - stop httpd
-
 - name: Gather IPA facts
   tags:
     - ipa

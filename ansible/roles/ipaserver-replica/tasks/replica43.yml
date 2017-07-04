@@ -2,6 +2,16 @@
 # configure as client first, then promote to replica
 - include: ../../ipa-client/tasks/main.yml
 
+# workaround for https://pagure.io/freeipa/issue/6704
+- name: Stop Apache HTTPD to free port 8443 for installation
+  tags:
+    - ipaserver-replica
+    - ipa-install
+  service:
+    name=httpd
+    state=stopped
+  when: not ipa.configured.server
+
 - name: install replica
   tags:
     - ipaserver-replica

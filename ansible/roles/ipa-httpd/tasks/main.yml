@@ -1,31 +1,10 @@
 ---
-- name: install Apache HTTPD base
+- name: Replace nss.conf port 8443 with 443
   tags:
-    - ipa-httpd
-    - package-install
-    - network
-  package: name={{ item }} state=present
-  with_items:
-    - httpd
-    - mod_nss
-  when: package_install
+    - ipa-modnss
+  replace: dest=/etc/httpd/conf.d/nss.conf regexp='8443' replace='443' backup=yes
   notify:
     - restart httpd
-    - restart sssd
-
-- name: Open Firewall for Apache
-  tags:
-    - ipa-httpd
-    - firewall
-  firewalld:
-    service={{ item }}
-    permanent=true
-    state=enabled
-    immediate=yes
-  with_items:
-    - http
-    - https
-  when: has_firewalld.stat.exists
 
 - name: Get keytab content
   tags:
@@ -137,14 +116,6 @@
     - ipa-httpd
     - ipa-install
   waitforcertmonger:
-
-- name: Replace nss.conf port 8443 with 443
-  tags:
-    - ipa-httpd
-    - ipa-install
-  replace: dest=/etc/httpd/conf.d/nss.conf regexp='8443' replace='443' backup=yes
-  notify:
-    - restart httpd
 
 - name: Remove welcome.conf
   tags:
