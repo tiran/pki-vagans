@@ -3,5 +3,6 @@ set -e
 
 . "{{ ipa_data_dir }}/ipaenv"
 
-kinit $@
-klist
+# pkinit depends krb5-pkinit package
+/usr/bin/kinit -c ${KRB5CCNAMEARMOR} -n
+/usr/bin/kinit -T ${KRB5CCNAMEARMOR} $@

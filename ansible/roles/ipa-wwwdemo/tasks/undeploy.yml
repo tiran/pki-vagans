@@ -1,0 +1,34 @@
+---
+- name: Undeploy, remove IPA services/groups/...
+  tags:
+    - ipa-wwwdemo
+    - ipa-wwwdemo-undeploy
+  ipa:
+    args="{{ item }}"
+    password="{{ ipa_admin_password }}"
+    ignore_no_modifications=true
+    ignore_already_exists=true
+  with_items:
+    - service-del HTTP/{{ ansible_fqdn }}
+    - group-remove-member webusers --users=bob
+  failed_when: false
+
+- name: Untrack certificate
+  tags:
+    - ipa-wwwdemo
+    - ipa-wwwdemo-undeploy
+  command: ipa-getcert stop-tracking -k {{ private_key }} -f {{ cert }}
+  failed_when: false
+
+- name: Remove keytab and certs
+  tags:
+    - ipa-wwwdemo
+    - ipa-wwwdemo-undeploy
+  file:
+    path={{ item }}
+    state=absent
+  with_items:
+    - "{{ cert }}"
+    - "{{ private_key }}"
+    - "{{ http_keytab }}"
+    - /etc/httpd/conf.d/wwwdemo.conf

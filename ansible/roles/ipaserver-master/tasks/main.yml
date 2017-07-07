@@ -188,6 +188,15 @@
     password="{{ ipa_admin_password }}"
     ignore_no_modifications=true
 
+- name: Ensure that ipa-ca points to master
+  tags:
+    - ipaserver-master
+    - ipa-install
+  ipa:
+    args="dnsrecord-mod {{ ipa.domain }}. ipa-ca --a-rec={{ ansible_default_ipv4.address }}"
+    password="{{ ipa_admin_password }}"
+    ignore_no_modifications=true
+
 - name: signal FreeIPA master has been deployed
   tags:
     - ipaserver-master

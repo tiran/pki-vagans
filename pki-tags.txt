@@ -5,4 +5,4 @@ playbook: ansible/pki-playbook.yml
       TASK TAGS: [bootstrap]
 
   play #2 (pki_server): install Dogtag PKI CA	TAGS: []
-      TASK TAGS: [389ds, bootstrap, common, custom-rpms, dummy, firewall, ipa-install, network, package-copr, package-install, package-upgrade, pki, pki-install, pkica, pkikra]
+      TASK TAGS: [389ds, bootstrap, common, custom-rpms, dummy, firewall, ipa-install, network, package-copr, package-install, package-upgrade, pki, pki-install, pkica, pkikra, setup]

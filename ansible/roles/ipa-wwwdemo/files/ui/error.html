@@ -1,0 +1,27 @@
+<html>
+<head>
+    <title>{title}</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/ui/css/patternfly.css"/>
+    <link rel="stylesheet" href="/ui/css/patternfly-additions.css"/>
+</head>
+<body>
+<div class="container">
+    <div class="page-header">
+        <h1>{title}</h1>
+    </div>
+    <div class="alert alert-danger alert-dismissable">
+      <button type="button" class="close" data-dismiss="alert" aria-hidden="true">
+        <span class="pficon pficon-close"></span>
+      </button>
+      <span class="pficon pficon-error-circle-o"></span>
+      <strong>{strongmsg}</strong> {msg}
+    </div>
+<!--
+        <pre>{env}</pre>
+-->
+</div>
+</body>
+</html>

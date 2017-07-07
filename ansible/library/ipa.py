@@ -33,8 +33,14 @@ options:
     aliases: []
   password:
     description:
-      - password for principal
-    required: true
+      - password for principal (mutually exclusive with keytab)
+    required: false
+    default:
+    aliases: []
+  keytab:
+    description:
+      - keytab (mutually exclusive with password)
+    required: false
     default:
     aliases: []
   ignore_no_modifications:
@@ -57,10 +63,11 @@ EXAMPLES = """
 
 
 class IPA(object):
-    def __init__(self, module, principal, password):
+    def __init__(self, module, principal, password, keytab):
         self.module = module
         self.principal = principal
         self.password = password
+        self.keytab = keytab
 
     def kinit(self):
         try:
@@ -73,14 +80,23 @@ class IPA(object):
             if dp in stdout:
                 return
 
-        cmd = ['kinit', self.principal]
-        popen = subprocess.Popen(
-            cmd,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
-        stdout, stderr = popen.communicate(self.password + '\n')
+        if self.password is not None:
+            cmd = ['kinit', self.principal]
+            popen = subprocess.Popen(
+                cmd,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
+            stdout, stderr = popen.communicate(self.password + '\n')
+        elif self.keytab is not None:
+            cmd = ['kinit', '-kt', self.keytab]
+            popen = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
+            stdout, stderr = popen.communicate()
         if popen.returncode != 0:
             raise subprocess.CalledProcessError(popen.returncode, cmd, stdout)
 
@@ -104,7 +120,8 @@ def main():
             cmd=dict(default='ipa'),
             args=dict(required=True),
             principal=dict(default='admin'),
-            password=dict(required=True),
+            password=dict(required=False),
+            keytab=dict(required=False),
             result_regex=dict(default=None),
             ignore_no_modifications=dict(default=False, type='bool'),
             ignore_already_exists=dict(default=False, type='bool'),
@@ -114,9 +131,13 @@ def main():
     args = module.params.get('args')
     principal = module.params.get('principal', 'admin')
     password = module.params.get('password')
+    keytab = module.params.get('keytab')
     result_regex = module.params.get('result_regex')
     ignore_nomod = module.params.get('ignore_no_modifications', False)
     ignore_exists = module.params.get('ignore_already_exists', False)
+
+    if keytab is not None and password is not None:
+        module.fail_json(msg="password and keytab are mutually exclusive.")
 
     if '$IPA_SERVER' in args:
         cfg = SafeConfigParser()
@@ -127,7 +148,7 @@ def main():
 
     kwargs = dict(cmd=cmd, args=args, principal=principal)
 
-    ipa = IPA(module, principal, password)
+    ipa = IPA(module, principal, password, keytab)
     try:
         ipa.kinit()
         rc, stdout, stderr = ipa.command(cmd, args)
@@ -143,6 +164,9 @@ def main():
             rc = 0
             changed = False
         elif ignore_exists and 'already exists' in stderr:
+            rc = 0
+            changed = False
+        elif ignore_exists and 'already a member' in stdout:
             rc = 0
             changed = False
 

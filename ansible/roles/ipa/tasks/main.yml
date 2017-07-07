@@ -17,6 +17,7 @@
 - name: Get reverse zone
   tags:
     - ipa
+    - setup
   reversezone: ipaddress={{ ansible_default_ipv4.address }}
   register: reversezone
   changed_when: false
@@ -26,6 +27,7 @@
     - ipa
     - package-install
   package: name=chrony state=absent
+  when: package_install
 
 - name: install FreeIPA client package
   tags:
@@ -38,14 +40,26 @@
    - ipa-admintools
   when: package_install
 
+- name: Copy workaround tmpfiles.d for /var/run/ipa
+  tags:
+    - ipa
+  copy:
+    src=ipa-client.tmpfiles.conf
+    dest=/etc/tmpfiles.d/ipa-client.conf
+    owner=root
+    group=root
+    mode=0644
+
 - name: Gather IPA facts
   tags:
     - ipa
+    - setup
   ipa_facts: domain={{ ipa_domain }}
 
 - name: Set install facts
   tags:
     - ipa
+    - setup
   changed_when: false
   set_fact:
     install_ipa_nfsserver: "{{ 'ipa_nfsserver' in groups and groups['ipa_nfsserver'] }}"

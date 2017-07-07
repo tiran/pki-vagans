@@ -1,0 +1,85 @@
+---
+- name: Create Apache config for demo app (default)
+  tags:
+    - ipa-wwwdemo
+  template:
+    src=wwwdemo.conf
+    dest=/etc/httpd/conf.d/wwwdemo.conf
+  when: deploy_service
+  notify:
+    - restart httpd
+
+- name: Set default facts for config
+  tags:
+    - ipa-wwwdemo
+  set_fact:
+    auth_gssapi=false
+    auth_gssapi_cookie=false
+    authnz_pam=false
+    lookup_identity=false
+    intercept_form=false
+
+- name: Create Apache config for demo app (1)
+  tags:
+    - ipa-wwwdemo
+  template:
+    src=wwwdemo.conf
+    dest=/etc/httpd/conf.d/wwwdemo.conf.1
+
+- name: With GSSAPI
+  tags:
+    - ipa-wwwdemo
+  set_fact:
+    auth_gssapi=true
+
+- name: Create Apache config for demo app (2)
+  tags:
+    - ipa-wwwdemo
+  template:
+    src=wwwdemo.conf
+    dest=/etc/httpd/conf.d/wwwdemo.conf.2
+
+- name: With lookup_identity
+  tags:
+    - ipa-wwwdemo
+  set_fact:
+    auth_gssapi=true
+    lookup_identity=true
+
+- name: Create Apache config for demo app (3)
+  tags:
+    - ipa-wwwdemo
+  template:
+    src=wwwdemo.conf
+    dest=/etc/httpd/conf.d/wwwdemo.conf.3
+
+- name: With authnz_pam
+  tags:
+    - ipa-wwwdemo
+  set_fact:
+    auth_gssapi=true
+    lookup_identity=true
+    authnz_pam=true
+
+- name: Create Apache config for demo app (4)
+  tags:
+    - ipa-wwwdemo
+  template:
+    src=wwwdemo.conf
+    dest=/etc/httpd/conf.d/wwwdemo.conf.4
+
+- name: With intercept form
+  tags:
+    - ipa-wwwdemo
+  set_fact:
+    auth_gssapi=true
+    lookup_identity=true
+    authnz_pam=true
+    intercept_form=true
+
+- name: Create Apache config for demo app (5)
+  tags:
+    - ipa-wwwdemo
+  template:
+    src=wwwdemo.conf
+    dest=/etc/httpd/conf.d/wwwdemo.conf.5

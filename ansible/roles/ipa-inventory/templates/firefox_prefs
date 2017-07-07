@@ -25,7 +25,8 @@ pref("datareporting.healthreport.service.enabled", false);
 pref("datareporting.policy.dataSubmissionEnabled", false);
 
 /* Kerberos SSO configuration */
-pref("network.negotiate-auth.trusted-uris", ".{{ ipa.realm }}");
+user_pref("network.negotiate-auth.trusted-uris", ".{{ ipa.domain }}");
+pref("network.negotiate-auth.trusted-uris", ".{{ ipa.domain }}");
 
 /* These are the defaults */
 pref("network.negotiate-auth.gsslib", "");

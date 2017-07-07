@@ -1,0 +1,40 @@
+---
+- name: Get ipa-getcert list
+  tags:
+    - ipa-wwwdemo
+  command:
+    ipa-getcert list
+  register:
+    ipa_getcert
+  changed_when: false
+
+- name: Set has_server_cert and CA unreachable facts
+  tags:
+    - ipa-wwwdemo
+  set_fact:
+    has_server_cert: "{{ cert in ipa_getcert.stdout }}"
+    ca_unreachable: "{{ 'CA_UNREACHABLE' in ipa_getcert.stdout }}"
+  changed_when: false
+
+- name: Restart certmonger when in state CA_UNREACHABLE
+  tags:
+    - ipa-wwwdemo
+  service: name=certmonger.service enabled=yes state=restarted
+  when: ca_unreachable
+
+- name: Request certificate with ipa-getcert
+  tags:
+    - ipa-wwwdemo
+  ipa:
+    cmd=ipa-getcert
+    args="request -w -k {{ private_key }} -f {{ cert }} -D {{ ansible_fqdn }} -K HTTP/{{ ansible_fqdn }} -T caIPAserviceCert -C 'systemctl reload httpd.service'"
+    keytab=/etc/krb5.keytab
+  when: not has_server_cert
+  notify:
+    - restart httpd
+
+# Also a workaround for https://fedorahosted.org/freeipa/ticket/5653
+- name: Wait for certmonger
+  tags:
+    - ipa-wwwdemo
+  waitforcertmonger:

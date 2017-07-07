@@ -1,4 +1,16 @@
 ---
+
+- name: Set cert file and keytab facts
+  tags:
+    - ipa-wwwdemo
+    - ipa-wwwdemo-undeploy
+  set_fact:
+    cert: /etc/pki/tls/certs/{{ ansible_fqdn }}.crt
+    private_key: /etc/pki/tls/private/{{ ansible_fqdn }}.key
+    http_keytab: /etc/httpd/{{ ansible_fqdn }}.keytab
+    deploy_service: false
+    undeploy_service: false
+
 - name: install Apache HTTPD and modules
   tags:
     - ipa-wwwdemo
@@ -18,18 +30,30 @@
     - sssd-dbus
     - mod_session
     - mod_auth_mellon
+    - mod_authnz_pam
   when: package_install
   notify:
     - restart httpd
     - restart sssd
 
-- name: Remove mod_nss
+- name: Remove welcome.conf
   tags:
     - ipa-wwwdemo
-    - package-install
-  package: name={{ item }} state=absent
-  with_items:
-    - mod_nss
+  file: dest=/etc/httpd/conf.d/welcome.conf state=absent
+  notify:
+    - restart httpd
+
+- name: Enable Apache HTTPD service
+  tags:
+    - ipa-wwwdemo
+  service: name=httpd.service enabled=yes
+
+- name: Create PAM service file for Apache example app
+  tags:
+    - ipa-wwwdemo
+  copy:
+    src=pam_websvc
+    dest=/etc/pam.d/websvc
   notify:
     - restart httpd
 
@@ -40,84 +64,89 @@
   notify:
     - restart httpd
 
-- name: setsebool httpd_dbus_sssd on
+- include: keytab.yml
+  when: deploy_service
+- include: cert.yml
+  when: deploy_service
+- include: undeploy.yml
+  when: undeploy_service
+- include: sssd_ifp.yml
+- include: ipaconf.yml
+- include: usermachine.yml
+- include: httpdconf.yml
+
+- name: Create directory for demo app
   tags:
     - ipa-wwwdemo
-  seboolean: name=httpd_dbus_sssd state=yes persistent=yes
+  file:
+    path=/srv/www/demo/ui
+    state=directory
+    mode=0755
+    owner=root
+    group=root
+    seuser=system_u
+    serole=object_r
+    setype=httpd_sys_content_t
+    selevel=s0
+
+- name: Copy Apache demo app files
+  tags:
+    - ipa-wwwdemo
+  copy:
+    src=ui/
+    dest=/srv/www/demo/ui/
+    mode=0644
+    directory_mode=0755
+    owner=root
+    group=root
+    seuser=system_u
+    serole=object_r
+    setype=httpd_sys_content_t
+    selevel=s0
+  notify:
+    - restart httpd
+  when: false
+
+- name: Copy Apache demo app files
+  tags:
+    - ipa-wwwdemo
+  synchronize:
+    src=ui/
+    dest=/srv/www/demo/ui/
+    owner=false
+    group=false
+    recursive=true
+    delete=true
+    times=true
+
+- name: Copy WSGI app for demo app
+  tags:
+    - ipa-wwwdemo
+  copy:
+    src=wsgi.py
+    dest=/srv/www/demo/wsgi.py
+    mode=0644
+    directory_mode=0755
+    owner=root
+    group=root
+    seuser=system_u
+    serole=object_r
+    setype=httpd_sys_content_t
+    selevel=s0
   notify:
     - restart httpd
 
-- name: Remove welcome.conf
+- name: Create helper scripts
   tags:
     - ipa-wwwdemo
-  file: dest=/etc/httpd/conf.d/welcome.conf state=absent
-  notify:
-    - restart httpd
-
-# SSSD
-- name: Add ldap_user_extra_attrs to sssd.conf
-  tags:
-    - ipa-wwwdemo
-    - ipa-install
-  ini_file:
-    dest=/etc/sssd/sssd.conf
-    section="domain/{{ ipa.domain }}"
-    option=ldap_user_extra_attrs
-    value="mail, givenname, sn"
-  notify:
-    - restart sssd
-    - flush sssd
-
-- name: Add [ifp]allowed_uids to sssd.conf
-  tags:
-    - ipa-wwwdemo
-    - ipa-install
-  ini_file:
-    dest=/etc/sssd/sssd.conf
-    section="ifp"
-    option=allowed_uids
-    value="apache, root"
-  notify:
-    - restart sssd
-    - flush sssd
-
-- name: Add [ifp]user_attributes to sssd.conf
-  tags:
-    - ipa-wwwdemo
-    - ipa-install
-  ini_file:
-    dest=/etc/sssd/sssd.conf
-    section="ifp"
-    option=user_attributes
-    value="+mail, +givenname, +sn"
-  notify:
-    - restart sssd
-    - flush sssd
-
-- name: Add [ifp]user_attributes to sssd.conf
-  tags:
-    - ipa-wwwdemo
-    - ipa-install
-  ini_file:
-    dest=/etc/sssd/sssd.conf
-    section="sssd"
-    option=services
-    value="nss, sudo, pam, autofs, ssh, ifp"
-  notify:
-    - restart sssd
-    - flush sssd
-
-- name: Enable Apache HTTPD service
-  tags:
-    - ipa-install
-  service: name=httpd.service enabled=yes
-
-- name: Create PAM service for Apache example app
-  tags:
-    - ipa-wwwdemo
-    - ipa-install
   template:
-    src=pam_wwwdemo
-    dest=/etc/pam.d/wwwdemo
-  notify:
-    - restart httpd
+    src={{ item }}
+    dest=/root/{{ item }}
+    mode=0750
+    owner=root
+    group=root
+  with_items:
+    - demostep.sh
+    - getcert.sh
+    - getkeytab.sh
+    - rekeycert.sh

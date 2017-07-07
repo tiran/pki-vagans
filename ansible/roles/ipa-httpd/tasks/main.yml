@@ -104,7 +104,7 @@
     - ipa-install
   ipa:
     cmd=ipa-getcert
-    args="request -w -d /etc/httpd/alias -n 'Server-Cert' -t 'NSS Certificate DB' -T caIPAserviceCert -C /usr/libexec/ipa/certmonger/restart_httpd"
+    args="request -w -d /etc/httpd/alias -n 'Server-Cert' -t 'NSS Certificate DB' -T caIPAserviceCert -C 'systemctl reload httpd.service'"
     password="{{ ipa_admin_password }}"
   when: not has_server_cert
   notify:

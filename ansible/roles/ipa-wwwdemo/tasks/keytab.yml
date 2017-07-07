@@ -1,0 +1,50 @@
+---
+- name: Get keytab content
+  tags:
+    - ipa-wwwdemo
+  command: klist -ke {{ http_keytab }}
+  register: keytab
+  changed_when: false
+  failed_when: "keytab.rc != 0 and 'not found' not in keytab.stderr"
+
+- name: Check for principal in keytab
+  tags:
+    - ipa-wwwdemo
+  changed_when: false
+  set_fact:
+   keytab_http_principal: "{{ 'HTTP/{{ ansible_fqdn }}' in keytab.stdout }}"
+
+- name: Create HTTP service
+  tags:
+    - ipa-wwwdemo
+  ipa:
+    args="service-add --force HTTP/{{ ansible_fqdn }}"
+    keytab=/etc/krb5.keytab
+    ignore_already_exists=true
+  when: not keytab_http_principal
+
+- name: Add HTTP service to keytab
+  tags:
+    - ipa-wwwdemo
+  ipa:
+    cmd=ipa-getkeytab
+    args="-s $IPA_SERVER -p HTTP/{{ ansible_fqdn }} -k {{ http_keytab }}"
+    keytab=/etc/krb5.keytab
+  when: not keytab_http_principal
+  notify:
+    - restart httpd
+
+- name: chown http.keytab
+  tags:
+    - ipa-wwwdemo
+  file:
+    path={{ http_keytab }}
+    owner=apache
+    group=apache
+    mode=0600
+    seuser=unconfined_u
+    serole=object_r
+    setype=httpd_config_t
+    selevel=s0
+  notify:
+    - restart httpd

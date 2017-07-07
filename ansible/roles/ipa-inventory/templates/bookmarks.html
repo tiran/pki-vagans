@@ -29,6 +29,10 @@
         <DT><A HREF="https://{{ hostvars[host].ansible_fqdn }}/example/" LAST_CHARSET="UTF-8">mod_auth_gssapi / mod_lookup_identity</A>
         <DD>mod_auth_gssapi / mod_lookup_identity
 {% endfor %}
+{% for host in groups['ipa_wwwdemo'] | default([]) %}
+        <DT><A HREF="https://{{ hostvars[host].ansible_fqdn }}/" LAST_CHARSET="UTF-8">WWW Demo</A>
+        <DD>WWW Demo
+{% endfor %}
         <DT><A HREF="http://www.freeipa.org/" ADD_DATE="1158286602" LAST_MODIFIED="1176675660" LAST_CHARSET="UTF-8">FreeIPA</A>
         <DD>FreeIPA.
         <HR>

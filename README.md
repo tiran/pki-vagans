@@ -16,7 +16,7 @@ Install dependencies
 --------------------
 
 ```shell
-sudo dnf install ansible libvirt vagrant vagrant-libvirt vagrant-hostmanager libselinux-python nss-tools
+sudo dnf install ansible libvirt vagrant vagrant-libvirt vagrant-hostmanager libselinux-python nss-tools krb5-pkinit
 sudo systemctl enable libvirtd
 sudo systemctl start libvirtd
 sudo usermod -G libvirt -a YOUR_USER

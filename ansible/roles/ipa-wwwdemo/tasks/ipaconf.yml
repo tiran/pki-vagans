@@ -1,0 +1,130 @@
+---
+- name: Add www demo groups
+  tags:
+    - ipa-wwwdemo
+  ipa:
+    args="{{ item }}"
+    password="{{ ipa_admin_password }}"
+    ignore_no_modifications=true
+    ignore_already_exists=true
+  with_items:
+    - group-add webadmins
+    - group-add webusers
+    - hostgroup-add webservers
+    - hostgroup-add-member webservers --hosts={{ ansible_fqdn }}
+    - hostgroup-add usermachines
+
+- name: Add HBAC allow_admin
+  tags:
+    - ipa-wwwdemo
+  ipa:
+    args="{{ item }}"
+    password="{{ ipa_admin_password }}"
+    ignore_no_modifications=true
+    ignore_already_exists=true
+  with_items:
+    - hbacrule-add allow_admin --servicecat=all --hostcat=all
+    - hbacrule-add-user allow_admin --groups=admins
+
+- name: Add HABC rule for webadmins
+  tags:
+    - ipa-wwwdemo
+  ipa:
+    args="{{ item }}"
+    password="{{ ipa_admin_password }}"
+    ignore_no_modifications=true
+    ignore_already_exists=true
+  with_items:
+    - hbacrule-add allow_webadmins --servicecat=all
+    - hbacrule-add-user allow_webadmins --groups=webadmins
+    - hbacrule-add-host allow_webadmins --hostgroups=webservers
+
+- name: Add HABC rule for webusers
+  tags:
+    - ipa-wwwdemo
+  ipa:
+    args="{{ item }}"
+    password="{{ ipa_admin_password }}"
+    ignore_no_modifications=true
+    ignore_already_exists=true
+  with_items:
+    - hbacsvc-add websvc
+    - hbacrule-add allow_webusers
+    - hbacrule-add-user allow_webusers --groups=webusers
+    - hbacrule-add-host allow_webusers --hostgroups=webservers
+    - hbacrule-add-service allow_webusers --hbacsvcs=websvc
+
+- name: Disable allow_all HABC
+  tags:
+    - ipa-wwwdemo
+  ipa:
+    args="hbacrule-disable allow_all"
+    password="{{ ipa_admin_password }}"
+    ignore_no_modifications=true
+    ignore_already_exists=true
+
+- name: Add SUDO role for wwwdemo
+  tags:
+    - ipa-wwwdemo
+  ipa:
+    args="{{ item }}"
+    password="{{ ipa_admin_password }}"
+    ignore_no_modifications=true
+    ignore_already_exists=true
+  with_items:
+    - sudorule-add sudo_webadmins --cmdcat=all --runasusercat=all --runasgroupcat=all
+    - sudorule-add-option sudo_webadmins --sudooption '!authenticate'
+    - sudorule-add-user sudo_webadmins --groups=webadmins
+    - sudorule-add-host sudo_webadmins --hostgroups=webservers --hostgroups=usermachines
+
+- name: Add privilege for wwwdemo
+  tags:
+    - ipa-wwwdemo
+  ipa:
+    args="{{ item }}"
+    password="{{ ipa_admin_password }}"
+    ignore_no_modifications=true
+    ignore_already_exists=true
+  with_items:
+    - role-add 'Web Admin'
+    - role-add-privilege 'Web Admin' --privileges='Service Administrators'
+    - role-add-member 'Web Admin' --groups=webadmins --hostgroups=webservers
+
+- name: Add demo user cheimes (webadmins, webusers)
+  tags:
+    - ipa-wwwdemo
+  ipa:
+    args="{{ item }}"
+    password="{{ ipa_admin_password }}"
+    ignore_no_modifications=true
+    ignore_already_exists=true
+  with_items:
+    - user-add cheimes --first=Christian --last=Heimes --email='christian@python.org'
+    - group-add-member webadmins --users=cheimes
+    - group-add-member webusers --users=cheimes
+
+- name: Add demo user bob (webusers)
+  tags:
+    - ipa-wwwdemo
+  ipa:
+    args="{{ item }}"
+    password="{{ ipa_admin_password }}"
+    ignore_no_modifications=true
+    ignore_already_exists=true
+  with_items:
+    - user-add bob --first=Bob --last=Smith
+
+- name: Create script to set passwords
+  tags:
+    - ipa-wwwdemo
+  template:
+    src=userpasswd.sh
+    dest=/root/userpasswd.sh
+    mode=0750
+    owner=root
+    group=root
+
+- name: Set passwords
+  tags:
+    - ipa-wwwdemo
+  command: /root/userpasswd.sh

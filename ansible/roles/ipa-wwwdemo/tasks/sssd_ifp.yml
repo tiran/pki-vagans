@@ -1,0 +1,56 @@
+---
+- name: setsebool httpd_dbus_sssd on
+  tags:
+    - ipa-wwwdemo
+  seboolean: name=httpd_dbus_sssd state=yes persistent=yes
+  notify:
+    - restart httpd
+
+- name: Add ldap_user_extra_attrs to sssd.conf
+  tags:
+    - ipa-wwwdemo
+    - ipa-install
+  ini_file:
+    dest=/etc/sssd/sssd.conf
+    section="domain/{{ ipa.domain }}"
+    option=ldap_user_extra_attrs
+    value="mail, givenname, sn"
+  notify:
+    - restart sssd
+    - flush sssd
+
+- name: Add [ifp]allowed_uids to sssd.conf
+  tags:
+    - ipa-wwwdemo
+  ini_file:
+    dest=/etc/sssd/sssd.conf
+    section="ifp"
+    option=allowed_uids
+    value="apache, root"
+  notify:
+    - restart sssd
+    - flush sssd
+
+- name: Add [ifp]user_attributes to sssd.conf
+  tags:
+    - ipa-wwwdemo
+  ini_file:
+    dest=/etc/sssd/sssd.conf
+    section="ifp"
+    option=user_attributes
+    value="+mail, +givenname, +sn"
+  notify:
+    - restart sssd
+    - flush sssd
+
+- name: Add [ifp]user_attributes to sssd.conf
+  tags:
+    - ipa-wwwdemo
+  ini_file:
+    dest=/etc/sssd/sssd.conf
+    section="sssd"
+    option=services
+    value="nss, sudo, pam, autofs, ssh, ifp"
+  notify:
+    - restart sssd
+    - flush sssd

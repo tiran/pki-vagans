@@ -63,6 +63,7 @@
 - name: Gather facts
   tags:
     - bootstrap
+    - setup
   setup:
 
 - name: Create directories in ipa_data_dir

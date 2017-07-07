@@ -1,0 +1,12 @@
+---
+- name: Add usermachine (GUI)
+  tags:
+    - ipa-wwwdemo
+  ipa:
+    args="{{ item }}"
+    password="{{ ipa_admin_password }}"
+    ignore_no_modifications=true
+    ignore_already_exists=true
+  with_items:
+    - host-add --force usermachine.{{ ipa_domain }}
+    - hostgroup-add-member usermachines --hosts=usermachine.{{ ipa_domain }}
