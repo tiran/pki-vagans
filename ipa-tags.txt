@@ -45,3 +45,6 @@ playbook: ansible/ipa-playbook.yml
 
   play #15 (ipa_tests): Create integration test files	TAGS: []
       TASK TAGS: [ipa-tests]
+
+  play #16 (all): Tidy up	TAGS: []
+      TASK TAGS: [ipa-install, ipa-tidy]

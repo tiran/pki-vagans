@@ -328,6 +328,8 @@ playbook: ansible/ipa-playbook.yml
       ipa-wwwdemo : Add privilege for wwwdemo	TAGS: [ipa-wwwdemo]
       ipa-wwwdemo : Add demo user cheimes (webadmins, webusers)	TAGS: [ipa-wwwdemo]
       ipa-wwwdemo : Add demo user bob (webusers)	TAGS: [ipa-wwwdemo]
+      ipa-wwwdemo : Create script to set passwords	TAGS: [ipa-wwwdemo]
+      ipa-wwwdemo : Set passwords	TAGS: [ipa-wwwdemo]
       ipa-wwwdemo : Add usermachine (GUI)	TAGS: [ipa-wwwdemo]
       ipa-wwwdemo : Create Apache config for demo app (default)	TAGS: [ipa-wwwdemo]
       ipa-wwwdemo : Set default facts for config	TAGS: [ipa-wwwdemo]
@@ -356,3 +358,7 @@ playbook: ansible/ipa-playbook.yml
       ipa-tests : copy /etc/ipa/ca.crt	TAGS: [ipa-tests]
       ipa-tests : create krb5.conf	TAGS: [ipa-tests]
       ipa-tests : Fetch dot_ipa	TAGS: [ipa-tests]
+
+  play #16 (all): Tidy up	TAGS: []
+    tasks:
+      ipa-tidy : Run kdestroy	TAGS: [ipa-install, ipa-tidy]

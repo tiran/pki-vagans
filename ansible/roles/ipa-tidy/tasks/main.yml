@@ -1,0 +1,7 @@
+---
+- name: Run kdestroy
+  tags:
+    - ipa-tidy
+    - ipa-install
+  command: kdestroy -A
+  changed_when: false

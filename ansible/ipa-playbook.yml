@@ -26,18 +26,21 @@
     - ipaserver
 
 - name: install FreeIPA server master
+  any_errors_fatal: true
   hosts:
     - ipaserver_master
   roles:
     - ipaserver-master
 
 - name: create local inventory files
+  any_errors_fatal: true
   hosts:
     - ipaserver_master
   roles:
     - ipa-inventory
 
 - name: install FreeIPA server replica
+  any_errors_fatal: true
   hosts:
     - ipaserver_replica
   roles:
@@ -59,49 +62,62 @@
   serial: 1
 
 - name: install OpenConnect VPN server for FreeIPA
+  any_errors_fatal: true
   hosts:
     - ipa_vpnserver
   roles:
     - ipa-vpnserver
 
 - name: install FreeIPA NFS server
+  any_errors_fatal: true
   hosts:
     - ipa_nfsserver
   roles:
     - ipa-nfsserver
 
 - name: install FreeIPA Samba server
+  any_errors_fatal: true
   hosts:
     - ipa_smbserver
   roles:
     - ipa-smbserver
 
 - name: install FreeIPA HTTP example app
+  any_errors_fatal: true
   hosts:
     - ipa_httpexample
   roles:
     - ipa-httpexample
 
 - name: install Ipsilon Identity Provider
+  any_errors_fatal: true
   hosts:
     - ipa_ipsilon_idp
   roles:
     - ipa-ipsilon-idp
 
 - name: install Ipsilon SP example
+  any_errors_fatal: true
   hosts:
     - ipa_sp_example
   roles:
     - ipa-sp-example
 
 - name: install WWW demo
+  any_errors_fatal: true
   hosts:
     - ipa_wwwdemo
   roles:
     - ipa-wwwdemo
 
 - name: Create integration test files
+  any_errors_fatal: true
   hosts:
     - ipa_tests
   roles:
     - ipa-tests
+
+- name: Tidy up
+  hosts: all
+  roles:
+    - ipa-tidy

@@ -17,12 +17,11 @@ def render(environ):
     )
 
     if environ.get('REMOTE_USER') is None:
+        status = '401 Unauthorized'
         if (environ.get('REDIRECT_REMOTE_USER') is None and
                 environ.get('SHOW_LOGIN')):
-            status = '401 Unauthorized'
             template_file = LOGIN
         else:
-            status = '403 Forbidden'
             kwargs['strongmsg'] = environ.get('REDIRECT_EXTERNAL_AUTH_ERROR',
                                               'No REMOTE_USER')
             kwargs['msg'] = environ.get('REDIRECT_REMOTE_USER', '')
