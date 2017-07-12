@@ -1,0 +1,6 @@
+#!/bin/bash
+set -e
+ssh-keygen -R {{ ansible_fqdn }} -f ~/.ssh/knownhosts_ipa
+
+set -x
+ssh -o "VerifyHostKeyDNS yes" -o "StrictHostKeyChecking ask" cheimes@{{ ansible_fqdn }} $@

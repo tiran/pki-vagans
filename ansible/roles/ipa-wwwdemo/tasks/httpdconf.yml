@@ -13,7 +13,7 @@
   tags:
     - ipa-wwwdemo
   set_fact:
-    auth_gssapi=false
+    auth_gssapi=true
     auth_gssapi_cookie=false
     authnz_pam=false
     lookup_identity=false
@@ -26,19 +26,6 @@
     src=wwwdemo.conf
     dest=/etc/httpd/conf.d/wwwdemo.conf.1
 
-- name: With GSSAPI
-  tags:
-    - ipa-wwwdemo
-  set_fact:
-    auth_gssapi=true
-
-- name: Create Apache config for demo app (2)
-  tags:
-    - ipa-wwwdemo
-  template:
-    src=wwwdemo.conf
-    dest=/etc/httpd/conf.d/wwwdemo.conf.2
-
 - name: With lookup_identity
   tags:
     - ipa-wwwdemo
@@ -46,12 +33,12 @@
     auth_gssapi=true
     lookup_identity=true
 
-- name: Create Apache config for demo app (3)
+- name: Create Apache config for demo app (2)
   tags:
     - ipa-wwwdemo
   template:
     src=wwwdemo.conf
-    dest=/etc/httpd/conf.d/wwwdemo.conf.3
+    dest=/etc/httpd/conf.d/wwwdemo.conf.2
 
 - name: With authnz_pam
   tags:
@@ -61,12 +48,12 @@
     lookup_identity=true
     authnz_pam=true
 
-- name: Create Apache config for demo app (4)
+- name: Create Apache config for demo app (3)
   tags:
     - ipa-wwwdemo
   template:
     src=wwwdemo.conf
-    dest=/etc/httpd/conf.d/wwwdemo.conf.4
+    dest=/etc/httpd/conf.d/wwwdemo.conf.3
 
 - name: With intercept form
   tags:
@@ -77,9 +64,9 @@
     authnz_pam=true
     intercept_form=true
 
-- name: Create Apache config for demo app (5)
+- name: Create Apache config for demo app (4)
   tags:
     - ipa-wwwdemo
   template:
     src=wwwdemo.conf
-    dest=/etc/httpd/conf.d/wwwdemo.conf.5
+    dest=/etc/httpd/conf.d/wwwdemo.conf.4

@@ -1,0 +1,65 @@
+Before:
+
+* edit /etc/NetworkManager/dnsmasq.d/ipa.example.conf
+* systemctl reload NetworkManager
+* . inventory/ipaenv
+* bin/ipa_democheck
+* bin/ipa_firefox &
+
+~/.ssh/config
+
+---
+Host *.ipa.example
+    GSSAPIAuthentication yes
+    GSSAPIDelegateCredentials yes
+    PreferredAuthentications gssapi-with-mic
+    VerifyHostKeyDNS yes
+    # pubkey auth slows us down
+    PubkeyAuthentication no
+    IdentitiesOnly yes
+    IdentityFile /dev/null
+    # don't use host key validation for the demo
+    UserKnownHostsFile ~/.ssh/knownhosts_ipa
+    # UserKnownHostsFile /dev/null
+    StrictHostKeyChecking no
+---
+
+Demo:
+
+* kinit admin
+* Firefox: master IPA
+* kinit cheimes
+* klist
+* bin/ipa_demossh
+* klist
+* demo:
+  * ipa service-add HTTP/demo.ipa.example
+  * sudo -s
+  * kinit -kt /etc/krb5.keytab
+  * /root/getkeytab.sh
+  * /root/getcert.sh
+
+
+  * /root/demostep.sh 1
+* firefox: demo.ipa.example
+  * /root/demostep.sh 2
+* kdestroy
+* firefox: demo.ipa.example
+* kinit bob
+* firefox: demo.ipa.example
+  * /root/demostep.sh 3
+* IPA: add user to webusers
+* firefox: demo.ipa.example
+* kdestroy
+  * /root/demostep.sh 4
+* firefox: demo.ipa.example
+
+
+  * /root/ocsp.sh
+* firefox: revoke certificate
+  * /root/ocsp.sh
+* firefox: new private window: demo
+  * /root/rekeycert.sh
+* firefox: new private window: demo
+
+* add OTP

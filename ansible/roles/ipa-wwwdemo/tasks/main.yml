@@ -1,16 +1,4 @@
 ---
-
-- name: Set cert file and keytab facts
-  tags:
-    - ipa-wwwdemo
-    - ipa-wwwdemo-undeploy
-  set_fact:
-    cert: /etc/pki/tls/certs/{{ ansible_fqdn }}.crt
-    private_key: /etc/pki/tls/private/{{ ansible_fqdn }}.key
-    http_keytab: /etc/httpd/{{ ansible_fqdn }}.keytab
-    deploy_service: false
-    undeploy_service: false
-
 - name: install Apache HTTPD and modules
   tags:
     - ipa-wwwdemo
@@ -63,6 +51,20 @@
   seboolean: name=httpd_mod_auth_pam state=yes persistent=yes
   notify:
     - restart httpd
+
+- name: Template local scripts
+  tags:
+    - ipa-wwwdemo
+  become: no
+  local_action:
+    template
+    src={{ item }}
+    dest={{ ipa_script_dir }}/{{ item }}
+    mode=0755
+  run_once: true
+  with_items:
+    - ipa_demossh
+    - ipa_democheck
 
 - include: keytab.yml
   when: deploy_service

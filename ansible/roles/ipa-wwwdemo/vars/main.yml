@@ -1,0 +1,6 @@
+---
+cert: /etc/pki/tls/certs/{{ ansible_fqdn }}.crt
+private_key: /etc/pki/tls/private/{{ ansible_fqdn }}.key
+http_keytab: /etc/httpd/{{ ansible_fqdn }}.keytab
+deploy_service: true
+undeploy_service: false

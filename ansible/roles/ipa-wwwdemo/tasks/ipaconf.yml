@@ -86,9 +86,9 @@
     ignore_no_modifications=true
     ignore_already_exists=true
   with_items:
-    - role-add 'Web Admin'
-    - role-add-privilege 'Web Admin' --privileges='Service Administrators'
-    - role-add-member 'Web Admin' --groups=webadmins --hostgroups=webservers
+    - role-add 'Service Admin'
+    - role-add-privilege 'Service Admin' --privileges='Service Administrators'
+    - role-add-member 'Service Admin' --groups=webadmins
 
 - name: Add demo user cheimes (webadmins, webusers)
   tags:

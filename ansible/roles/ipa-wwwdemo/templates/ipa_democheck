@@ -1,0 +1,34 @@
+#!/bin/bash
+set -e
+
+ADMIN_PASSWD="{{ ipa_admin_password }}"
+
+if [ -z "$IPA_INVENTORY" ]; then
+    echo "ERROR" > /dev/stderr
+    echo ". {{ ipa_data_dir }}/ipaenv" > /dev/stderr
+    exit 1
+fi
+
+echo "server=/{{ ipa.domain }}/{{ hostvars[groups['ipaserver_master'][0]].ansible_default_ipv4.address }}"
+host {{ hostvars[groups['ipaserver_master'][0]].ansible_fqdn }}
+
+rm -f ~/.ssh/knownhosts_ipa
+
+echo "${ADMIN_PASSWD}" | kinit admin
+
+{% for host in hostvars %}
+ping -c1 {{ hostvars[host].ansible_fqdn }}
+dig -t sshfp {{ hostvars[host].ansible_fqdn }} > /dev/null
+ssh admin@{{ hostvars[host].ansible_fqdn }} -- hostname
+{% endfor %}
+
+echo "${ADMIN_PASSWD}" | kinit cheimes
+
+ssh cheimes@{{ ansible_fqdn }} -- hostname
+
+echo "${ADMIN_PASSWD}" | kinit bob
+
+kdestroy -A
+
+echo
+echo "Demo setup is working."
