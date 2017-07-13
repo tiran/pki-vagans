@@ -5,3 +5,5 @@ export IPA_CONFDIR="${IPA_INVENTORY}"
 export KRB5_CONFIG="${IPA_INVENTORY}/krb5.conf"
 export KRB5CCNAME="${IPA_INVENTORY}/ccache"
 export KRB5CCNAMEARMOR="${IPA_INVENTORY}/ccache.armor"
+
+export PS1="[\u@\h \W]\[\e[44m\][IPA]\[\e[m\]\$ "

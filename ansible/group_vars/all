@@ -25,3 +25,6 @@ package_install: true
 package_upgrade: false
 selinux_state: enforcing
 selinux_policy: targeted
+enable_packages: true
+enable_network: true
+enable_forwarders: "{{ enable_network }}"

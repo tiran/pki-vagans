@@ -26,7 +26,7 @@
     --ssh-trust-dns
     --allow-zone-overlap
     --reverse-zone={{ reversezone.reversezone }}
-    {{ '--forwarder=%s' % dns_forwarder['nameservers'][0] if enable_network else '--no-forwarders' }}
+    {{ '--forwarder=%s' % dns_forwarder['nameservers'][0] if enable_forwarders else '--no-forwarders' }}
   when: not ipa.configured.server
 
 - name: Install KRA on FreeIPA master (2-3 minutes)

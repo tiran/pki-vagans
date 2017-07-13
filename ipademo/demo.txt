@@ -2,7 +2,11 @@ Before:
 
 * edit /etc/NetworkManager/dnsmasq.d/ipa.example.conf
 * systemctl reload NetworkManager
-* . inventory/ipaenv
+* three konsole tabs:
+    * . inventory/ipaenv
+    * 1) ssh
+    * 2) kdestroy / kinit
+    * 3) ipa_firefox
 * bin/ipa_democheck
 * bin/ipa_firefox &
 

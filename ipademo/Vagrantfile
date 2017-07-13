@@ -146,6 +146,7 @@ Vagrant.configure(2) do |config|
                 ],
                 "deploy_service": false,
                 "undeploy_service": false,
+                "enable_forwarders": false,
             }
         end
     end
