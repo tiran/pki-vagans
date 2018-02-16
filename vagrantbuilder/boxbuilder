@@ -114,10 +114,9 @@ FLAVORS = {
         '--install', FREEIPA_PGK_NAMES,
         '--firstboot', 'scripts/ipa-firstboot',
     ],
-    'freeipa45-copr': [
+    'freeipa46-copr': [
         # FreeIPA 4.5 for Fedora 25+
-        '--run-command', COPR_ENABLE.format('@freeipa/freeipa-4-5'),
-        '--run-command', COPR_ENABLE.format('@latchset/custodia'),
+        '--run-command', COPR_ENABLE.format('@freeipa/freeipa-4-6'),
         '--uninstall', 'chrony',
         '--install', FREEIPA_PGK_NAMES,
         '--firstboot', 'scripts/ipa-firstboot',
@@ -129,12 +128,12 @@ FLAVORS = {
 
 # os_version, suffix, extras
 PLATFORMS = {
-    'fedora25': ('fedora-25', 'f25', []),
-    'centos73': ('centos-7.3', 'centos73', [
+    'fedora27': ('fedora-27', 'f27', []),
+    'centos74': ('centos-7.4', 'centos74', [
         '--install', 'epel-release',
         '--copy-in', 'scripts/puiterwijk-ipsilon-epel-7.repo:/etc/yum.repos.d/',
     ]),
-    # 'rhel73': ('rhel-7.3', 'rhel73', []),
+    # 'rhel74': ('rhel-7.4', 'rhel74', []),
 }
 
 

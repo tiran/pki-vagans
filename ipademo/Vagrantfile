@@ -5,10 +5,10 @@ Vagrant.require_version ">= 1.6.0"
 
 DOMAIN="ipa.example"
 INSTALL_CLIENT = false
-INSTALL_IDP = true
+INSTALL_IDP = false
 INSTALL_NFS = false
 INSTALL_VPN = false
-INSTALL_REPLICA = false
+INSTALL_REPLICA = true
 
 HERE = File.dirname(__FILE__)
 ENV['ANSIBLE_CONFIG'] = "#{HERE}/../ansible/ansible.cfg"
@@ -21,8 +21,8 @@ if ENV.has_key?('SSH_AUTH_SOCK')
 end
 
 Vagrant.configure(2) do |config|
-    config.vm.box = "cheimes/freeipa45-f25"
-    config.vm.box_version = "4.5.2.2017070400"
+    config.vm.box = "cheimes/freeipa-f27"
+    # config.vm.box_version = "4.5.2.2017070400"
 
     # no rsync, Ansible playbook syncs files manually
     config.vm.synced_folder ".", "/vagrant", disabled: true
@@ -70,7 +70,7 @@ Vagrant.configure(2) do |config|
         config.vm.define "ipareplica1" do |host|
             host.vm.hostname = "replica1.#{DOMAIN}"
             host.vm.provider :libvirt do |domain|
-                domain.memory = 1536
+                domain.memory = 1792
             end
         end
     end
@@ -81,7 +81,7 @@ Vagrant.configure(2) do |config|
     config.vm.define "ipamaster" do |host|
         host.vm.hostname = "master.#{DOMAIN}"
         host.vm.provider :libvirt do |domain|
-            domain.memory = 1536
+            domain.memory = 1792
             domain.cpus = 2
         end
 

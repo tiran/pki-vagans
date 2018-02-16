@@ -1,11 +1,7 @@
 
 playbook: ansible/pki-playbook.yml
 
-  play #1 (all): safe-guard against race condition	TAGS: []
-    tasks:
-      wait for the node to be ready	TAGS: [bootstrap]
-
-  play #2 (pki_server): install Dogtag PKI CA	TAGS: []
+  play #1 (pki_server): install Dogtag PKI CA	TAGS: []
     tasks:
       bootstrap : Check default route	TAGS: [bootstrap]
       bootstrap : Create some default route	TAGS: [bootstrap]
@@ -17,9 +13,6 @@ playbook: ansible/pki-playbook.yml
       bootstrap : Create directories in ipa_data_dir	TAGS: [bootstrap]
       bootstrap : Dummy (for ansible.skip_tags)	TAGS: [dummy]
       common : DNF or YUM?	TAGS: [common]
-      common : Default facts (enable_packages, enable_network)	TAGS: [common]
-      common : Override enable_packages=true	TAGS: [common, package-install]
-      common : Override enable_network=true	TAGS: [common, network]
       common : Get nmcli device info	TAGS: [common]
       common : Set nmcli device info fact	TAGS: [common]
       common : Set SELinux state (aka make Dan happy or sad)	TAGS: [common]
@@ -62,9 +55,6 @@ playbook: ansible/pki-playbook.yml
       bootstrap : Create directories in ipa_data_dir	TAGS: [bootstrap]
       bootstrap : Dummy (for ansible.skip_tags)	TAGS: [dummy]
       common : DNF or YUM?	TAGS: [common]
-      common : Default facts (enable_packages, enable_network)	TAGS: [common]
-      common : Override enable_packages=true	TAGS: [common, package-install]
-      common : Override enable_network=true	TAGS: [common, network]
       common : Get nmcli device info	TAGS: [common]
       common : Set nmcli device info fact	TAGS: [common]
       common : Set SELinux state (aka make Dan happy or sad)	TAGS: [common]
@@ -121,9 +111,6 @@ playbook: ansible/pki-playbook.yml
       bootstrap : Create directories in ipa_data_dir	TAGS: [bootstrap]
       bootstrap : Dummy (for ansible.skip_tags)	TAGS: [dummy]
       common : DNF or YUM?	TAGS: [common]
-      common : Default facts (enable_packages, enable_network)	TAGS: [common]
-      common : Override enable_packages=true	TAGS: [common, package-install]
-      common : Override enable_network=true	TAGS: [common, network]
       common : Get nmcli device info	TAGS: [common]
       common : Set nmcli device info fact	TAGS: [common]
       common : Set SELinux state (aka make Dan happy or sad)	TAGS: [common]
@@ -166,9 +153,6 @@ playbook: ansible/pki-playbook.yml
       bootstrap : Create directories in ipa_data_dir	TAGS: [bootstrap]
       bootstrap : Dummy (for ansible.skip_tags)	TAGS: [dummy]
       common : DNF or YUM?	TAGS: [common]
-      common : Default facts (enable_packages, enable_network)	TAGS: [common]
-      common : Override enable_packages=true	TAGS: [common, package-install]
-      common : Override enable_network=true	TAGS: [common, network]
       common : Get nmcli device info	TAGS: [common]
       common : Set nmcli device info fact	TAGS: [common]
       common : Set SELinux state (aka make Dan happy or sad)	TAGS: [common]

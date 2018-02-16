@@ -1,11 +1,7 @@
 
 playbook: ansible/ipa-playbook.yml
 
-  play #1 (all): safe-guard against race condition	TAGS: []
-    tasks:
-      wait for the node to be ready	TAGS: [bootstrap]
-
-  play #2 (all): install IPA base system	TAGS: []
+  play #1 (all): install IPA base system	TAGS: []
     tasks:
       bootstrap : Check default route	TAGS: [bootstrap]
       bootstrap : Create some default route	TAGS: [bootstrap]
@@ -17,9 +13,6 @@ playbook: ansible/ipa-playbook.yml
       bootstrap : Create directories in ipa_data_dir	TAGS: [bootstrap]
       bootstrap : Dummy (for ansible.skip_tags)	TAGS: [dummy]
       common : DNF or YUM?	TAGS: [common]
-      common : Default facts (enable_packages, enable_network)	TAGS: [common]
-      common : Override enable_packages=true	TAGS: [common, package-install]
-      common : Override enable_network=true	TAGS: [common, network]
       common : Get nmcli device info	TAGS: [common]
       common : Set nmcli device info fact	TAGS: [common]
       common : Set SELinux state (aka make Dan happy or sad)	TAGS: [common]
@@ -61,7 +54,7 @@ playbook: ansible/ipa-playbook.yml
       ipa : Gather IPA facts	TAGS: [ipa, setup]
       ipa : Set install facts	TAGS: [ipa, setup]
 
-  play #3 (ipaserver_master,ipaserver_replica): install IPA server system	TAGS: []
+  play #2 (ipaserver_master,ipaserver_replica): install IPA server system	TAGS: []
     tasks:
       ipa-modnss : Install Apache HTTPD with mod_nss	TAGS: [ipa-modnss, network, package-install]
       ipa-modnss : Open Firewall for Apache	TAGS: [firewall, ipa-modnss]
@@ -71,7 +64,7 @@ playbook: ansible/ipa-playbook.yml
       ipaserver : install FreeIPA server package (RHEL / CentOS)	TAGS: [ipaserver, network, package-install]
       ipaserver : Open Firewall for services	TAGS: [firewall, ipaserver]
 
-  play #4 (ipaserver_master): install FreeIPA server master	TAGS: []
+  play #3 (ipaserver_master): install FreeIPA server master	TAGS: []
     tasks:
       ipaserver-master : Stop Apache HTTPD to free port 8443 for installation	TAGS: [ipa-install, ipaserver-master]
       ipaserver-master : Install FreeIPA master (5-7 minutes)	TAGS: [ipa-install, ipaserver-master]
@@ -97,7 +90,7 @@ playbook: ansible/ipa-playbook.yml
       ipaserver-master : Fetch IPA ca.crt	TAGS: [fetch, ipa-install, ipaserver-master]
       ipaserver-master : Copy IPA ca.crt to all machines	TAGS: [ipa-install, ipaserver-master]
 
-  play #5 (ipaserver_master): create local inventory files	TAGS: []
+  play #4 (ipaserver_master): create local inventory files	TAGS: []
     tasks:
       ipa-inventory : Create Firefox prefs	TAGS: [ipa-install, ipa-inventory]
       ipa-inventory : Create Firefox bookmarks	TAGS: [ipa-install, ipa-inventory]
@@ -117,7 +110,7 @@ playbook: ansible/ipa-playbook.yml
       ipa-inventory : Remove old CA.crt from NSSDB	TAGS: [ipa-install, ipa-inventory]
       ipa-inventory : Populate NSSDB with CA.crt	TAGS: [ipa-install, ipa-inventory]
 
-  play #6 (ipaserver_replica): install FreeIPA server replica	TAGS: []
+  play #5 (ipaserver_replica): install FreeIPA server replica	TAGS: []
     tasks:
       ipaserver-replica : Create /export home directory with correct context	TAGS: [ipa-client, ipa-install]
       ipaserver-replica : join FreeIPA	TAGS: [ipa-client, ipa-install]
@@ -134,13 +127,13 @@ playbook: ansible/ipa-playbook.yml
       ipaserver-replica : Make sure named-pkcs11 DNS is restarted	TAGS: [ipa-install, ipaserver-replica]
       ipaserver-replica : Update IPA facts	TAGS: [ipaserver-replica]
 
-  play #7 (ipa_client,ipa_nfsserver,ipa_smbserver,ipa_vpnserver,ipa_httpexample,ipa_ipsilon_idp,ipa_wwwdemo): install FreeIPA client	TAGS: []
+  play #6 (ipa_client,ipa_nfsserver,ipa_smbserver,ipa_vpnserver,ipa_httpexample,ipa_ipsilon_idp,ipa_wwwdemo): install FreeIPA client	TAGS: []
     tasks:
       ipa-client : Create /export home directory with correct context	TAGS: [ipa-client, ipa-install]
       ipa-client : join FreeIPA	TAGS: [ipa-client, ipa-install]
       ipa-client : Update IPA facts	TAGS: [ipa-client]
 
-  play #8 (ipa_vpnserver): install OpenConnect VPN server for FreeIPA	TAGS: []
+  play #7 (ipa_vpnserver): install OpenConnect VPN server for FreeIPA	TAGS: []
     tasks:
       ipa-vpnserver : install ocserv VPN server	TAGS: [ipa-vpnserver, network, package-install]
       ipa-vpnserver : Open Firewall services for ocserv VPN server	TAGS: [firewall, ipa-vpnserver]
@@ -161,7 +154,7 @@ playbook: ansible/ipa-playbook.yml
       ipa-vpnserver : Template local inventory files	TAGS: [ipa-install, ipa-vpnserver]
       ipa-vpnserver : Write custom krb5.conf	TAGS: [fetch, ipa-install, ipa-vpnserver]
 
-  play #9 (ipa_nfsserver): install FreeIPA NFS server	TAGS: []
+  play #8 (ipa_nfsserver): install FreeIPA NFS server	TAGS: []
     tasks:
       ipa-nfsserver : install nfs-utils	TAGS: [ipa-nfsserver, network, package-install]
       ipa-nfsserver : Open Firewall for NFS	TAGS: [firewall, ipa-nfsserver]
@@ -182,7 +175,7 @@ playbook: ansible/ipa-playbook.yml
       ipa-nfsserver : Create home directory for FreeIPA users	TAGS: [ipa-install, ipa-nfs-homedirs, ipa-nfsserver]
       ipa-nfsserver : Run ipa-client-automount on master, replicas and clients	TAGS: [ipa-install, ipa-nfsserver]
 
-  play #10 (ipa_smbserver): install FreeIPA Samba server	TAGS: []
+  play #9 (ipa_smbserver): install FreeIPA Samba server	TAGS: []
     tasks:
       ipa-smbserver : install Samba dependencies	TAGS: [ipa-smbserver, network, package-install]
       ipa-smbserver : Open Firewall for Samba	TAGS: [firewall, ipa-smbserver]
@@ -194,7 +187,7 @@ playbook: ansible/ipa-playbook.yml
       ipa-smbserver : Write smb.conf	TAGS: [ipa-install, ipa-smbserver]
       ipa-smbserver : Enable Samba services	TAGS: [ipa-install, ipa-smbserver]
 
-  play #11 (ipa_httpexample): install FreeIPA HTTP example app	TAGS: []
+  play #10 (ipa_httpexample): install FreeIPA HTTP example app	TAGS: []
     tasks:
       ipa-modnss : Install Apache HTTPD with mod_nss	TAGS: [ipa-modnss, network, package-install]
       ipa-modnss : Open Firewall for Apache	TAGS: [firewall, ipa-modnss]
@@ -228,7 +221,7 @@ playbook: ansible/ipa-playbook.yml
       ipa-httpexample : Create Apache example app	TAGS: [ipa-httpexample, ipa-install]
       ipa-httpexample : Create PAM service for Apache example app	TAGS: [ipa-httpexample, ipa-install]
 
-  play #12 (ipa_ipsilon_idp): install Ipsilon Identity Provider	TAGS: []
+  play #11 (ipa_ipsilon_idp): install Ipsilon Identity Provider	TAGS: []
     tasks:
       ipa-modnss : Install Apache HTTPD with mod_nss	TAGS: [ipa-modnss, network, package-install]
       ipa-modnss : Open Firewall for Apache	TAGS: [firewall, ipa-modnss]
@@ -253,7 +246,7 @@ playbook: ansible/ipa-playbook.yml
       ipa-ipsilon-idp : Install Ipsilon IdP	TAGS: [ipa-install, ipa-ipsilon-idp]
       ipa-ipsilon-idp : Use NSS instead of mod_ssl	TAGS: [ipa-install, ipa-ipsilon-idp]
 
-  play #13 (ipa_sp_example): install Ipsilon SP example	TAGS: []
+  play #12 (ipa_sp_example): install Ipsilon SP example	TAGS: []
     tasks:
       ipa-modnss : Install Apache HTTPD with mod_nss	TAGS: [ipa-modnss, network, package-install]
       ipa-modnss : Open Firewall for Apache	TAGS: [firewall, ipa-modnss]
@@ -289,7 +282,7 @@ playbook: ansible/ipa-playbook.yml
       ipa-sp-example : Create Apache SP example app	TAGS: [ipa-install, ipa-sp-example]
       ipa-sp-example : Overwrite ipsilon-saml.conf with custom config	TAGS: [ipa-install, ipa-sp-example]
 
-  play #14 (ipa_wwwdemo): install WWW demo	TAGS: []
+  play #13 (ipa_wwwdemo): install WWW demo	TAGS: []
     tasks:
       ipa-modssl : Install Apache HTTPD with mod_ssl	TAGS: [ipa-modssl, network, package-install]
       ipa-modssl : Open Firewall for Apache	TAGS: [firewall, ipa-modssl]
@@ -346,7 +339,7 @@ playbook: ansible/ipa-playbook.yml
       ipa-wwwdemo : Copy WSGI app for demo app	TAGS: [ipa-wwwdemo]
       ipa-wwwdemo : Create helper scripts	TAGS: [ipa-wwwdemo]
 
-  play #15 (ipa_tests): Create integration test files	TAGS: []
+  play #14 (ipa_tests): Create integration test files	TAGS: []
     tasks:
       ipa-tests : Create dot_ipa directories	TAGS: [ipa-tests]
       ipa-tests : Create default.conf	TAGS: [ipa-tests]
@@ -357,6 +350,6 @@ playbook: ansible/ipa-playbook.yml
       ipa-tests : create krb5.conf	TAGS: [ipa-tests]
       ipa-tests : Fetch dot_ipa	TAGS: [ipa-tests]
 
-  play #16 (all): Tidy up	TAGS: []
+  play #15 (all): Tidy up	TAGS: []
     tasks:
       ipa-tidy : Run kdestroy	TAGS: [ipa-install, ipa-tidy]
