@@ -93,14 +93,14 @@
     dest={{ ipa_data_dir }}/default.conf
     flat=yes
 
-- name: Fetch kra agent pem file
+- name: Fetch ra agent pem file
   tags:
     - ipa-inventory
     - ipa-install
     - fetch
   fetch:
-    src=/etc/httpd/alias/kra-agent.pem
-    dest={{ ipa_data_dir }}/kra-agent.pem
+    src=/var/lib/ipa/ra-agent.pem
+    dest={{ ipa_data_dir }}/ra-agent.pem
     flat=yes
 
 - name: Template local scripts
