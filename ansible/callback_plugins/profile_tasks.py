@@ -69,3 +69,6 @@ class CallbackModule(object):
                 datetime.timedelta(seconds=(int(total_seconds)))
                 )
           )
+
+    def set_options(self):
+        None
